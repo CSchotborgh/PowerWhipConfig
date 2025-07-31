@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Eye, ZoomIn, ZoomOut, Move, Hand, ChevronDown } from "lucide-react";
+import { Eye, ZoomIn, ZoomOut, Move, Hand, ChevronDown, Database, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
+import EnhancedComponentLibrary from "./EnhancedComponentLibrary";
 
 export default function VisualDesignTab() {
-  const [openSections, setOpenSections] = useState<string[]>(["canvas-tools", "layer-management"]);
+  const [openSections, setOpenSections] = useState<string[]>(["canvas-tools", "lookup-library"]);
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => 
@@ -97,6 +98,35 @@ export default function VisualDesignTab() {
                   <span className="text-sm text-technical-700 dark:text-technical-300">Grid</span>
                   <input type="checkbox" defaultChecked className="rounded" />
                 </div>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
+      <Collapsible
+        open={openSections.includes("lookup-library")}
+        onOpenChange={() => toggleSection("lookup-library")}
+      >
+        <Card>
+          <CollapsibleTrigger className="w-full">
+            <CardHeader className="hover:bg-technical-50 dark:hover:bg-technical-800 transition-colors">
+              <CardTitle className="flex items-center justify-between text-technical-900 dark:text-technical-100">
+                <div className="flex items-center">
+                  <Database className="w-4 h-4 mr-2 text-primary" />
+                  Lookup Component Library
+                </div>
+                <ChevronDown className={cn(
+                  "w-4 h-4 transition-transform duration-200",
+                  openSections.includes("lookup-library") ? "rotate-180" : ""
+                )} />
+              </CardTitle>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="p-0">
+              <div className="max-h-96 overflow-hidden">
+                <EnhancedComponentLibrary />
               </div>
             </CardContent>
           </CollapsibleContent>
