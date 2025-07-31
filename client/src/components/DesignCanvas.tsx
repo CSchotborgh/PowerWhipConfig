@@ -159,11 +159,34 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
                 <Save className="w-4 h-4 mr-2" />
                 Save Design
               </Button>
-              <Button onClick={toggleViewMode} variant="outline">
-                {viewMode === "design" ? "Switch to Order Entry" : 
-                 viewMode === "order" ? "Switch to Excel Transformer" : 
-                 "Switch to Design Canvas"}
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={toggleViewMode} variant="outline">
+                  {viewMode === "design" ? "Switch to Order Entry" : 
+                   viewMode === "order" ? "Switch to Excel Transformer" : 
+                   "Switch to Design Canvas"}
+                </Button>
+                <Button 
+                  onClick={() => setViewMode("design")} 
+                  variant={viewMode === "design" ? "default" : "outline"}
+                  size="sm"
+                >
+                  Design
+                </Button>
+                <Button 
+                  onClick={() => setViewMode("order")} 
+                  variant={viewMode === "order" ? "default" : "outline"}
+                  size="sm"
+                >
+                  Order Entry
+                </Button>
+                <Button 
+                  onClick={() => setViewMode("transformer")} 
+                  variant={viewMode === "transformer" ? "default" : "outline"}
+                  size="sm"
+                >
+                  Excel Transformer
+                </Button>
+              </div>
             </div>
           </div>
         </div>
