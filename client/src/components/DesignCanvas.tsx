@@ -102,19 +102,11 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
 
   // Show different views based on mode
   if (viewMode === "order") {
-    return (
-      <div className="h-full">
-        <AGGridOrderEntry onToggleView={toggleViewMode} />
-      </div>
-    );
+    return <AGGridOrderEntry onToggleView={toggleViewMode} />;
   }
 
   if (viewMode === "transformer") {
-    return (
-      <div className="h-full">
-        <ExcelTransformer onToggleView={toggleViewMode} />
-      </div>
-    );
+    return <ExcelTransformer onToggleView={toggleViewMode} />;
   }
 
   return (

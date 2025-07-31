@@ -131,14 +131,33 @@ export default function AGGridOrderEntry({ onToggleView }: AGGridOrderEntryProps
 
   if (isLoading) {
     return (
-      <div className="flex-1 p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-technical-200 dark:bg-technical-700 rounded w-1/3"></div>
-          <div className="h-12 bg-technical-200 dark:bg-technical-700 rounded"></div>
-          <div className="space-y-2">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="h-16 bg-technical-100 dark:bg-technical-800 rounded"></div>
-            ))}
+      <div className="flex-1 flex flex-col h-full">
+        <div className="p-4 border-b border-technical-200 dark:border-technical-600 bg-technical-50 dark:bg-technical-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-technical-900 dark:text-technical-100">
+                Order Entry System
+              </h2>
+              <p className="text-sm text-technical-600 dark:text-technical-400 mt-1">
+                Loading component data...
+              </p>
+            </div>
+            <Button onClick={onToggleView} variant="outline">
+              Switch to Excel Transformer
+            </Button>
+          </div>
+        </div>
+        <div className="flex-1 p-6 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <div className="space-y-2">
+              <p className="text-lg font-medium text-technical-900 dark:text-technical-100">
+                Loading Order Entry Data
+              </p>
+              <p className="text-sm text-technical-600 dark:text-technical-400">
+                Fetching component information from Excel lookup file...
+              </p>
+            </div>
           </div>
         </div>
       </div>
