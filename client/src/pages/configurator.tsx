@@ -15,16 +15,22 @@ export default function Configurator() {
   
   const { screenInfo, breakpoints, shouldCollapsePanels, shouldStackVertically } = useResponsiveLayout();
 
-  // Auto-collapse panels on smaller screens
+  // Auto-collapse panels on smaller screens, but keep main content visible
   useEffect(() => {
-    if (shouldCollapsePanels()) {
+    if (screenInfo.width <= 768) {
+      // On mobile/tablet, collapse side panels but keep main canvas
       setLeftPanelExpanded(false);
       setRightPanelExpanded(false);
+    } else if (screenInfo.width <= 1024) {
+      // On small desktop, show main content with collapsed panels
+      setLeftPanelExpanded(false);
+      setRightPanelExpanded(true);
     } else {
+      // On larger screens, show all panels
       setLeftPanelExpanded(true);
       setRightPanelExpanded(true);
     }
-  }, [shouldCollapsePanels]);
+  }, [screenInfo.width]);
 
   return (
     <ConfigurationProvider>
@@ -59,8 +65,8 @@ export default function Configurator() {
             </Button>
           </div>
           
-          <main className="flex-1 flex">
-            <div className="flex-1 p-2 sm:p-4 lg:p-6 main-canvas responsive-container min-w-0">
+          <main className="flex-1 flex min-w-0">
+            <div className="flex-1 p-2 sm:p-4 lg:p-6 min-w-0">
               <DesignCanvas />
             </div>
             
