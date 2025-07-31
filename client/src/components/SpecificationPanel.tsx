@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClipboardList, Thermometer, Zap } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ClipboardList, Thermometer, Zap, ChevronDown } from "lucide-react";
 import { useConfiguration } from "@/contexts/ConfigurationContext";
 import { calculateVoltageDrops, calculateThermalAnalysis } from "@/lib/electricalCalculations";
 import { cn } from "@/lib/utils";
@@ -10,6 +12,15 @@ interface SpecificationPanelProps {
 
 export default function SpecificationPanel({ isExpanded }: SpecificationPanelProps) {
   const { configuration, components } = useConfiguration();
+  const [openSections, setOpenSections] = useState<string[]>(["current-config", "component-list"]);
+
+  const toggleSection = (section: string) => {
+    setOpenSections(prev => 
+      prev.includes(section) 
+        ? prev.filter(s => s !== section)
+        : [...prev, section]
+    );
+  };
 
   const voltageDrops = calculateVoltageDrops({
     voltage: configuration.voltage || 120,
@@ -44,41 +55,54 @@ export default function SpecificationPanel({ isExpanded }: SpecificationPanelPro
       {isExpanded && (
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
         {/* Current Configuration */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-technical-800 dark:text-technical-200">
-              Current Configuration
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-technical-50 dark:bg-technical-800 rounded-lg p-3 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-technical-600 dark:text-technical-400">Total Length:</span>
-                <span className="font-mono text-technical-900 dark:text-technical-100">
-                  {totalLength.toFixed(1)} ft
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-technical-600 dark:text-technical-400">Wire Count:</span>
-                <span className="font-mono text-technical-900 dark:text-technical-100">
-                  {wireCount} conductors
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-technical-600 dark:text-technical-400">Total Weight:</span>
-                <span className="font-mono text-technical-900 dark:text-technical-100">
-                  {totalWeight.toFixed(1)} lbs
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-technical-600 dark:text-technical-400">Estimated Cost:</span>
-                <span className="font-mono text-technical-900 dark:text-technical-100">
-                  ${estimatedCost.toFixed(2)}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Collapsible
+          open={openSections.includes("current-config")}
+          onOpenChange={() => toggleSection("current-config")}
+        >
+          <Card>
+            <CollapsibleTrigger className="w-full">
+              <CardHeader className="hover:bg-technical-50 dark:hover:bg-technical-800 transition-colors">
+                <CardTitle className="flex items-center justify-between text-sm text-technical-800 dark:text-technical-200">
+                  <span>Current Configuration</span>
+                  <ChevronDown className={cn(
+                    "w-4 h-4 transition-transform duration-200",
+                    openSections.includes("current-config") ? "rotate-180" : ""
+                  )} />
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <div className="bg-technical-50 dark:bg-technical-800 rounded-lg p-3 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-technical-600 dark:text-technical-400">Total Length:</span>
+                    <span className="font-mono text-technical-900 dark:text-technical-100">
+                      {totalLength.toFixed(1)} ft
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-technical-600 dark:text-technical-400">Wire Count:</span>
+                    <span className="font-mono text-technical-900 dark:text-technical-100">
+                      {wireCount} conductors
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-technical-600 dark:text-technical-400">Total Weight:</span>
+                    <span className="font-mono text-technical-900 dark:text-technical-100">
+                      {totalWeight.toFixed(1)} lbs
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-technical-600 dark:text-technical-400">Estimated Cost:</span>
+                    <span className="font-mono text-technical-900 dark:text-technical-100">
+                      ${estimatedCost.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         {/* Component List */}
         <Card>
