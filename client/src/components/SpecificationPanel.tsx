@@ -2,8 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClipboardList, Thermometer, Zap } from "lucide-react";
 import { useConfiguration } from "@/contexts/ConfigurationContext";
 import { calculateVoltageDrops, calculateThermalAnalysis } from "@/lib/electricalCalculations";
+import { cn } from "@/lib/utils";
 
-export default function SpecificationPanel() {
+interface SpecificationPanelProps {
+  isExpanded: boolean;
+}
+
+export default function SpecificationPanel({ isExpanded }: SpecificationPanelProps) {
   const { configuration, components } = useConfiguration();
 
   const voltageDrops = calculateVoltageDrops({
@@ -25,15 +30,19 @@ export default function SpecificationPanel() {
   const estimatedCost = components.reduce((sum, comp) => sum + (comp.price || 0), 0) + totalLength * 2.5;
 
   return (
-    <div className="w-80 bg-white dark:bg-technical-800 border-l border-technical-200 dark:border-technical-700 flex flex-col">
+    <div className={cn(
+      "bg-white dark:bg-technical-800 border-l border-technical-200 dark:border-technical-700 flex flex-col transition-all duration-300 ease-in-out",
+      isExpanded ? "w-80" : "w-12"
+    )}>
       <div className="p-4 border-b border-technical-200 dark:border-technical-700">
         <h3 className="font-semibold text-technical-900 dark:text-technical-100 flex items-center">
           <ClipboardList className="w-4 h-4 mr-2 text-primary" />
-          Configuration Details
+          {isExpanded && "Configuration Details"}
         </h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      {isExpanded && (
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
         {/* Current Configuration */}
         <Card>
           <CardHeader>
@@ -143,7 +152,20 @@ export default function SpecificationPanel() {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      )}
+      
+      {/* Collapsed State */}
+      {!isExpanded && (
+        <div className="flex-1 flex flex-col items-center justify-center p-2 space-y-4">
+          <div className="text-technical-400 dark:text-technical-500 text-xs text-center">
+            <ClipboardList className="w-6 h-6 mx-auto mb-1" />
+            <div className="text-[10px] leading-tight">
+              Config<br />Details
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

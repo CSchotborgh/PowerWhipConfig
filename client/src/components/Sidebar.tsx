@@ -1,3 +1,4 @@
+import React from "react";
 import { cn } from "@/lib/utils";
 import { Settings, Eye, FileText } from "lucide-react";
 import ConfigurationTab from "./ConfigurationTab";
@@ -7,9 +8,10 @@ import DocumentationTab from "./DocumentationTab";
 interface SidebarProps {
   activeTab: "configuration" | "visual" | "documentation";
   onTabChange: (tab: "configuration" | "visual" | "documentation") => void;
+  isExpanded: boolean;
 }
 
-export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export default function Sidebar({ activeTab, onTabChange, isExpanded }: SidebarProps) {
   const tabs = [
     {
       id: "configuration" as const,
@@ -29,7 +31,10 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   ];
 
   return (
-    <aside className="w-80 bg-white dark:bg-technical-800 border-r border-technical-200 dark:border-technical-700 flex flex-col">
+    <aside className={cn(
+      "bg-white dark:bg-technical-800 border-r border-technical-200 dark:border-technical-700 flex flex-col transition-all duration-300 ease-in-out",
+      isExpanded ? "w-80" : "w-12"
+    )}>
       {/* Navigation Tabs */}
       <div className="border-b border-technical-200 dark:border-technical-700">
         <nav className="flex">
@@ -43,11 +48,13 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
                   "flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors",
                   activeTab === tab.id
                     ? "border-primary text-primary bg-primary/10"
-                    : "border-transparent text-technical-600 dark:text-technical-400 hover:text-technical-900 dark:hover:text-technical-200"
+                    : "border-transparent text-technical-600 dark:text-technical-400 hover:text-technical-900 dark:hover:text-technical-200",
+                  !isExpanded && "px-2"
                 )}
+                title={!isExpanded ? tab.label : undefined}
               >
-                <Icon className="w-4 h-4 mr-2 inline" />
-                {tab.label}
+                <Icon className={cn("w-4 h-4", isExpanded ? "mr-2 inline" : "mx-auto")} />
+                {isExpanded && tab.label}
               </button>
             );
           })}
@@ -55,11 +62,29 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-hidden">
-        {activeTab === "configuration" && <ConfigurationTab />}
-        {activeTab === "visual" && <VisualDesignTab />}
-        {activeTab === "documentation" && <DocumentationTab />}
-      </div>
+      {isExpanded && (
+        <div className="flex-1 overflow-hidden">
+          {activeTab === "configuration" && <ConfigurationTab />}
+          {activeTab === "visual" && <VisualDesignTab />}
+          {activeTab === "documentation" && <DocumentationTab />}
+        </div>
+      )}
+      
+      {/* Collapsed State Icons */}
+      {!isExpanded && (
+        <div className="flex-1 flex flex-col items-center justify-center p-2 space-y-4">
+          <div className="text-technical-400 dark:text-technical-500 text-xs text-center">
+            {tabs.find(tab => tab.id === activeTab)?.icon && (
+              React.createElement(tabs.find(tab => tab.id === activeTab)!.icon, {
+                className: "w-6 h-6 mx-auto mb-1"
+              })
+            )}
+            <div className="text-[10px] leading-tight">
+              {tabs.find(tab => tab.id === activeTab)?.label}
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
