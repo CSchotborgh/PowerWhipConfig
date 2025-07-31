@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Eye, ZoomIn, ZoomOut, Move, Hand, ChevronDown, Database, Layers } from "lucide-react";
+import { Eye, ZoomIn, ZoomOut, Move, Hand, ChevronDown, Database, Layers, Layout, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import EnhancedComponentLibrary from "./EnhancedComponentLibrary";
+import DesignCanvas from "./DesignCanvas";
+import AGGridOrderEntry from "./AGGridOrderEntry";
 
 export default function VisualDesignTab() {
   const [openSections, setOpenSections] = useState<string[]>(["canvas-tools", "lookup-library"]);
+  const [viewMode, setViewMode] = useState<"design" | "order">("design");
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => 
@@ -17,8 +20,40 @@ export default function VisualDesignTab() {
     );
   };
 
+  const toggleViewMode = () => {
+    setViewMode(prev => prev === "design" ? "order" : "design");
+  };
+
+  // If in order view, show the AG-Grid order entry instead of the design tools
+  if (viewMode === "order") {
+    return <AGGridOrderEntry onToggleView={toggleViewMode} />;
+  }
+
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {/* View Toggle Header */}
+      <Card className="border-technical-200 dark:border-technical-600">
+        <CardHeader className="p-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-technical-900 dark:text-technical-100">
+              <Layout className="w-4 h-4 text-primary" />
+              Visual Design & Order Entry
+            </CardTitle>
+            <Button 
+              onClick={toggleViewMode}
+              variant="default"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Switch to Order Entry
+            </Button>
+          </div>
+          <p className="text-sm text-technical-600 dark:text-technical-400">
+            Design your power whip layout using drag-and-drop components or switch to order entry mode for component selection and BOM management.
+          </p>
+        </CardHeader>
+      </Card>
       <Collapsible
         open={openSections.includes("canvas-tools")}
         onOpenChange={() => toggleSection("canvas-tools")}
