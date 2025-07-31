@@ -17,14 +17,18 @@ export default function Configurator() {
 
   // Auto-collapse panels on smaller screens, but keep main content visible
   useEffect(() => {
-    if (screenInfo.width <= 768) {
-      // On mobile/tablet, collapse side panels but keep main canvas
+    if (screenInfo.width <= 480) {
+      // On very small screens, collapse both panels
       setLeftPanelExpanded(false);
       setRightPanelExpanded(false);
+    } else if (screenInfo.width <= 768) {
+      // On mobile/tablet, show left panel for configuration tools
+      setLeftPanelExpanded(true);
+      setRightPanelExpanded(false);
     } else if (screenInfo.width <= 1024) {
-      // On small desktop, show main content with collapsed panels
-      setLeftPanelExpanded(false);
-      setRightPanelExpanded(true);
+      // On small desktop, show both panels but collapsed
+      setLeftPanelExpanded(true);
+      setRightPanelExpanded(false);
     } else {
       // On larger screens, show all panels
       setLeftPanelExpanded(true);
@@ -41,7 +45,7 @@ export default function Configurator() {
         </div>
         
         {/* Main Content Area */}
-        <div className={`flex flex-1 overflow-hidden w-full ${shouldStackVertically() ? 'flex-col' : 'flex-row'}`}>
+        <div className={`flex flex-1 overflow-hidden w-full h-full ${shouldStackVertically() ? 'flex-col' : 'flex-row'}`}>
           {/* Left Panel - Sidebar */}
           <div className="relative flex">
             <Sidebar 
@@ -65,8 +69,8 @@ export default function Configurator() {
             </Button>
           </div>
           
-          <main className="flex-1 flex min-w-0">
-            <div className="flex-1 p-2 sm:p-4 lg:p-6 min-w-0">
+          <main className="flex-1 flex min-w-0 h-full">
+            <div className="flex-1 p-2 sm:p-4 lg:p-6 min-w-0 h-full">
               <DesignCanvas />
             </div>
             
