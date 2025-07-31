@@ -1,0 +1,139 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ClipboardList, Thermometer, Zap } from "lucide-react";
+import { useConfiguration } from "@/contexts/ConfigurationContext";
+import { calculateVoltageDrops, calculateThermalAnalysis } from "@/lib/electricalCalculations";
+
+export default function SpecificationPanel() {
+  const { configuration, components } = useConfiguration();
+
+  const voltageDrops = calculateVoltageDrops(configuration);
+  const thermalAnalysis = calculateThermalAnalysis(configuration);
+  
+  const totalLength = 12.5; // Calculate based on actual component positions
+  const wireCount = 3; // Based on configuration
+  const totalWeight = components.length * 0.5 + totalLength * 0.2; // Simplified calculation
+  const estimatedCost = components.reduce((sum, comp) => sum + (comp.price || 0), 0) + totalLength * 2.5;
+
+  return (
+    <div className="w-80 bg-white dark:bg-technical-800 border-l border-technical-200 dark:border-technical-700 flex flex-col">
+      <div className="p-4 border-b border-technical-200 dark:border-technical-700">
+        <h3 className="font-semibold text-technical-900 dark:text-technical-100 flex items-center">
+          <ClipboardList className="w-4 h-4 mr-2 text-primary" />
+          Configuration Details
+        </h3>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {/* Current Configuration */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm text-technical-800 dark:text-technical-200">
+              Current Configuration
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-technical-50 dark:bg-technical-800 rounded-lg p-3 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-technical-600 dark:text-technical-400">Total Length:</span>
+                <span className="font-mono text-technical-900 dark:text-technical-100">
+                  {totalLength.toFixed(1)} ft
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-technical-600 dark:text-technical-400">Wire Count:</span>
+                <span className="font-mono text-technical-900 dark:text-technical-100">
+                  {wireCount} conductors
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-technical-600 dark:text-technical-400">Total Weight:</span>
+                <span className="font-mono text-technical-900 dark:text-technical-100">
+                  {totalWeight.toFixed(1)} lbs
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-technical-600 dark:text-technical-400">Estimated Cost:</span>
+                <span className="font-mono text-technical-900 dark:text-technical-100">
+                  ${estimatedCost.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Component List */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm text-technical-800 dark:text-technical-200">
+              Components Used
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {components.length === 0 ? (
+                <div className="text-sm text-technical-500 dark:text-technical-500 text-center py-4">
+                  No components added yet
+                </div>
+              ) : (
+                components.map((component, index) => (
+                  <div
+                    key={`${component.id}-${index}`}
+                    className="flex items-center justify-between p-2 bg-technical-50 dark:bg-technical-800 rounded-lg"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className={`text-sm ${
+                        component.type === 'connector' ? 'text-orange-500' :
+                        component.type === 'protection' ? 'text-blue-500' :
+                        'text-technical-500'
+                      }`}>
+                        {component.type === 'connector' ? '🔌' :
+                         component.type === 'protection' ? '🛡️' : '📦'}
+                      </span>
+                      <span className="text-sm font-medium">{component.name}</span>
+                    </div>
+                    <span className="text-xs text-technical-600 dark:text-technical-400">
+                      ${component.price?.toFixed(2) || '0.00'}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Technical Analysis */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm text-technical-800 dark:text-technical-200">
+              Technical Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+              <div className="flex items-center space-x-2 text-green-800 dark:text-green-200 text-sm font-medium mb-2">
+                <Zap className="w-4 h-4" />
+                <span>Voltage Drop Analysis</span>
+              </div>
+              <div className="text-xs text-green-700 dark:text-green-300">
+                Calculated voltage drop: {voltageDrops.drop.toFixed(1)}V ({voltageDrops.percentage.toFixed(1)}%)<br />
+                {voltageDrops.percentage < 3 ? 'Within acceptable limits (<3%)' : 'Exceeds recommended limits'}
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <div className="flex items-center space-x-2 text-blue-800 dark:text-blue-200 text-sm font-medium mb-2">
+                <Thermometer className="w-4 h-4" />
+                <span>Thermal Analysis</span>
+              </div>
+              <div className="text-xs text-blue-700 dark:text-blue-300">
+                Ambient temp: {thermalAnalysis.ambientTemp}°C<br />
+                Max conductor temp: {thermalAnalysis.conductorTemp}°C<br />
+                Safety margin: {thermalAnalysis.safetyMargin}°C
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
