@@ -1,32 +1,65 @@
 import { useState } from "react";
 import Header from "@/components/Header";
-import Sidebar from "@/components/Sidebar";
+import ConfigurationTab from "@/components/ConfigurationTab";
+import VisualDesignTab from "@/components/VisualDesignTab";
+import DocumentationTab from "@/components/DocumentationTab";
+import OrderEntryTab from "@/components/OrderEntryTab";
 import DesignCanvas from "@/components/DesignCanvas";
 import SpecificationPanel from "@/components/SpecificationPanel";
 import { ConfigurationProvider } from "@/contexts/ConfigurationContext";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, PanelLeftClose, PanelRightClose } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Configurator() {
   const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation" | "order">("configuration");
   const [leftPanelExpanded, setLeftPanelExpanded] = useState(true);
   const [rightPanelExpanded, setRightPanelExpanded] = useState(true);
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "configuration":
+        return <ConfigurationTab />;
+      case "visual":
+        return <VisualDesignTab />;
+      case "order":
+        return <OrderEntryTab />;
+      case "documentation":
+        return <DocumentationTab />;
+      default:
+        return <ConfigurationTab />;
+    }
+  };
+
   return (
     <ConfigurationProvider>
       <div className="h-screen flex flex-col bg-technical-50 dark:bg-technical-900 text-technical-900 dark:text-technical-50">
-        {/* Header Navbar */}
-        <Header />
+        {/* Header Navbar with Navigation */}
+        <Header activeTab={activeTab} onTabChange={setActiveTab} />
         
         {/* Main Body Container */}
         <div className="flex flex-1 overflow-hidden bg-gradient-to-br from-technical-50 to-technical-100 dark:from-technical-900 dark:to-technical-800">
-          {/* Left Panel - Configuration Sidebar */}
+          {/* Left Panel - Tab Content */}
           <div className="relative flex">
-            <Sidebar 
-              activeTab={activeTab} 
-              onTabChange={setActiveTab}
-              isExpanded={leftPanelExpanded}
-            />
+            <aside className={`bg-white dark:bg-technical-800 border-r-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg ${leftPanelExpanded ? "w-80" : "w-12"}`}>
+              {leftPanelExpanded && (
+                <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30">
+                  <div className="h-full border-r border-technical-100 dark:border-technical-600/30">
+                    {renderTabContent()}
+                  </div>
+                </div>
+              )}
+              
+              {/* Collapsed State */}
+              {!leftPanelExpanded && (
+                <div className="flex-1 flex flex-col items-center justify-center p-2 space-y-4 bg-gradient-to-b from-technical-50/50 to-white dark:from-technical-700/50 dark:to-technical-800">
+                  <div className="text-technical-400 dark:text-technical-500 text-xs text-center p-3 rounded-xl bg-white dark:bg-technical-700 shadow-md">
+                    <div className="text-[10px] leading-tight font-medium">
+                      Panel Collapsed
+                    </div>
+                  </div>
+                </div>
+              )}
+            </aside>
             
             {/* Left Panel Toggle Button */}
             <Button
@@ -34,7 +67,7 @@ export default function Configurator() {
               size="sm"
               onClick={() => setLeftPanelExpanded(!leftPanelExpanded)}
               className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-6 rounded-r-xl border border-l-0 border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 hover:bg-technical-50 dark:hover:bg-technical-700 shadow-lg hover:shadow-xl transition-all"
-              title={leftPanelExpanded ? "Collapse sidebar" : "Expand sidebar"}
+              title={leftPanelExpanded ? "Collapse panel" : "Expand panel"}
             >
               {leftPanelExpanded ? (
                 <ChevronLeft className="h-4 w-4 text-technical-500" />

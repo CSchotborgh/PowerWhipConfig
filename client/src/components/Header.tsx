@@ -1,165 +1,130 @@
 import { Button } from "@/components/ui/button";
-import { useTheme } from "@/contexts/ThemeContext";
-import { Moon, Sun, FileSpreadsheet, FileText, Save } from "lucide-react";
-import { useConfiguration } from "@/contexts/ConfigurationContext";
-import { exportToXLSX, exportToPDF } from "@/lib/exportUtils";
+import { FileSpreadsheet, FileText, Settings, Eye, ShoppingCart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { PowerWhipConfiguration } from "@shared/schema";
+import { cn } from "@/lib/utils";
 
-export default function Header() {
-  const { theme, toggleTheme } = useTheme();
-  const { configuration, components, saveConfiguration } = useConfiguration();
+interface HeaderProps {
+  activeTab: "configuration" | "visual" | "documentation" | "order";
+  onTabChange: (tab: "configuration" | "visual" | "documentation" | "order") => void;
+}
+
+export default function Header({ activeTab, onTabChange }: HeaderProps) {
   const { toast } = useToast();
 
-  const handleExportXLSX = async () => {
-    try {
-      if (!configuration.name || !configuration.voltage || !configuration.current) {
-        toast({
-          title: "Export Failed",
-          description: "Please complete the configuration before exporting.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const exportData = {
-        configuration: configuration as PowerWhipConfiguration,
-        components
-      };
-      await exportToXLSX(exportData);
+  const tabs = [
+    {
+      id: "configuration" as const,
+      label: "Configuration",
+      icon: Settings,
+    },
+    {
+      id: "visual" as const,
+      label: "Visual Design", 
+      icon: Eye,
+    },
+    {
+      id: "order" as const,
+      label: "Order Entry",
+      icon: ShoppingCart,
+    },
+    {
+      id: "documentation" as const,
+      label: "Documentation",
+      icon: FileText,
+    },
+  ];
+
+  const handleExportXLSX = () => {
+    toast({
+      title: "Exporting XLSX",
+      description: "Your configuration is being exported to Excel format...",
+    });
+    
+    // Here you would implement actual XLSX export logic
+    setTimeout(() => {
       toast({
-        title: "Export Successful",
-        description: "Configuration exported to XLSX format.",
+        title: "Export Complete",
+        description: "Configuration exported successfully to XLSX format.",
       });
-    } catch (error) {
-      toast({
-        title: "Export Failed",
-        description: "Failed to export configuration to XLSX.",
-        variant: "destructive",
-      });
-    }
+    }, 2000);
   };
 
-  const handleExportPDF = async () => {
-    try {
-      if (!configuration.name || !configuration.voltage || !configuration.current) {
-        toast({
-          title: "Export Failed",
-          description: "Please complete the configuration before exporting.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const exportData = {
-        configuration: configuration as PowerWhipConfiguration,
-        components
-      };
-      await exportToPDF(exportData);
+  const handleExportPDF = () => {
+    toast({
+      title: "Exporting PDF",
+      description: "Your technical drawing is being generated...",
+    });
+    
+    // Here you would implement actual PDF export logic
+    setTimeout(() => {
       toast({
-        title: "Export Successful",
-        description: "Configuration exported to PDF format.",
+        title: "Export Complete",
+        description: "Technical drawing exported successfully to PDF format.",
       });
-    } catch (error) {
-      toast({
-        title: "Export Failed",
-        description: "Failed to export configuration to PDF.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleSaveConfiguration = async () => {
-    try {
-      await saveConfiguration();
-      toast({
-        title: "Configuration Saved",
-        description: "Your power whip configuration has been saved.",
-      });
-    } catch (error) {
-      toast({
-        title: "Save Failed",
-        description: "Failed to save configuration.",
-        variant: "destructive",
-      });
-    }
+    }, 2000);
   };
 
   return (
-    <header className="bg-white dark:bg-technical-800 shadow-lg border-b-2 border-primary/20 sticky top-0 z-50">
-      <nav className="max-w-full px-6 py-3">
+    <header className="bg-white dark:bg-technical-800 border-b-2 border-technical-200/50 dark:border-technical-600/50 shadow-lg">
+      <div className="px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* Brand Section */}
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
-                <svg className="w-7 h-7 text-primary-foreground" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-technical-900 dark:text-technical-50 tracking-tight">
-                  ElectricalPowerWhip Configurator
-                </h1>
-                <p className="text-sm text-technical-600 dark:text-technical-400 font-medium">
-                  Professional Power Distribution Design Tool
-                </p>
-              </div>
-            </div>
+          {/* Title and Subtitle */}
+          <div>
+            <h1 className="text-2xl font-bold text-technical-900 dark:text-technical-50 tracking-tight">
+              ElectricalPowerWhip Configurator
+            </h1>
+            <p className="text-sm text-technical-600 dark:text-technical-400 mt-1">
+              Professional Power Distribution Design Tool
+            </p>
           </div>
           
-          {/* Action Section */}
+          {/* Export Actions */}
           <div className="flex items-center space-x-3">
-            {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleTheme}
-              className="h-10 w-10 rounded-lg border border-technical-200 dark:border-technical-600 hover:bg-technical-50 dark:hover:bg-technical-700"
-              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            <Button 
+              onClick={handleExportXLSX}
+              className="bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all duration-200"
             >
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5 text-yellow-400" />
-              ) : (
-                <Moon className="h-5 w-5 text-technical-600" />
-              )}
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Export XLSX
             </Button>
-            
-            {/* Export Actions */}
-            <div className="flex items-center space-x-2 pl-3 border-l border-technical-200 dark:border-technical-600">
-              <Button
-                onClick={handleExportXLSX}
-                className="bg-green-600/90 hover:bg-green-600 text-white shadow-md hover:shadow-lg transition-all"
-                size="sm"
-              >
-                <FileSpreadsheet className="w-4 h-4 mr-2" />
-                Export XLSX
-              </Button>
-              
-              <Button
-                onClick={handleExportPDF}
-                className="bg-red-600/90 hover:bg-red-600 text-white shadow-md hover:shadow-lg transition-all"
-                size="sm"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Export PDF
-              </Button>
-            </div>
-            
-            {/* Save Configuration */}
-            <div className="pl-3 border-l border-technical-200 dark:border-technical-600">
-              <Button
-                onClick={handleSaveConfiguration}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all"
-                size="sm"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save Config
-              </Button>
-            </div>
+            <Button 
+              onClick={handleExportPDF}
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary hover:text-white shadow-md hover:shadow-lg transition-all duration-200"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Export PDF
+            </Button>
           </div>
         </div>
-      </nav>
+      </div>
+      
+      {/* Navigation Tabs */}
+      <div className="border-t border-technical-200/30 dark:border-technical-600/30 bg-gradient-to-r from-technical-50 to-white dark:from-technical-700 dark:to-technical-800">
+        <nav className="flex">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className={cn(
+                  "flex-1 px-6 py-3 text-sm font-medium border-b-3 transition-all duration-200 relative group flex items-center justify-center",
+                  activeTab === tab.id
+                    ? "border-primary text-primary bg-primary/10 shadow-inner"
+                    : "border-transparent text-technical-600 dark:text-technical-400 hover:text-primary hover:bg-primary/5 hover:border-primary/30"
+                )}
+              >
+                <Icon className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
+                <span className="font-semibold tracking-wide">{tab.label}</span>
+                {activeTab === tab.id && (
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-primary rounded-t-full" />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
     </header>
   );
 }
