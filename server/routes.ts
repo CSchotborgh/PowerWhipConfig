@@ -3,6 +3,12 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertPowerWhipConfigurationSchema, insertElectricalComponentSchema } from "@shared/schema";
 import { z } from "zod";
+import { parseExcelFile, extractComponentData, analyzeExcelStructure, generateBOM } from "./excelParser";
+import * as path from "path";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Power Whip Configuration routes
@@ -146,6 +152,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to prepare export data" });
+    }
+  });
+
+  // Excel data analysis routes
+  app.get("/api/excel/analyze", async (_req, res) => {
+    try {
+      const filePath = path.join(__dirname, '../attached_assets/MasterBubbleUpLookup_1753982166714.xlsx');
+      const analysis = analyzeExcelStructure(filePath);
+      res.json(analysis);
+    } catch (error) {
+      console.error('Excel analysis error:', error);
+      res.status(500).json({ message: "Failed to analyze Excel file" });
+    }
+  });
+
+  app.get("/api/excel/components", async (_req, res) => {
+    try {
+      const filePath = path.join(__dirname, '../attached_assets/MasterBubbleUpLookup_1753982166714.xlsx');
+      const sheets = parseExcelFile(filePath);
+      const components = extractComponentData(sheets);
+      res.json(components);
+    } catch (error) {
+      console.error('Excel components error:', error);
+      res.status(500).json({ message: "Failed to extract components from Excel" });
+    }
+  });
+
+  app.post("/api/excel/bom", async (req, res) => {
+    try {
+      const { componentIds, quantities } = req.body;
+      const filePath = path.join(__dirname, '../attached_assets/MasterBubbleUpLookup_1753982166714.xlsx');
+      const sheets = parseExcelFile(filePath);
+      const components = extractComponentData(sheets);
+      
+      const selectedComponents = components.filter(comp => 
+        componentIds.includes(comp.partNumber)
+      );
+      
+      const bom = generateBOM(selectedComponents, quantities);
+      res.json(bom);
+    } catch (error) {
+      console.error('BOM generation error:', error);
+      res.status(500).json({ message: "Failed to generate BOM" });
     }
   });
 

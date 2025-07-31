@@ -1,13 +1,14 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Settings, Eye, FileText } from "lucide-react";
+import { Settings, Eye, FileText, ShoppingCart } from "lucide-react";
 import ConfigurationTab from "./ConfigurationTab";
 import VisualDesignTab from "./VisualDesignTab";
 import DocumentationTab from "./DocumentationTab";
+import OrderEntryTab from "./OrderEntryTab";
 
 interface SidebarProps {
-  activeTab: "configuration" | "visual" | "documentation";
-  onTabChange: (tab: "configuration" | "visual" | "documentation") => void;
+  activeTab: "configuration" | "visual" | "documentation" | "order";
+  onTabChange: (tab: "configuration" | "visual" | "documentation" | "order") => void;
   isExpanded: boolean;
 }
 
@@ -22,6 +23,11 @@ export default function Sidebar({ activeTab, onTabChange, isExpanded }: SidebarP
       id: "visual" as const,
       label: "Visual Design", 
       icon: Eye,
+    },
+    {
+      id: "order" as const,
+      label: "Order Entry",
+      icon: ShoppingCart,
     },
     {
       id: "documentation" as const,
@@ -66,6 +72,7 @@ export default function Sidebar({ activeTab, onTabChange, isExpanded }: SidebarP
         <div className="flex-1 overflow-hidden">
           {activeTab === "configuration" && <ConfigurationTab />}
           {activeTab === "visual" && <VisualDesignTab />}
+          {activeTab === "order" && <OrderEntryTab />}
           {activeTab === "documentation" && <DocumentationTab />}
         </div>
       )}

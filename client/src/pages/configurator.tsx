@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, PanelLeftClose, PanelRightClose } from "lucide-react";
 
 export default function Configurator() {
-  const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation">("configuration");
+  const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation" | "order">("configuration");
   const [leftPanelExpanded, setLeftPanelExpanded] = useState(true);
   const [rightPanelExpanded, setRightPanelExpanded] = useState(true);
 
