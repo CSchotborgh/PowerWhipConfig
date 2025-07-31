@@ -97,7 +97,11 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
 
   // If in order view, show the AG-Grid order entry
   if (viewMode === "order") {
-    return <AGGridOrderEntry onToggleView={toggleViewMode} />;
+    return (
+      <div className="h-full">
+        <AGGridOrderEntry onToggleView={toggleViewMode} />
+      </div>
+    );
   }
 
   return (

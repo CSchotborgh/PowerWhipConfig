@@ -158,11 +158,9 @@ export default function AGGridOrderEntry({ onToggleView }: AGGridOrderEntryProps
               Select components and manage quantities for your power whip configuration
             </p>
           </div>
-          {onToggleView && (
-            <Button onClick={onToggleView} variant="outline" className="flex items-center gap-2">
-              Switch to Design Board
-            </Button>
-          )}
+          <Button onClick={onToggleView} variant="outline" className="flex items-center gap-2">
+            Switch to Design Canvas
+          </Button>
         </div>
 
         {/* Search and filters */}
