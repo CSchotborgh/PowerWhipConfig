@@ -332,8 +332,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Use actual data from MasterBubbleUpLookup
             const specs = match.sourceRow.specifications || {};
             orderEntryData.push([
-              lineNumber++,
-              1, // Each row is 1 unit (user input count handled by creating multiple rows)
+              (lineNumber++).toString(),
+              '1', // Each row is 1 unit (user input count handled by creating multiple rows)
               specs['Choose receptacle'] || receptacle.type,
               specs['Select Cable/Conduit Type'] || 'MCC',
               specs['Whip Length (ft)'] || '250',
@@ -383,11 +383,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               specs['Breaker options'] || specs['Breaker options'] || '3 Pole, 60A, 240/120V, Bolt in, 22KA, Square D, QOB360VH'
             ]);
           } else {
-            // Create default row for unmatched patterns
+            // Create default row for unmatched patterns with asterisk marking  
             orderEntryData.push([
-              lineNumber++,
-              1,
-              receptacle.type,
+              (lineNumber++).toString(),
+              '1',
+              `*${receptacle.type}`, // Asterisk marking for unfound patterns
               'MCC',
               '250',
               '10',
@@ -395,11 +395,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               '', '', '', '1', '3', '5', '', '', '', '', '3/4', '6', '8', '208',
               'Standard Power Whip Box',
               '--------', '--------', '--------', '--------', '------->',
-              `PWxx-${receptacle.type}T-xxSALx(103)`,
-              `Pattern ${receptacle.type} - No exact match found in lookup data`,
-              `PW250K-${receptacle.type}T-D${lineNumber}SAL1234`,
+              `*PWxx-${receptacle.type}T-xxSALx(103)`,
+              `*${receptacle.type} - Pattern not found in MasterBubbleUpLookup data`,
+              `*PW250K-${receptacle.type}T-D${lineNumber}SAL1234`,
               '287.2', '6', '260', '0', '1847.2', '0', '1847.2', '2462.933333',
-              `Whip ${receptacle.type} 6AWG 3/4MCC 250ft, Price to Wesco 1847.2ea`,
+              `*Whip ${receptacle.type} 6AWG 3/4MCC 250ft - Pattern not found in lookup`,
               '3D', '3', '0', '60', '208', '60AH', '60AH', '60AH', '',
               '3 Pole, 60A, 240/120V, Bolt in, 22KA, Square D, QOB360VH'
             ]);

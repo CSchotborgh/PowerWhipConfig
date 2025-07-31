@@ -162,10 +162,26 @@ CS8369`);
       });
 
       Object.entries(patternCounts).forEach(([pattern, count]) => {
-        // Find matching rows in lookup data where "Choose receptacle" column matches pattern
+        // Enhanced pattern matching - search multiple possible field names
         const matches = lookupData.filter((row: any) => {
-          const receptacleField = row.specifications?.['Choose receptacle'] || row.receptacle || '';
-          return receptacleField.toString().toUpperCase() === pattern.toUpperCase();
+          const specs = row.specifications || {};
+          const searchFields = [
+            specs['Choose receptacle'],
+            specs['Receptacle'],
+            specs['Part Number'],
+            specs['Model'],
+            specs['Product Code'],
+            row.receptacle,
+            row.partNumber,
+            row.model
+          ];
+          
+          return searchFields.some(field => {
+            if (!field) return false;
+            const fieldStr = field.toString().toUpperCase().trim();
+            const patternStr = pattern.toUpperCase().trim();
+            return fieldStr === patternStr || fieldStr.includes(patternStr);
+          });
         });
 
         if (matches.length > 0) {
@@ -176,22 +192,37 @@ CS8369`);
             ...firstMatch,
             lineNumber: totalFoundRows + index + 1,
             originalPattern: pattern,
-            quantity: 1, // Each row represents 1 unit
+            quantity: 1,
             sourceRow: firstMatch,
-            inputOccurrence: index + 1
+            inputOccurrence: index + 1,
+            matchedIn: 'MasterBubbleUpLookup',
+            foundInLookup: true,
+            rowIndex: lookupData.indexOf(firstMatch)
           }));
 
           receptacleMatches[pattern] = expandedMatches;
           totalFoundRows += count;
         } else {
-          // No match found, but still create rows for each occurrence
+          // No match found - create default rows with asterisk marking
           const expandedMatches = Array.from({ length: count }, (_, index) => ({
-            originalPattern: pattern,
+            originalPattern: `*${pattern}`,  // Asterisk marking for unfound patterns
             lineNumber: totalFoundRows + index + 1,
             quantity: 1,
-            error: 'No matching row found in MasterBubbleUpLookup data',
+            error: `Pattern "${pattern}" not found in MasterBubbleUpLookup data`,
             sourceRow: null,
-            inputOccurrence: index + 1
+            inputOccurrence: index + 1,
+            matchedIn: 'Default (Not Found)',
+            foundInLookup: false,
+            defaultData: {
+              'Choose receptacle': `*${pattern}`,
+              'Description': `Default entry for ${pattern} - not found in lookup`,
+              'Order QTY': 1,
+              'Unit Price': 0,
+              'Extended Price': 0,
+              'Lead Time': 'TBD',
+              'Manufacturer': 'Unknown',
+              'Category': 'Electrical Component'
+            }
           }));
           
           receptacleMatches[pattern] = expandedMatches;
@@ -199,12 +230,19 @@ CS8369`);
         }
       });
 
-      const receptacles = Object.entries(receptacleMatches).map(([type, matches]) => ({
-        type,
-        count: matches.length,
-        matches,
-        foundInLookup: matches.some((m: any) => !m.error)
-      }));
+      const receptacles = Object.entries(receptacleMatches).map(([type, matches]) => {
+        const firstMatch = matches[0];
+        return {
+          type,
+          count: matches.length,
+          matches,
+          foundInLookup: firstMatch?.foundInLookup || false,
+          matchedIn: firstMatch?.matchedIn || 'Not Found',
+          rowIndex: firstMatch?.rowIndex !== undefined ? firstMatch.rowIndex : null,
+          sourceData: firstMatch?.sourceRow?.specifications || null,
+          errorMessage: firstMatch?.error || null
+        };
+      });
 
       setParsedData({
         receptacles,
@@ -394,18 +432,43 @@ CS8369`);
               </p>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="space-y-3 max-h-96 overflow-y-auto">
                 {parsedData.receptacles.map((receptacle) => (
                   <div 
                     key={receptacle.type}
-                    className="flex items-center justify-between p-3 bg-technical-50 dark:bg-technical-800 rounded-lg"
+                    className="p-4 bg-technical-50 dark:bg-technical-800 rounded-lg border border-technical-200 dark:border-technical-600"
                   >
-                    <span className="font-mono text-sm font-medium">
-                      {receptacle.type}
-                    </span>
-                    <Badge variant="secondary">
-                      {receptacle.count} matches
-                    </Badge>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-mono text-sm font-medium">
+                        {receptacle.foundInLookup ? receptacle.type : `*${receptacle.type}`}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={receptacle.foundInLookup ? "default" : "secondary"}>
+                          {receptacle.count} rows
+                        </Badge>
+                        {receptacle.foundInLookup ? (
+                          <div className="w-3 h-3 rounded-full bg-green-500" title="Found in lookup"></div>
+                        ) : (
+                          <div className="w-3 h-3 rounded-full bg-orange-500" title="Using defaults"></div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="text-xs text-technical-600 dark:text-technical-400 space-y-1">
+                      <div>
+                        <strong>Status:</strong> {receptacle.matchedIn || (receptacle.foundInLookup ? 'Found in MasterBubbleUpLookup' : 'Default (Not Found)')}
+                      </div>
+                      {receptacle.rowIndex !== null && (
+                        <div>
+                          <strong>Lookup Row:</strong> #{receptacle.rowIndex + 1}
+                        </div>
+                      )}
+                      {receptacle.errorMessage && (
+                        <div className="text-orange-600 dark:text-orange-400">
+                          <strong>Note:</strong> {receptacle.errorMessage}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
