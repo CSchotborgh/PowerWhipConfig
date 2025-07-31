@@ -80,7 +80,13 @@ export default function ExcelTransformer({ onToggleView }: ExcelTransformerProps
       const receptacleMatches: { [key: string]: any[] } = {};
       let totalFoundRows = 0;
 
+      // Count occurrences of each pattern
+      const patternCounts: { [key: string]: number } = {};
       inputPatterns.forEach(pattern => {
+        patternCounts[pattern] = (patternCounts[pattern] || 0) + 1;
+      });
+
+      Object.entries(patternCounts).forEach(([pattern, count]) => {
         // Find matching rows in lookup data where "Choose receptacle" column matches pattern
         const matches = lookupData.filter((row: any) => {
           const receptacleField = row.specifications?.['Choose receptacle'] || row.receptacle || '';
@@ -89,29 +95,32 @@ export default function ExcelTransformer({ onToggleView }: ExcelTransformerProps
 
         if (matches.length > 0) {
           const firstMatch = matches[0];
-          const quantity = parseInt(firstMatch.specifications?.['Order QTY'] || '1', 10) || 1;
           
-          // Create multiple rows based on quantity
-          const expandedMatches = Array.from({ length: quantity }, (_, index) => ({
+          // Create one row for each occurrence of the pattern (user input count)
+          const expandedMatches = Array.from({ length: count }, (_, index) => ({
             ...firstMatch,
             lineNumber: totalFoundRows + index + 1,
             originalPattern: pattern,
             quantity: 1, // Each row represents 1 unit
-            sourceRow: firstMatch
+            sourceRow: firstMatch,
+            inputOccurrence: index + 1
           }));
 
           receptacleMatches[pattern] = expandedMatches;
-          totalFoundRows += quantity;
+          totalFoundRows += count;
         } else {
-          // No match found, but still include it in results
-          receptacleMatches[pattern] = [{
+          // No match found, but still create rows for each occurrence
+          const expandedMatches = Array.from({ length: count }, (_, index) => ({
             originalPattern: pattern,
-            lineNumber: totalFoundRows + 1,
+            lineNumber: totalFoundRows + index + 1,
             quantity: 1,
             error: 'No matching row found in MasterBubbleUpLookup data',
-            sourceRow: null
-          }];
-          totalFoundRows += 1;
+            sourceRow: null,
+            inputOccurrence: index + 1
+          }));
+          
+          receptacleMatches[pattern] = expandedMatches;
+          totalFoundRows += count;
         }
       });
 

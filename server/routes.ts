@@ -333,7 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const specs = match.sourceRow.specifications || {};
             orderEntryData.push([
               lineNumber++,
-              specs['Order QTY'] || 1,
+              1, // Each row is 1 unit (user input count handled by creating multiple rows)
               specs['Choose receptacle'] || receptacle.type,
               specs['Select Cable/Conduit Type'] || 'MCC',
               specs['Whip Length (ft)'] || '250',
