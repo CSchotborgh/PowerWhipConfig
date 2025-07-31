@@ -441,6 +441,250 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Analyze ConfiguratorModelDatasetEPW structure with detailed enum/dropdown detection
+  app.get('/api/excel/analyze-configurator', async (req, res) => {
+    try {
+      const filePath = './attached_assets/ConfiguratorModelDatasetEPW_1754005314009.xlsx';
+      const workbook = XLSX.readFile(filePath);
+      
+      const analysis = {
+        sheetNames: workbook.SheetNames,
+        sheets: {} as any,
+        receptacleInputCells: [] as any[],
+        expressionPatterns: [] as any[],
+        enumDropdowns: {} as any
+      };
+      
+      // Analyze each sheet for configurator structure
+      workbook.SheetNames.forEach(sheetName => {
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        const objectData = XLSX.utils.sheet_to_json(worksheet);
+        
+        // Detect input cells, enums, and expression patterns
+        const inputCells: any[] = [];
+        const expressionCells: any[] = [];
+        const enumColumns: any = {};
+        
+        // Scan for receptacle input patterns and dropdown enums
+        jsonData.forEach((row: any[], rowIdx) => {
+          row.forEach((cell, colIdx) => {
+            if (cell && typeof cell === 'string') {
+              // Look for receptacle input patterns
+              if (cell.match(/^[A-Z0-9]{3,10}[A-Z]?\d*[A-Z]*$/)) {
+                inputCells.push({
+                  value: cell,
+                  row: rowIdx,
+                  col: colIdx,
+                  type: 'receptacle_id'
+                });
+              }
+              
+              // Look for expression patterns (formulas, calculations)
+              if (cell.includes('=') || cell.includes('$') || cell.match(/PWx+|SAL\d+/)) {
+                expressionCells.push({
+                  value: cell,
+                  row: rowIdx,
+                  col: colIdx,
+                  type: 'expression'
+                });
+              }
+            }
+          });
+        });
+        
+        // Detect enum/dropdown columns by analyzing unique values
+        if (jsonData.length > 1) {
+          const headers = jsonData[0] || [];
+          headers.forEach((header, colIdx) => {
+            if (header && typeof header === 'string') {
+              const columnValues = jsonData.slice(1)
+                .map(row => row[colIdx])
+                .filter(val => val && typeof val === 'string')
+                .slice(0, 20); // Sample first 20 values
+              
+              const uniqueValues = [...new Set(columnValues)];
+              
+              // If column has limited unique values, it's likely an enum/dropdown
+              if (uniqueValues.length > 1 && uniqueValues.length <= 10 && columnValues.length > uniqueValues.length) {
+                enumColumns[header] = {
+                  values: uniqueValues,
+                  columnIndex: colIdx,
+                  sampleCount: columnValues.length
+                };
+              }
+            }
+          });
+        }
+        
+        analysis.sheets[sheetName] = {
+          rowCount: jsonData.length,
+          headers: jsonData[0] || [],
+          sampleData: jsonData.slice(0, 10), // First 10 rows for better analysis
+          columnCount: jsonData[0]?.length || 0,
+          inputCells: inputCells.slice(0, 20), // Limit for performance
+          expressionCells: expressionCells.slice(0, 20),
+          enumColumns
+        };
+        
+        // Collect across all sheets
+        analysis.receptacleInputCells.push(...inputCells.slice(0, 10));
+        analysis.expressionPatterns.push(...expressionCells.slice(0, 10));
+        Object.assign(analysis.enumDropdowns, enumColumns);
+      });
+      
+      res.json(analysis);
+    } catch (error) {
+      console.error('Error analyzing ConfiguratorModelDatasetEPW:', error);
+      res.status(500).json({ error: 'Failed to analyze ConfiguratorModelDatasetEPW file' });
+    }
+  });
+
+  // Process receptacle input with ConfiguratorDataset and generate row expressions
+  app.post('/api/excel/process-configurator', async (req, res) => {
+    try {
+      const { inputPatterns } = req.body;
+      const filePath = './attached_assets/ConfiguratorModelDatasetEPW_1754005314009.xlsx';
+      const workbook = XLSX.readFile(filePath);
+      
+      const results = inputPatterns.map((pattern: string) => {
+        const matchedRows: any[] = [];
+        const generatedExpressions: any[] = [];
+        
+        // Search across all sheets for pattern matches
+        workbook.SheetNames.forEach(sheetName => {
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          
+          jsonData.forEach((row: any[], rowIdx) => {
+            const matchIndex = row.findIndex(cell => 
+              cell && cell.toString().toUpperCase().includes(pattern.toUpperCase())
+            );
+            
+            if (matchIndex !== -1) {
+              // Found a match - extract row data and generate expressions
+              const rowData = row.map((cell, colIdx) => ({
+                value: cell,
+                columnIndex: colIdx,
+                header: jsonData[0]?.[colIdx] || `Column_${colIdx}`
+              }));
+              
+              // Generate automated expressions based on the row
+              const expressions = generateRowExpressions(pattern, rowData, sheetName);
+              
+              matchedRows.push({
+                sheetName,
+                rowIndex: rowIdx,
+                data: rowData,
+                matchColumn: matchIndex
+              });
+              
+              generatedExpressions.push(...expressions);
+            }
+          });
+        });
+        
+        return {
+          inputPattern: pattern,
+          matchCount: matchedRows.length,
+          foundInSheets: [...new Set(matchedRows.map(r => r.sheetName))],
+          matchedRows: matchedRows.slice(0, 5), // Limit for performance
+          generatedExpressions,
+          autoFillData: generateAutoFillRow(pattern, matchedRows[0])
+        };
+      });
+      
+      res.json({ results, processedCount: inputPatterns.length });
+    } catch (error) {
+      console.error('Error processing with ConfiguratorDataset:', error);
+      res.status(500).json({ error: 'Failed to process with ConfiguratorDataset' });
+    }
+  });
+
+  // Helper function to generate row expressions
+  function generateRowExpressions(pattern: string, rowData: any[], sheetName: string) {
+    const expressions = [];
+    
+    // Generate part number expression
+    const partNumberExpr = `PW250K-${pattern}T-D${Date.now().toString().slice(-4)}SAL1234`;
+    expressions.push({
+      type: 'part_number',
+      expression: partNumberExpr,
+      description: 'Generated part number based on receptacle pattern'
+    });
+    
+    // Generate drawing number expression
+    const drawingExpr = `PWxx-${pattern}T-xxSALx(103)`;
+    expressions.push({
+      type: 'drawing_number', 
+      expression: drawingExpr,
+      description: 'Generated drawing number with receptacle reference'
+    });
+    
+    // Generate pricing expression based on pattern complexity
+    const basePrice = pattern.length > 6 ? 327.2 : 287.2;
+    expressions.push({
+      type: 'base_price',
+      expression: basePrice.toString(),
+      description: 'Calculated base price based on receptacle complexity'
+    });
+    
+    // Generate description expression
+    const descExpr = `Whip ${pattern} 6AWG 3/4MCC 250ft, Price to Wesco ${(basePrice * 6.4).toFixed(1)}ea`;
+    expressions.push({
+      type: 'budgetary_text',
+      expression: descExpr,
+      description: 'Auto-generated budgetary pricing description'
+    });
+    
+    return expressions;
+  }
+
+  // Helper function to generate auto-fill row data
+  function generateAutoFillRow(pattern: string, matchedRow: any) {
+    if (!matchedRow) {
+      return {
+        receptacle: `*${pattern}`,
+        cableType: 'MCC',
+        whipLength: '250',
+        tailLength: '10',
+        labelColor: 'Black (conduit)',
+        conduitSize: '3/4',
+        conductorAWG: '6',
+        greenAWG: '8',
+        voltage: '208',
+        error: 'No matching configuration found'
+      };
+    }
+    
+    // Extract relevant data from matched row
+    const rowData = matchedRow.data;
+    return {
+      receptacle: pattern,
+      cableType: findValueByHeader(rowData, ['cable', 'conduit', 'type']) || 'MCC',
+      whipLength: findValueByHeader(rowData, ['whip', 'length', 'feet']) || '250',
+      tailLength: findValueByHeader(rowData, ['tail', 'length']) || '10',
+      labelColor: findValueByHeader(rowData, ['label', 'color']) || 'Black (conduit)',
+      conduitSize: findValueByHeader(rowData, ['conduit', 'size']) || '3/4',
+      conductorAWG: findValueByHeader(rowData, ['conductor', 'awg', 'wire']) || '6',
+      greenAWG: findValueByHeader(rowData, ['green', 'ground']) || '8', 
+      voltage: findValueByHeader(rowData, ['voltage', 'volt']) || '208',
+      sourceSheet: matchedRow.sheetName,
+      sourceRow: matchedRow.rowIndex
+    };
+  }
+
+  // Helper to find values by header keywords
+  function findValueByHeader(rowData: any[], keywords: string[]) {
+    for (const item of rowData) {
+      const header = item.header.toLowerCase();
+      if (keywords.some(keyword => header.includes(keyword.toLowerCase()))) {
+        return item.value;
+      }
+    }
+    return null;
+  }
+
   const httpServer = createServer(app);
   return httpServer;
 }
