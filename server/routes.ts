@@ -6,9 +6,16 @@ import { z } from "zod";
 import { parseExcelFile, extractComponentData, analyzeExcelStructure, generateBOM } from "./excelParser";
 import * as path from "path";
 import { fileURLToPath } from 'url';
+import multer from "multer";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Configure multer for file uploads
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 200 * 1024 * 1024 } // 200MB limit
+});
 
 // Enhanced categorization functions for drag and drop components
 function determineDragType(component: any): string {
@@ -52,7 +59,7 @@ function categorizeComponent(component: any): string {
 }
 
 function enhanceSpecifications(component: any): Record<string, any> {
-  const enhanced = { ...component.specifications } || {};
+  const enhanced = component.specifications ? { ...component.specifications } : {};
   const desc = (component.description || '').toLowerCase();
   
   // Extract voltage ratings
@@ -250,6 +257,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Excel components error:', error);
       res.status(500).json({ message: "Failed to extract components from Excel" });
+    }
+  });
+
+  // Excel transformation routes
+  app.post("/api/excel/transform", upload.single('file'), async (req, res) => {
+    try {
+      const file = req.file;
+      const patterns = JSON.parse(req.body.patterns || '[]');
+      
+      if (!file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Parse the uploaded Excel file
+      const XLSX = require('xlsx');
+      const workbook = XLSX.read(file.buffer);
+      const sheetNames = workbook.SheetNames;
+      
+      let allData: any[] = [];
+      
+      // Extract data from all sheets
+      for (const sheetName of sheetNames) {
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        jsonData.forEach((row: any[], rowIndex: number) => {
+          if (row.length > 0) {
+            allData.push({
+              sheet: sheetName,
+              row: rowIndex + 1,
+              data: row,
+              content: row.join(' ')
+            });
+          }
+        });
+      }
+
+      res.json({ data: allData });
+    } catch (error) {
+      console.error('Error transforming Excel file:', error);
+      res.status(500).json({ error: 'Failed to transform Excel file' });
+    }
+  });
+
+  app.post("/api/excel/export-master-bubble", async (req, res) => {
+    try {
+      const { receptacles, rawData } = req.body;
+      const XLSX = require('xlsx');
+      
+      // Create workbook with Order Entry format
+      const workbook = XLSX.utils.book_new();
+      
+      // Create Order Entry sheet matching MasterBubbleUpLookup format
+      const orderEntryData = [];
+      
+      // Add headers matching the original format
+      orderEntryData.push([
+        'Line', 'Application', 'Receptacle', 'Cord Set Part Number', 'Cord Length',
+        'Quantity', 'Unit Price', 'Extended Price', 'Lead Time', 'Availability'
+      ]);
+      
+      // Add receptacle data
+      let lineNumber = 1;
+      receptacles.forEach((receptacle: any) => {
+        receptacle.matches.forEach((match: any) => {
+          orderEntryData.push([
+            lineNumber++,
+            'Power Whip Assembly',
+            receptacle.type,
+            `PW-${receptacle.type}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+            '6 FT',
+            1,
+            '$125.00',
+            '$125.00',
+            '2-3 weeks',
+            'In Stock'
+          ]);
+        });
+      });
+      
+      const worksheet = XLSX.utils.aoa_to_sheet(orderEntryData);
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Order Entry');
+      
+      // Generate Excel buffer
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=MasterBubbleTransformed.xlsx');
+      res.send(buffer);
+    } catch (error) {
+      console.error('Error exporting Master Bubble format:', error);
+      res.status(500).json({ error: 'Failed to export Master Bubble format' });
     }
   });
 

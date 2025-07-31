@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Grid, Layers, Settings, RotateCcw, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AGGridOrderEntry from "./AGGridOrderEntry";
+import ExcelTransformer from "./ExcelTransformer";
 
 interface DroppedComponent {
   id: string;
@@ -25,7 +26,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   const [droppedComponents, setDroppedComponents] = useState<DroppedComponent[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
-  const [viewMode, setViewMode] = useState<"design" | "order">("design");
+  const [viewMode, setViewMode] = useState<"design" | "order" | "transformer">("design");
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const handleDrop = (e: React.DragEvent) => {
@@ -90,16 +91,28 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   };
 
   const toggleViewMode = () => {
-    setViewMode(prev => prev === "design" ? "order" : "design");
+    setViewMode(prev => {
+      if (prev === "design") return "order";
+      if (prev === "order") return "transformer";
+      return "design";
+    });
   };
 
   const selectedComponentData = droppedComponents.find(comp => comp.id === selectedComponent);
 
-  // If in order view, show the AG-Grid order entry
+  // Show different views based on mode
   if (viewMode === "order") {
     return (
       <div className="h-full">
         <AGGridOrderEntry onToggleView={toggleViewMode} />
+      </div>
+    );
+  }
+
+  if (viewMode === "transformer") {
+    return (
+      <div className="h-full">
+        <ExcelTransformer onToggleView={toggleViewMode} />
       </div>
     );
   }
@@ -113,7 +126,9 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <h2 className="text-xl font-bold text-technical-900 dark:text-technical-100">
-                {viewMode === "design" ? "Design Canvas" : "Order Entry System"}
+                {viewMode === "design" ? "Design Canvas" : 
+                 viewMode === "order" ? "Order Entry System" : 
+                 "Excel Transformer"}
               </h2>
               <div className="flex items-center gap-2">
                 <Button
@@ -145,7 +160,9 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
                 Save Design
               </Button>
               <Button onClick={toggleViewMode} variant="outline">
-                {viewMode === "design" ? "Switch to Order Entry" : "Switch to Design Canvas"}
+                {viewMode === "design" ? "Switch to Order Entry" : 
+                 viewMode === "order" ? "Switch to Excel Transformer" : 
+                 "Switch to Design Canvas"}
               </Button>
             </div>
           </div>
