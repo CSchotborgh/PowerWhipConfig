@@ -29,7 +29,10 @@ export default function ComponentLibrary() {
   };
 
   const handleDragStart = (e: React.DragEvent, component: ElectricalComponent) => {
-    e.dataTransfer.setData("application/json", JSON.stringify(component));
+    console.log("Starting drag for component:", component); // Debug log
+    const componentData = JSON.stringify(component);
+    console.log("Serialized component data:", componentData); // Debug log
+    e.dataTransfer.setData("application/json", componentData);
     e.dataTransfer.effectAllowed = "copy";
   };
 

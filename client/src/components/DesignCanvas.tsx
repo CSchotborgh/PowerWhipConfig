@@ -36,26 +36,36 @@ export default function DesignCanvas() {
 
     try {
       const componentData = e.dataTransfer.getData("application/json");
-      const component: ElectricalComponent = JSON.parse(componentData);
+      console.log("Dropped component data:", componentData); // Debug log
       
-      if (canvasRef.current) {
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / scale;
-        const y = (e.clientY - rect.top) / scale;
+      if (componentData && componentData.trim() !== '') {
+        const component: ElectricalComponent = JSON.parse(componentData);
+        console.log("Parsed component:", component); // Debug log
         
-        const newCanvasComponent: CanvasComponent = {
-          id: `${component.id}_${Date.now()}`,
-          component,
-          x,
-          y,
-          connections: [],
-        };
-        
-        setCanvasComponents(prev => [...prev, newCanvasComponent]);
-        addComponent(component);
+        if (canvasRef.current && component && typeof component === 'object') {
+          const rect = canvasRef.current.getBoundingClientRect();
+          const x = (e.clientX - rect.left) / scale;
+          const y = (e.clientY - rect.top) / scale;
+          
+          const newCanvasComponent: CanvasComponent = {
+            id: `${component.id || 'component'}_${Date.now()}`,
+            component,
+            x,
+            y,
+            connections: [],
+          };
+          
+          console.log("Adding component to canvas:", newCanvasComponent); // Debug log
+          setCanvasComponents(prev => [...prev, newCanvasComponent]);
+          addComponent(component);
+        } else {
+          console.error("Invalid component data or missing canvas reference");
+        }
+      } else {
+        console.error("No component data found in drop event");
       }
     } catch (error) {
-      console.error("Failed to parse dropped component:", error);
+      console.error("Failed to parse dropped component:", error, e.dataTransfer.getData("application/json"));
     }
   }, [scale, addComponent]);
 
