@@ -159,7 +159,7 @@ export default function AGGridOrderEntry({ onToggleView }: AGGridOrderEntryProps
             </p>
           </div>
           <Button onClick={onToggleView} variant="outline" className="flex items-center gap-2">
-            Switch to Design Canvas
+            Switch to Excel Transformer
           </Button>
         </div>
 
