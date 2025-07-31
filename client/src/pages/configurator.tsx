@@ -15,23 +15,14 @@ export default function Configurator() {
   
   const { screenInfo, breakpoints, shouldCollapsePanels, shouldStackVertically } = useResponsiveLayout();
 
-  // Auto-collapse panels on smaller screens, but keep main content visible
+  // Keep sidebar expanded to show tools
   useEffect(() => {
-    if (screenInfo.width <= 480) {
-      // On very small screens, collapse both panels
-      setLeftPanelExpanded(false);
-      setRightPanelExpanded(false);
-    } else if (screenInfo.width <= 768) {
-      // On mobile/tablet, show left panel for configuration tools
-      setLeftPanelExpanded(true);
-      setRightPanelExpanded(false);
-    } else if (screenInfo.width <= 1024) {
-      // On small desktop, show both panels but collapsed
-      setLeftPanelExpanded(true);
+    // Always keep left panel expanded so tools are visible
+    setLeftPanelExpanded(true);
+    // Only collapse right panel on smaller screens
+    if (screenInfo.width <= 1024) {
       setRightPanelExpanded(false);
     } else {
-      // On larger screens, show all panels
-      setLeftPanelExpanded(true);
       setRightPanelExpanded(true);
     }
   }, [screenInfo.width]);
@@ -47,7 +38,7 @@ export default function Configurator() {
         {/* Main Content Area */}
         <div className={`flex flex-1 overflow-hidden w-full h-full ${shouldStackVertically() ? 'flex-col' : 'flex-row'}`}>
           {/* Left Panel - Sidebar */}
-          <div className="relative flex">
+          <div className="relative flex" style={{ minWidth: leftPanelExpanded ? '320px' : '48px' }}>
             <Sidebar 
               activeTab={activeTab} 
               onTabChange={setActiveTab}

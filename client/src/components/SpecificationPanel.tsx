@@ -42,15 +42,8 @@ export default function SpecificationPanel({ isExpanded }: SpecificationPanelPro
 
   return (
     <div className={cn(
-      "bg-white dark:bg-technical-800 border-l border-technical-200 dark:border-technical-700 flex flex-col transition-all duration-300 ease-in-out specs-panel responsive-container",
-      isExpanded ? "w-80 lg:w-96 xl:w-[400px] 2xl:w-[480px]" : "w-12 sm:w-16 lg:w-12",
-      "mobile-stack tablet-stack",
-      // Mobile responsive adjustments
-      "max-sm:w-full max-sm:h-auto max-sm:border-l-0 max-sm:border-t",
-      // Tablet adjustments  
-      "sm:max-md:w-72",
-      // Wide screen adjustments
-      "min-[1920px]:w-[520px] min-[2560px]:w-[600px]"
+      "bg-white dark:bg-technical-800 border-l border-technical-200 dark:border-technical-700 flex flex-col transition-all duration-300 ease-in-out h-full",
+      isExpanded ? "w-80" : "w-12"
     )}>
       <div className="p-4 border-b border-technical-200 dark:border-technical-700">
         <h3 className="font-semibold text-technical-900 dark:text-technical-100 flex items-center">
