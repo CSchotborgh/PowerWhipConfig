@@ -100,7 +100,7 @@ export default function DesignCanvas() {
   };
 
   return (
-    <div className="h-full w-full min-h-[600px] bg-technical-50 dark:bg-technical-900 rounded-xl shadow-sm border border-technical-200 dark:border-technical-700 relative overflow-hidden">
+    <div className="h-full bg-white dark:bg-technical-800 rounded-xl shadow-sm border border-technical-200 dark:border-technical-700 relative overflow-hidden">
       {/* Canvas Header */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
         <div className="bg-white dark:bg-technical-800 px-3 py-1 rounded-lg shadow-sm border border-technical-200 dark:border-technical-700 flex items-center space-x-2">

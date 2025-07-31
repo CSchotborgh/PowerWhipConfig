@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import DesignCanvas from "@/components/DesignCanvas";
@@ -6,39 +6,20 @@ import SpecificationPanel from "@/components/SpecificationPanel";
 import { ConfigurationProvider } from "@/contexts/ConfigurationContext";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, PanelLeftClose, PanelRightClose } from "lucide-react";
-import useResponsiveLayout from "@/hooks/useResponsiveLayout";
 
 export default function Configurator() {
   const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation" | "order">("configuration");
   const [leftPanelExpanded, setLeftPanelExpanded] = useState(true);
   const [rightPanelExpanded, setRightPanelExpanded] = useState(true);
-  
-  const { screenInfo, breakpoints, shouldCollapsePanels, shouldStackVertically } = useResponsiveLayout();
-
-  // Keep sidebar expanded to show tools
-  useEffect(() => {
-    // Always keep left panel expanded so tools are visible
-    setLeftPanelExpanded(true);
-    // Only collapse right panel on smaller screens
-    if (screenInfo.width <= 1024) {
-      setRightPanelExpanded(false);
-    } else {
-      setRightPanelExpanded(true);
-    }
-  }, [screenInfo.width]);
 
   return (
     <ConfigurationProvider>
-      <div className="h-screen w-screen flex flex-col bg-technical-50 dark:bg-technical-900 text-technical-900 dark:text-technical-50 configurator-layout">
-        {/* Fixed Header at top */}
-        <div className="w-full shrink-0">
-          <Header />
-        </div>
+      <div className="h-screen flex flex-col bg-technical-50 dark:bg-technical-900 text-technical-900 dark:text-technical-50">
+        <Header />
         
-        {/* Main Content Area */}
-        <div className={`flex flex-1 overflow-hidden w-full h-full ${shouldStackVertically() ? 'flex-col' : 'flex-row'}`}>
+        <div className="flex flex-1 overflow-hidden">
           {/* Left Panel - Sidebar */}
-          <div className="relative flex" style={{ minWidth: leftPanelExpanded ? '320px' : '48px' }}>
+          <div className="relative flex">
             <Sidebar 
               activeTab={activeTab} 
               onTabChange={setActiveTab}
@@ -60,8 +41,8 @@ export default function Configurator() {
             </Button>
           </div>
           
-          <main className="flex-1 flex min-w-0 h-full">
-            <div className="flex-1 p-2 sm:p-4 lg:p-6 min-w-0 h-full">
+          <main className="flex-1 flex">
+            <div className="flex-1 p-6">
               <DesignCanvas />
             </div>
             

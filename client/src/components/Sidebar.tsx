@@ -38,7 +38,7 @@ export default function Sidebar({ activeTab, onTabChange, isExpanded }: SidebarP
 
   return (
     <aside className={cn(
-      "bg-white dark:bg-technical-800 border-r border-technical-200 dark:border-technical-700 flex flex-col transition-all duration-300 ease-in-out h-full",
+      "bg-white dark:bg-technical-800 border-r border-technical-200 dark:border-technical-700 flex flex-col transition-all duration-300 ease-in-out",
       isExpanded ? "w-80" : "w-12"
     )}>
       {/* Navigation Tabs */}
