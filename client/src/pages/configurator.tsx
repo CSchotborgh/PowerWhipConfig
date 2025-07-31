@@ -82,14 +82,7 @@ export default function Configurator() {
             {/* Design Canvas Area */}
             <div className="flex-1 p-6 bg-gradient-to-br from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30">
               <div className="h-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-sm overflow-hidden">
-                {activeTab === "visual" ? (
-                  /* Visual Design tab has its own internal toggle between design canvas and order entry */
-                  <div className="h-full overflow-hidden">
-                    <DesignCanvas />
-                  </div>
-                ) : (
-                  <DesignCanvas />
-                )}
+                <DesignCanvas />
               </div>
             </div>
             

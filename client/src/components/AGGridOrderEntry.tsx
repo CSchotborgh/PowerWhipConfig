@@ -258,7 +258,7 @@ export default function AGGridOrderEntry({ onToggleView }: AGGridOrderEntryProps
           <div className="divide-y divide-technical-200 dark:divide-technical-600">
             {filteredData.map((item, index) => (
               <div 
-                key={item.id}
+                key={`order-item-${item.partNumber}-${index}`}
                 className={cn(
                   "grid grid-cols-12 gap-4 p-4 hover:bg-technical-50 dark:hover:bg-technical-800 transition-colors",
                   index % 2 === 0 ? "bg-white dark:bg-technical-900" : "bg-technical-25 dark:bg-technical-850"

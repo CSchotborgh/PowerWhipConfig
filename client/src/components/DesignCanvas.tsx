@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Grid, Layers, Settings, RotateCcw, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
+import AGGridOrderEntry from "./AGGridOrderEntry";
 
 interface DroppedComponent {
   id: string;
@@ -18,10 +19,13 @@ interface DesignCanvasProps {
   onToggleView?: () => void;
 }
 
+
+
 export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   const [droppedComponents, setDroppedComponents] = useState<DroppedComponent[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
+  const [viewMode, setViewMode] = useState<"design" | "order">("design");
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const handleDrop = (e: React.DragEvent) => {
@@ -85,7 +89,16 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
     }
   };
 
+  const toggleViewMode = () => {
+    setViewMode(prev => prev === "design" ? "order" : "design");
+  };
+
   const selectedComponentData = droppedComponents.find(comp => comp.id === selectedComponent);
+
+  // If in order view, show the AG-Grid order entry
+  if (viewMode === "order") {
+    return <AGGridOrderEntry onToggleView={toggleViewMode} />;
+  }
 
   return (
     <div className="flex-1 flex h-full">
@@ -96,7 +109,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <h2 className="text-xl font-bold text-technical-900 dark:text-technical-100">
-                Design Canvas
+                {viewMode === "design" ? "Design Canvas" : "Order Entry System"}
               </h2>
               <div className="flex items-center gap-2">
                 <Button
@@ -127,11 +140,9 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
                 <Save className="w-4 h-4 mr-2" />
                 Save Design
               </Button>
-              {onToggleView && (
-                <Button onClick={onToggleView} variant="outline">
-                  Switch to Order Entry
-                </Button>
-              )}
+              <Button onClick={toggleViewMode} variant="outline">
+                {viewMode === "design" ? "Switch to Order Entry" : "Switch to Design Canvas"}
+              </Button>
             </div>
           </div>
         </div>
