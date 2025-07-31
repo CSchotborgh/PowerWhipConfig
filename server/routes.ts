@@ -306,34 +306,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { receptacles, rawData } = req.body;
       const XLSX = await import('xlsx');
       
-      // Create workbook with Order Entry format
+      // Create workbook with Order Entry format matching MasterBubbleUpLookup structure
       const workbook = XLSX.utils.book_new();
       
-      // Create Order Entry sheet matching MasterBubbleUpLookup format
-      const orderEntryData = [];
+      // Headers matching the exact MasterBubbleUpLookup Order Entry tab structure
+      const headers = [
+        'ID', 'Order QTY', 'Choose receptacle', 'Select Cable/Conduit Type', 'Whip Length (ft)', 
+        'Tail Length (ft)', 'Label Color (Background/Text)', 'building', 'PDU', 'Panel', 
+        'First Circuit', 'Second Circuit', 'Third Circuit', 'Cage', 'Cabinet Number', 
+        'Included Breaker', 'Mounting bolt', 'Conduit Size', 'Conductor AWG', 'Green AWG', 
+        'Voltage', 'Box', 'L1', 'L2', 'L3', 'N', 'E', 'Drawing number', 'Notes to Enconnex', 
+        'Orderable Part number', 'base price', 'Per foot', 'length', 'Bolt adder', 
+        'assembled price', 'Breaker adder', 'Price to Wesco', 'List Price', 
+        'Budgetary pricing text', 'phase type', 'conductor count', 'neutral', 'current', 
+        'UseVoltage', 'plate hole', 'box', 'Box code', 'Box options', 'Breaker options'
+      ];
       
-      // Add headers matching the original format
-      orderEntryData.push([
-        'Line', 'Application', 'Receptacle', 'Cord Set Part Number', 'Cord Length',
-        'Quantity', 'Unit Price', 'Extended Price', 'Lead Time', 'Availability'
-      ]);
+      const orderEntryData = [headers];
       
-      // Add receptacle data
+      // Add receptacle data based on lookup results
       let lineNumber = 1;
       receptacles.forEach((receptacle: any) => {
         receptacle.matches.forEach((match: any) => {
-          orderEntryData.push([
-            lineNumber++,
-            'Power Whip Assembly',
-            receptacle.type,
-            `PW-${receptacle.type}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
-            '6 FT',
-            1,
-            '$125.00',
-            '$125.00',
-            '2-3 weeks',
-            'In Stock'
-          ]);
+          if (match.sourceRow) {
+            // Use actual data from MasterBubbleUpLookup
+            const specs = match.sourceRow.specifications || {};
+            orderEntryData.push([
+              lineNumber++,
+              specs['Order QTY'] || 1,
+              specs['Choose receptacle'] || receptacle.type,
+              specs['Select Cable/Conduit Type'] || 'MCC',
+              specs['Whip Length (ft)'] || '250',
+              specs['Tail Length (ft)'] || '10',
+              specs['Label Color (Background/Text)'] || 'Black (conduit)',
+              specs['building'] || '',
+              specs['PDU'] || '',
+              specs['Panel'] || '',
+              specs['First Circuit'] || '1',
+              specs['Second Circuit'] || '3',
+              specs['Third Circuit'] || '5',
+              specs['Cage'] || '',
+              specs['Cabinet Number'] || '',
+              specs['Included Breaker'] || '',
+              specs['Mounting bolt'] || '',
+              specs['Conduit Size'] || '3/4',
+              specs['Conductor AWG'] || '6',
+              specs['Green AWG'] || '8',
+              specs['Voltage'] || '208',
+              specs['Box'] || specs['Box'] || 'Backshell, Cast Aluminum, 15 Degree 60A',
+              specs['L1'] || '--------',
+              specs['L2'] || '--------',
+              specs['L3'] || '--------',
+              specs['N'] || '--------',
+              specs['E'] || '------->',
+              specs['Drawing number'] || `PWxx-${receptacle.type}T-xxSALx(103)`,
+              specs['Notes to Enconnex'] || 'MC Cable Wire Colors Black/White/Red/Blue/Green',
+              specs['Orderable Part number'] || `PW250K-${receptacle.type}T-D${lineNumber}SAL1234`,
+              specs['base price'] || '287.2',
+              specs['Per foot'] || '6',
+              specs['length'] || '260',
+              specs['Bolt adder'] || '0',
+              specs['assembled price'] || '1847.2',
+              specs['Breaker adder'] || '0',
+              specs['Price to Wesco'] || '1847.2',
+              specs['List Price'] || '2462.933333',
+              specs['Budgetary pricing text'] || `Whip ${receptacle.type} 6AWG 3/4MCC 250ft, Price to Wesco 1847.2ea`,
+              specs['phase type'] || '3D',
+              specs['conductor count'] || '3',
+              specs['neutral'] || '0',
+              specs['current'] || '60',
+              specs['UseVoltage'] || '208',
+              specs['plate hole'] || '60AH',
+              specs['box'] || '60AH',
+              specs['Box code'] || '60AH',
+              specs['Box options'] || specs['Box options'] || '',
+              specs['Breaker options'] || specs['Breaker options'] || '3 Pole, 60A, 240/120V, Bolt in, 22KA, Square D, QOB360VH'
+            ]);
+          } else {
+            // Create default row for unmatched patterns
+            orderEntryData.push([
+              lineNumber++,
+              1,
+              receptacle.type,
+              'MCC',
+              '250',
+              '10',
+              'Black (conduit)',
+              '', '', '', '1', '3', '5', '', '', '', '', '3/4', '6', '8', '208',
+              'Standard Power Whip Box',
+              '--------', '--------', '--------', '--------', '------->',
+              `PWxx-${receptacle.type}T-xxSALx(103)`,
+              `Pattern ${receptacle.type} - No exact match found in lookup data`,
+              `PW250K-${receptacle.type}T-D${lineNumber}SAL1234`,
+              '287.2', '6', '260', '0', '1847.2', '0', '1847.2', '2462.933333',
+              `Whip ${receptacle.type} 6AWG 3/4MCC 250ft, Price to Wesco 1847.2ea`,
+              '3D', '3', '0', '60', '208', '60AH', '60AH', '60AH', '',
+              '3 Pole, 60A, 240/120V, Bolt in, 22KA, Square D, QOB360VH'
+            ]);
+          }
         });
       });
       

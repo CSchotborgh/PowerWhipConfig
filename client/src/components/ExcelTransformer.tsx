@@ -52,15 +52,11 @@ export default function ExcelTransformer({ onToggleView }: ExcelTransformerProps
   const processData = useCallback(async () => {
     setIsProcessing(true);
     try {
-      const patterns = receptaclePatterns.split('\n').filter(p => p.trim());
-      
-      let dataToProcess = [];
-      
+      let inputPatterns: string[] = [];
+
       if (uploadedFile) {
-        // Process uploaded Excel file
         const formData = new FormData();
         formData.append('file', uploadedFile);
-        formData.append('patterns', JSON.stringify(patterns));
         
         const response = await fetch('/api/excel/transform', {
           method: 'POST',
@@ -69,46 +65,74 @@ export default function ExcelTransformer({ onToggleView }: ExcelTransformerProps
         
         if (response.ok) {
           const result = await response.json();
-          dataToProcess = result.data;
+          // Extract patterns from uploaded data
+          inputPatterns = result.data.map((item: any) => item.content).filter((content: string) => content.trim());
         }
       } else if (textInput.trim()) {
-        // Process text input
-        const lines = textInput.split('\n').filter(line => line.trim());
-        dataToProcess = lines.map((line, index) => ({ line: index + 1, content: line }));
+        // Parse text input for receptacle patterns (like "460R9W")
+        inputPatterns = textInput.trim().split('\n').map(line => line.trim()).filter(line => line);
       }
 
-      // Match patterns against data
-      const receptacleMatches: { [key: string]: any[] } = {};
+      // Now lookup each pattern in the MasterBubbleUpLookup data
+      const lookupResponse = await fetch('/api/excel/components');
+      const lookupData = await lookupResponse.json();
       
-      dataToProcess.forEach((item: any) => {
-        patterns.forEach(pattern => {
-          const content = JSON.stringify(item).toUpperCase();
-          if (content.includes(pattern.toUpperCase())) {
-            if (!receptacleMatches[pattern]) {
-              receptacleMatches[pattern] = [];
-            }
-            receptacleMatches[pattern].push(item);
-          }
+      const receptacleMatches: { [key: string]: any[] } = {};
+      let totalFoundRows = 0;
+
+      inputPatterns.forEach(pattern => {
+        // Find matching rows in lookup data where "Choose receptacle" column matches pattern
+        const matches = lookupData.filter((row: any) => {
+          const receptacleField = row.specifications?.['Choose receptacle'] || row.receptacle || '';
+          return receptacleField.toString().toUpperCase() === pattern.toUpperCase();
         });
+
+        if (matches.length > 0) {
+          const firstMatch = matches[0];
+          const quantity = parseInt(firstMatch.specifications?.['Order QTY'] || '1', 10) || 1;
+          
+          // Create multiple rows based on quantity
+          const expandedMatches = Array.from({ length: quantity }, (_, index) => ({
+            ...firstMatch,
+            lineNumber: totalFoundRows + index + 1,
+            originalPattern: pattern,
+            quantity: 1, // Each row represents 1 unit
+            sourceRow: firstMatch
+          }));
+
+          receptacleMatches[pattern] = expandedMatches;
+          totalFoundRows += quantity;
+        } else {
+          // No match found, but still include it in results
+          receptacleMatches[pattern] = [{
+            originalPattern: pattern,
+            lineNumber: totalFoundRows + 1,
+            quantity: 1,
+            error: 'No matching row found in MasterBubbleUpLookup data',
+            sourceRow: null
+          }];
+          totalFoundRows += 1;
+        }
       });
 
       const receptacles = Object.entries(receptacleMatches).map(([type, matches]) => ({
         type,
         count: matches.length,
-        matches
+        matches,
+        foundInLookup: matches.some((m: any) => !m.error)
       }));
 
       setParsedData({
         receptacles,
-        totalMatches: receptacles.reduce((sum, r) => sum + r.count, 0),
-        rawData: dataToProcess
+        totalMatches: totalFoundRows,
+        rawData: inputPatterns
       });
     } catch (error) {
       console.error('Error processing data:', error);
     } finally {
       setIsProcessing(false);
     }
-  }, [uploadedFile, textInput, receptaclePatterns]);
+  }, [uploadedFile, textInput]);
 
   const exportToMasterBubbleFormat = useCallback(async () => {
     if (!parsedData) return;
@@ -213,15 +237,21 @@ export default function ExcelTransformer({ onToggleView }: ExcelTransformerProps
           {/* Text Input Section */}
           <Card>
             <CardHeader>
-              <CardTitle>Text Input Data</CardTitle>
+              <CardTitle>Receptacle Pattern Lookup</CardTitle>
+              <p className="text-sm text-technical-600 dark:text-technical-400">
+                Enter receptacle patterns to lookup in MasterBubbleUpLookup data (one per line)
+              </p>
             </CardHeader>
             <CardContent>
               <Textarea
-                placeholder="Paste your data here (one entry per line)..."
+                placeholder="Enter receptacle patterns to lookup:&#10;460R9W&#10;460C9W&#10;L5-20R&#10;etc..."
                 value={textInput}
                 onChange={(e) => setTextInput(e.target.value)}
                 className="min-h-[200px] font-mono text-sm"
               />
+              <p className="text-sm text-technical-600 dark:text-technical-400 mt-2">
+                Example: Enter "460R9W" to find matching row in Order Entry tab and create output rows based on quantity
+              </p>
             </CardContent>
           </Card>
         </div>
