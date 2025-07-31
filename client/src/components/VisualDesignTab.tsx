@@ -73,11 +73,14 @@ export default function VisualDesignTab() {
             <label className="block text-sm font-medium text-technical-700 dark:text-technical-300 mb-1">
               Scale
             </label>
-            <select className="w-full px-3 py-2 border border-technical-300 dark:border-technical-600 rounded-lg bg-white dark:bg-technical-800">
-              <option>1:1</option>
-              <option>1:5</option>
-              <option selected>1:10</option>
-              <option>1:20</option>
+            <select 
+              className="w-full px-3 py-2 border border-technical-300 dark:border-technical-600 rounded-lg bg-white dark:bg-technical-800"
+              defaultValue="1:10"
+            >
+              <option value="1:1">1:1</option>
+              <option value="1:5">1:5</option>
+              <option value="1:10">1:10</option>
+              <option value="1:20">1:20</option>
             </select>
           </div>
           
@@ -85,11 +88,14 @@ export default function VisualDesignTab() {
             <label className="block text-sm font-medium text-technical-700 dark:text-technical-300 mb-1">
               Units
             </label>
-            <select className="w-full px-3 py-2 border border-technical-300 dark:border-technical-600 rounded-lg bg-white dark:bg-technical-800">
-              <option>Inches</option>
-              <option>Feet</option>
-              <option>Millimeters</option>
-              <option>Centimeters</option>
+            <select 
+              className="w-full px-3 py-2 border border-technical-300 dark:border-technical-600 rounded-lg bg-white dark:bg-technical-800"
+              defaultValue="Inches"
+            >
+              <option value="Inches">Inches</option>
+              <option value="Feet">Feet</option>
+              <option value="Millimeters">Millimeters</option>
+              <option value="Centimeters">Centimeters</option>
             </select>
           </div>
         </CardContent>

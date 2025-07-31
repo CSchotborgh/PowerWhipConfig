@@ -1,0 +1,55 @@
+[vite] connecting...
+[vite] connected.
+Warning: Use the &#x60;defaultValue&#x60; or &#x60;value&#x60; props on &lt;select&gt; instead of setting &#x60;selected&#x60; on &lt;option&gt;.
+    at option
+    at select
+    at div
+    at div
+    at _c9 (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at VisualDesignTab
+    at div
+    at aside
+    at Sidebar (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/src/components/Sidebar.tsx:22:35)
+    at div
+    at div
+    at ConfigurationProvider (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/src/contexts/ConfigurationContext.tsx:23:41)
+    at Configurator (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/src/pages/configurator.tsx:26:37)
+    at Route (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=9f4fa251:323:16)
+    at Switch (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=9f4fa251:379:17)
+    at Router
+    at Provider (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-KPO4B3UQ.js?v=5a1171ae:32:15)
+    at TooltipProvider (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=f648877b:56:5)
+    at ThemeProvider (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/src/contexts/ThemeContext.tsx:20:33)
+    at QueryClientProvider (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=f5b72600:2805:3)
+    at App
+at option
+at select
+at div
+at div
+at _c9 (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/src/components/ui/card.tsx:114:12)
+at div
+at _c (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/src/components/ui/card.tsx:20:11)
+at div
+at VisualDesignTab
+at div
+at aside
+at Sidebar (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/src/components/Sidebar.tsx:22:35)
+at div
+at div
+at ConfigurationProvider (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/src/contexts/ConfigurationContext.tsx:23:41)
+at Configurator (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/src/pages/configurator.tsx:26:37)
+at Route (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=9f4fa251:323:16)
+at Switch (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=9f4fa251:379:17)
+at Router
+at Provider (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-KPO4B3UQ.js?v=5a1171ae:32:15)
+at TooltipProvider (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=f648877b:56:5)
+at ThemeProvider (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/src/contexts/ThemeContext.tsx:20:33)
+at QueryClientProvider (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=f5b72600:2805:3)
+at App
+at t.value (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://f1aad9c1-ee92-4faf-a46a-b121a63e4c2b-00-2ndgavs3di3ur.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400

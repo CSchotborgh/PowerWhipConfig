@@ -145,7 +145,14 @@ export class MemStorage implements IStorage {
 
     defaultComponents.forEach(component => {
       const id = randomUUID();
-      const fullComponent: ElectricalComponent = { ...component, id };
+      const fullComponent: ElectricalComponent = { 
+        ...component, 
+        id,
+        maxVoltage: component.maxVoltage ?? null,
+        maxCurrent: component.maxCurrent ?? null,
+        price: component.price ?? null,
+        compatibleGauges: component.compatibleGauges ?? null
+      };
       this.components.set(id, fullComponent);
     });
   }
@@ -165,6 +172,8 @@ export class MemStorage implements IStorage {
     const configuration: PowerWhipConfiguration = { 
       ...config, 
       id, 
+      isValid: config.isValid ?? false,
+      validationResults: config.validationResults ?? null,
       createdAt: now,
       updatedAt: now
     };
@@ -204,7 +213,14 @@ export class MemStorage implements IStorage {
 
   async createComponent(component: InsertElectricalComponent): Promise<ElectricalComponent> {
     const id = randomUUID();
-    const fullComponent: ElectricalComponent = { ...component, id };
+    const fullComponent: ElectricalComponent = { 
+      ...component, 
+      id,
+      maxVoltage: component.maxVoltage ?? null,
+      maxCurrent: component.maxCurrent ?? null,
+      price: component.price ?? null,
+      compatibleGauges: component.compatibleGauges ?? null
+    };
     this.components.set(id, fullComponent);
     return fullComponent;
   }

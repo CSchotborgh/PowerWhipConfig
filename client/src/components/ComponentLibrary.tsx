@@ -104,9 +104,9 @@ export default function ComponentLibrary() {
                         <div className="text-xs font-medium text-technical-700 dark:text-technical-300">
                           {component.name}
                         </div>
-                        {component.specifications && (
+                        {(component.maxVoltage || component.maxCurrent) && (
                           <div className="text-xs text-technical-500 dark:text-technical-500 mt-1">
-                            {component.maxVoltage}V / {component.maxCurrent}A
+                            {component.maxVoltage || 'N/A'}V / {component.maxCurrent || 'N/A'}A
                           </div>
                         )}
                       </div>

@@ -4,15 +4,29 @@ import { Moon, Sun, FileSpreadsheet, FileText, Save } from "lucide-react";
 import { useConfiguration } from "@/contexts/ConfigurationContext";
 import { exportToXLSX, exportToPDF } from "@/lib/exportUtils";
 import { useToast } from "@/hooks/use-toast";
+import type { PowerWhipConfiguration } from "@shared/schema";
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
-  const { configuration, saveConfiguration } = useConfiguration();
+  const { configuration, components, saveConfiguration } = useConfiguration();
   const { toast } = useToast();
 
   const handleExportXLSX = async () => {
     try {
-      await exportToXLSX(configuration);
+      if (!configuration.name || !configuration.voltage || !configuration.current) {
+        toast({
+          title: "Export Failed",
+          description: "Please complete the configuration before exporting.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const exportData = {
+        configuration: configuration as PowerWhipConfiguration,
+        components
+      };
+      await exportToXLSX(exportData);
       toast({
         title: "Export Successful",
         description: "Configuration exported to XLSX format.",
@@ -28,7 +42,20 @@ export default function Header() {
 
   const handleExportPDF = async () => {
     try {
-      await exportToPDF(configuration);
+      if (!configuration.name || !configuration.voltage || !configuration.current) {
+        toast({
+          title: "Export Failed",
+          description: "Please complete the configuration before exporting.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const exportData = {
+        configuration: configuration as PowerWhipConfiguration,
+        components
+      };
+      await exportToPDF(exportData);
       toast({
         title: "Export Successful",
         description: "Configuration exported to PDF format.",

@@ -6,8 +6,18 @@ import { calculateVoltageDrops, calculateThermalAnalysis } from "@/lib/electrica
 export default function SpecificationPanel() {
   const { configuration, components } = useConfiguration();
 
-  const voltageDrops = calculateVoltageDrops(configuration);
-  const thermalAnalysis = calculateThermalAnalysis(configuration);
+  const voltageDrops = calculateVoltageDrops({
+    voltage: configuration.voltage || 120,
+    current: configuration.current || 20,
+    wireGauge: configuration.wireGauge || "12",
+    totalLength: configuration.totalLength || 12.5,
+  });
+  const thermalAnalysis = calculateThermalAnalysis({
+    voltage: configuration.voltage || 120,
+    current: configuration.current || 20,
+    wireGauge: configuration.wireGauge || "12",
+    totalLength: configuration.totalLength || 12.5,
+  });
   
   const totalLength = 12.5; // Calculate based on actual component positions
   const wireCount = 3; // Based on configuration
