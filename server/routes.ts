@@ -304,7 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/excel/export-master-bubble", async (req, res) => {
     try {
       const { receptacles, rawData } = req.body;
-      const XLSX = require('xlsx');
+      const XLSX = await import('xlsx');
       
       // Create workbook with Order Entry format
       const workbook = XLSX.utils.book_new();

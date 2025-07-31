@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Grid, Layers, Settings, RotateCcw, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AGGridOrderEntry from "./AGGridOrderEntry";
+import VirtualizedOrderEntry from "./VirtualizedOrderEntry";
+import PerformanceOrderEntry from "./PerformanceOrderEntry";
 import ExcelTransformer from "./ExcelTransformer";
 
 interface DroppedComponent {
@@ -102,7 +104,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
 
   // Show different views based on mode
   if (viewMode === "order") {
-    return <AGGridOrderEntry onToggleView={toggleViewMode} />;
+    return <PerformanceOrderEntry onToggleView={toggleViewMode} />;
   }
 
   if (viewMode === "transformer") {
