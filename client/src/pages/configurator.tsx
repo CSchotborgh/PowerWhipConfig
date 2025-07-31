@@ -29,8 +29,12 @@ export default function Configurator() {
   return (
     <ConfigurationProvider>
       <div className="h-screen w-screen flex flex-col bg-technical-50 dark:bg-technical-900 text-technical-900 dark:text-technical-50 configurator-layout">
-        <Header />
+        {/* Fixed Header at top */}
+        <div className="w-full shrink-0">
+          <Header />
+        </div>
         
+        {/* Main Content Area */}
         <div className={`flex flex-1 overflow-hidden w-full ${shouldStackVertically() ? 'flex-col' : 'flex-row'}`}>
           {/* Left Panel - Sidebar */}
           <div className="relative flex">
