@@ -38,8 +38,15 @@ export default function Sidebar({ activeTab, onTabChange, isExpanded }: SidebarP
 
   return (
     <aside className={cn(
-      "bg-white dark:bg-technical-800 border-r border-technical-200 dark:border-technical-700 flex flex-col transition-all duration-300 ease-in-out",
-      isExpanded ? "w-80" : "w-12"
+      "bg-white dark:bg-technical-800 border-r border-technical-200 dark:border-technical-700 flex flex-col transition-all duration-300 ease-in-out sidebar responsive-container",
+      isExpanded ? "w-80 lg:w-96 xl:w-[400px] 2xl:w-[480px]" : "w-12 sm:w-16 lg:w-12",
+      "mobile-stack tablet-stack",
+      // Mobile responsive adjustments
+      "max-sm:w-full max-sm:h-auto max-sm:border-r-0 max-sm:border-b",
+      // Tablet adjustments
+      "sm:max-md:w-72",
+      // Wide screen adjustments
+      "min-[1920px]:w-[520px] min-[2560px]:w-[600px]"
     )}>
       {/* Navigation Tabs */}
       <div className="border-b border-technical-200 dark:border-technical-700">

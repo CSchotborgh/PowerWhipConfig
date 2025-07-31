@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import DesignCanvas from "@/components/DesignCanvas";
@@ -6,18 +6,32 @@ import SpecificationPanel from "@/components/SpecificationPanel";
 import { ConfigurationProvider } from "@/contexts/ConfigurationContext";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, PanelLeftClose, PanelRightClose } from "lucide-react";
+import useResponsiveLayout from "@/hooks/useResponsiveLayout";
 
 export default function Configurator() {
   const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation" | "order">("configuration");
   const [leftPanelExpanded, setLeftPanelExpanded] = useState(true);
   const [rightPanelExpanded, setRightPanelExpanded] = useState(true);
+  
+  const { screenInfo, breakpoints, shouldCollapsePanels, shouldStackVertically } = useResponsiveLayout();
+
+  // Auto-collapse panels on smaller screens
+  useEffect(() => {
+    if (shouldCollapsePanels()) {
+      setLeftPanelExpanded(false);
+      setRightPanelExpanded(false);
+    } else {
+      setLeftPanelExpanded(true);
+      setRightPanelExpanded(true);
+    }
+  }, [shouldCollapsePanels]);
 
   return (
     <ConfigurationProvider>
-      <div className="h-screen flex flex-col bg-technical-50 dark:bg-technical-900 text-technical-900 dark:text-technical-50">
+      <div className="h-screen w-screen flex flex-col bg-technical-50 dark:bg-technical-900 text-technical-900 dark:text-technical-50 configurator-layout">
         <Header />
         
-        <div className="flex flex-1 overflow-hidden">
+        <div className={`flex flex-1 overflow-hidden w-full ${shouldStackVertically() ? 'flex-col' : 'flex-row'}`}>
           {/* Left Panel - Sidebar */}
           <div className="relative flex">
             <Sidebar 
@@ -42,7 +56,7 @@ export default function Configurator() {
           </div>
           
           <main className="flex-1 flex">
-            <div className="flex-1 p-6">
+            <div className="flex-1 p-2 sm:p-4 lg:p-6 main-canvas responsive-container min-w-0">
               <DesignCanvas />
             </div>
             
