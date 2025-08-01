@@ -15,7 +15,11 @@ import {
   Database,
   ChevronRight,
   RotateCcw,
-  Download
+  Download,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -85,11 +89,38 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
   const [scriptResults, setScriptResults] = useState<any[]>([]);
   const [apiEndpoint, setApiEndpoint] = useState('/api/excel/analyze-configurator');
   const [expressionMode, setExpressionMode] = useState<'formula' | 'vb' | 'api'>('formula');
+  const [zoomLevel, setZoomLevel] = useState<number>(100);
   
   const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadConfiguratorData();
+  }, []);
+
+  // Keyboard shortcuts for zoom
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && !e.shiftKey) {
+        switch (e.key) {
+          case '=':
+          case '+':
+            e.preventDefault();
+            zoomIn();
+            break;
+          case '-':
+            e.preventDefault();
+            zoomOut();
+            break;
+          case '0':
+            e.preventDefault();
+            resetZoom();
+            break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const loadConfiguratorData = async () => {
@@ -353,6 +384,37 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
     }
   };
 
+  // Zoom functionality
+  const zoomIn = () => {
+    setZoomLevel(prev => Math.min(200, prev + 25));
+  };
+
+  const zoomOut = () => {
+    setZoomLevel(prev => Math.max(50, prev - 25));
+  };
+
+  const resetZoom = () => {
+    setZoomLevel(100);
+  };
+
+  const fitToScreen = () => {
+    if (gridRef.current) {
+      const container = gridRef.current.parentElement;
+      if (container) {
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        const gridWidth = gridRef.current.scrollWidth;
+        const gridHeight = gridRef.current.scrollHeight;
+        
+        const widthRatio = (containerWidth * 0.9) / gridWidth;
+        const heightRatio = (containerHeight * 0.9) / gridHeight;
+        const optimalZoom = Math.min(widthRatio, heightRatio) * 100;
+        
+        setZoomLevel(Math.max(50, Math.min(200, optimalZoom)));
+      }
+    }
+  };
+
   const renderCell = (row: number, col: number) => {
     const cellRef = getCellReference(row, col);
     const cell = sheets[activeSheet]?.cells[cellRef];
@@ -460,6 +522,25 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
             Excel-like ConfiguratorDataset Interface
           </h2>
           <div className="flex items-center gap-2">
+            {/* Zoom Controls */}
+            <div className="flex items-center gap-1 border border-technical-200 dark:border-technical-600 rounded-md">
+              <Button size="sm" variant="ghost" onClick={zoomOut} disabled={zoomLevel <= 50}>
+                <ZoomOut className="w-4 h-4" />
+              </Button>
+              <span className="px-2 text-sm font-mono min-w-14 text-center">
+                {zoomLevel}%
+              </span>
+              <Button size="sm" variant="ghost" onClick={zoomIn} disabled={zoomLevel >= 200}>
+                <ZoomIn className="w-4 h-4" />
+              </Button>
+              <Button size="sm" variant="ghost" onClick={resetZoom} title="Reset Zoom">
+                <Minimize2 className="w-4 h-4" />
+              </Button>
+              <Button size="sm" variant="ghost" onClick={fitToScreen} title="Fit to Screen">
+                <Maximize2 className="w-4 h-4" />
+              </Button>
+            </div>
+            
             <Button size="sm" variant="outline" onClick={onToggleView}>
               Back to Design Canvas
             </Button>
@@ -502,7 +583,7 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
             className="flex-1"
           />
           <div className="text-xs text-technical-600 dark:text-technical-400">
-            💡 Double-click cells to edit, Ctrl+V to paste from Excel
+            💡 Double-click cells to edit, Ctrl+V to paste from Excel, Ctrl+/- to zoom
           </div>
         </div>
         
@@ -523,8 +604,18 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
 
       <div className="flex-1 flex">
         {/* Main Grid */}
-        <div className="flex-1 p-4">
-          {renderGrid()}
+        <div className="flex-1 p-4 overflow-auto">
+          <div 
+            ref={gridRef}
+            style={{ 
+              transform: `scale(${zoomLevel / 100})`,
+              transformOrigin: 'top left',
+              minWidth: zoomLevel < 100 ? `${100 / (zoomLevel / 100)}%` : 'auto',
+              minHeight: zoomLevel < 100 ? `${100 / (zoomLevel / 100)}%` : 'auto'
+            }}
+          >
+            {renderGrid()}
+          </div>
         </div>
         
         {/* Side Panel - Script/API Interface */}
