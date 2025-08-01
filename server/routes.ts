@@ -557,7 +557,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const enumColumns: any = {};
         
         // Scan for receptacle input patterns and dropdown enums
-        jsonData.forEach((row: any[], rowIdx) => {
+        (jsonData as any[][]).forEach((row: any[], rowIdx) => {
           row.forEach((cell, colIdx) => {
             if (cell && typeof cell === 'string') {
               // Look for receptacle input patterns
@@ -646,7 +646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const worksheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
           
-          jsonData.forEach((row: any[], rowIdx) => {
+          (jsonData as any[][]).forEach((row: any[], rowIdx) => {
             const matchIndex = row.findIndex(cell => 
               cell && cell.toString().toUpperCase().includes(pattern.toUpperCase())
             );
@@ -656,7 +656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const rowData = row.map((cell, colIdx) => ({
                 value: cell,
                 columnIndex: colIdx,
-                header: jsonData[0]?.[colIdx] || `Column_${colIdx}`
+                header: (jsonData as any[][])[0]?.[colIdx] || `Column_${colIdx}`
               }));
               
               // Generate automated expressions based on the row
@@ -941,7 +941,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return {
         pattern,
         found: false,
-        error: error.message
+        error: (error as Error).message
       };
     }
   }
@@ -998,7 +998,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         formula,
         result: '#ERROR!',
-        error: error.message
+        error: (error as Error).message
       });
     }
   });

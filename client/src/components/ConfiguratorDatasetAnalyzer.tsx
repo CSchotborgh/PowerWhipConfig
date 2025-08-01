@@ -9,6 +9,7 @@ import { Loader2, RefreshCw, Download, Upload, FileSpreadsheet, Database } from 
 import { useToast } from '@/hooks/use-toast';
 import ExcelLikeInterface from './ExcelLikeInterface';
 import ExcelFormulaLibrary from './ExcelFormulaLibrary';
+import UnifiedFileUpload from './UnifiedFileUpload';
 
 interface ConfiguratorAnalysis {
   sheetNames: string[];
@@ -20,6 +21,9 @@ interface ConfiguratorAnalysis {
       columnCount: number;
     };
   };
+  receptacleInputCells?: any[];
+  expressionPatterns?: any[];
+  enumDropdowns?: any;
 }
 
 interface ConfiguratorDatasetAnalyzerProps {
@@ -262,75 +266,15 @@ CS8369`);
           <>
         {/* File Upload Prompt */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              Excel File Editor
-              <div className="flex items-center gap-2">
-                <Button 
-                  onClick={() => fileInputRef.current?.click()} 
-                  size="sm"
-                  disabled={isUploading}
-                >
-                  {isUploading ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <Upload className="w-4 h-4 mr-2" />
-                  )}
-                  {isUploading ? 'Uploading...' : 'Upload Excel File'}
-                </Button>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-12">
-              <FileSpreadsheet className="w-16 h-16 mx-auto mb-4 text-technical-400" />
-              <h3 className="text-lg font-medium mb-2">Upload Excel File for Editing</h3>
-              <p className="text-technical-600 dark:text-technical-400 mb-6">
-                Upload any Excel file (.xlsx/.xls) to view and edit it with full spreadsheet functionality including:
-              </p>
-              <div className="grid grid-cols-2 gap-4 text-sm text-left max-w-2xl mx-auto mb-6">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span>View all sheets and tabs</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>Edit cells with formulas</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                    <span>Execute VB scripts</span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span>API integration capabilities</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                    <span>Function calculations</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                    <span>Expression processing</span>
-                  </div>
-                </div>
-              </div>
-              <Button 
-                onClick={() => fileInputRef.current?.click()}
-                size="lg"
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                ) : (
-                  <Upload className="w-5 h-5 mr-2" />
-                )}
-                Choose Excel File
-              </Button>
-            </div>
+          <CardContent className="p-6">
+            <UnifiedFileUpload 
+              mode="configurator"
+              onFileUploaded={(fileId: string, fileName: string) => {
+                setUploadedFileId(fileId);
+                setUploadedFileName(fileName);
+              }}
+              className="border-0 bg-transparent shadow-none"
+            />
           </CardContent>
         </Card>
 

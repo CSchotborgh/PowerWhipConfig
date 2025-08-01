@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import UnifiedFileUpload from './UnifiedFileUpload';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -227,72 +228,20 @@ export default function ExcelFormulaLibrary({ onToggleView }: ExcelFormulaLibrar
                   Excel Formula Analysis
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <div className="border-2 border-dashed border-technical-300 dark:border-technical-600 rounded-lg p-8">
-                    <FileSpreadsheet className="w-12 h-12 mx-auto mb-4 text-technical-400" />
-                    <h3 className="text-lg font-medium mb-2">Upload Excel File for Analysis</h3>
-                    <p className="text-technical-600 dark:text-technical-400 mb-4">
-                      Extract formulas, patterns, and expressions to build your reusable library
-                    </p>
-                    
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".xlsx,.xls"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                    
-                    <Button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
-                      className="mb-4"
-                    >
-                      {isUploading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-4 h-4 mr-2" />
-                          Choose Excel File
-                        </>
-                      )}
-                    </Button>
-                    
-                    <div className="text-sm text-technical-500 dark:text-technical-400">
-                      Supports .xlsx and .xls files up to 200MB
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4 mt-6">
-                  <div className="text-center p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                    <Calculator className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                    <h4 className="font-medium text-blue-900 dark:text-blue-100">Formula Extraction</h4>
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      Automatically extracts and categorizes all Excel formulas
-                    </p>
-                  </div>
-                  
-                  <div className="text-center p-4 bg-green-50 dark:bg-green-950 rounded-lg">
-                    <Layers className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                    <h4 className="font-medium text-green-900 dark:text-green-100">Pattern Recognition</h4>
-                    <p className="text-sm text-green-700 dark:text-green-300">
-                      Identifies repeating patterns and formula sequences
-                    </p>
-                  </div>
-                  
-                  <div className="text-center p-4 bg-purple-50 dark:bg-purple-950 rounded-lg">
-                    <BookOpen className="w-8 h-8 mx-auto mb-2 text-purple-600" />
-                    <h4 className="font-medium text-purple-900 dark:text-purple-100">Library Building</h4>
-                    <p className="text-sm text-purple-700 dark:text-purple-300">
-                      Creates reusable templates and expression libraries
-                    </p>
-                  </div>
-                </div>
+              <CardContent>
+                <UnifiedFileUpload
+                  mode="formula-library"
+                  onAnalysisComplete={(analysis) => {
+                    toast({
+                      title: "Analysis Complete",
+                      description: `Extracted ${analysis?.formulaCount || 0} formulas and ${analysis?.patternCount || 0} patterns`,
+                    });
+                    queryClient.invalidateQueries({ queryKey: ['/api/excel/formulas'] });
+                    queryClient.invalidateQueries({ queryKey: ['/api/excel/patterns'] });
+                    queryClient.invalidateQueries({ queryKey: ['/api/excel/archive'] });
+                  }}
+                  className="border-0 shadow-none"
+                />
               </CardContent>
             </Card>
           </TabsContent>
