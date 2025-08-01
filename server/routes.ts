@@ -307,6 +307,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to parse comma-delimited patterns
+  const parseReceptaclePattern = (pattern: string) => {
+    const parts = pattern.split(',').map(p => p.trim());
+    return {
+      receptacle: parts[0] || '',
+      cableConduitType: parts[1] || '',
+      whipLength: parts[2] || '',
+      tailLength: parts[3] || '',
+      labelColor: parts[4] || ''
+    };
+  };
+
   app.post("/api/excel/export-master-bubble", async (req, res) => {
     try {
       const { receptacles, rawData } = req.body;
@@ -330,21 +342,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const orderEntryData = [headers];
       
-      // Add receptacle data based on lookup results
+      // Add receptacle data based on lookup results with comma-delimited parsing
       let lineNumber = 1;
       receptacles.forEach((receptacle: any) => {
+        // Parse comma-delimited pattern if present
+        const parsedPattern = parseReceptaclePattern(receptacle.type);
+        
         receptacle.matches.forEach((match: any) => {
           if (match.sourceRow) {
-            // Use actual data from MasterBubbleUpLookup
+            // Use actual data from MasterBubbleUpLookup with comma-delimited overrides
             const specs = match.sourceRow.specifications || {};
             orderEntryData.push([
               (lineNumber++).toString(),
               '1', // Each row is 1 unit (user input count handled by creating multiple rows)
-              specs['Choose receptacle'] || receptacle.type,
-              specs['Select Cable/Conduit Type'] || 'MCC',
-              specs['Whip Length (ft)'] || '250',
-              specs['Tail Length (ft)'] || '10',
-              specs['Label Color (Background/Text)'] || 'Black (conduit)',
+              parsedPattern.receptacle || specs['Choose receptacle'] || receptacle.type,
+              parsedPattern.cableConduitType || specs['Select Cable/Conduit Type'] || 'MCC',
+              parsedPattern.whipLength || specs['Whip Length (ft)'] || '250',
+              parsedPattern.tailLength || specs['Tail Length (ft)'] || '10',
+              parsedPattern.labelColor || specs['Label Color (Background/Text)'] || 'Black (conduit)',
               specs['building'] || '',
               specs['PDU'] || '',
               specs['Panel'] || '',
@@ -389,15 +404,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
               specs['Breaker options'] || specs['Breaker options'] || '3 Pole, 60A, 240/120V, Bolt in, 22KA, Square D, QOB360VH'
             ]);
           } else {
-            // Create default row for unmatched patterns with asterisk marking  
+            // Create default row for unmatched patterns with comma-delimited parsing
+            const parsedPattern = parseReceptaclePattern(receptacle.type);
             orderEntryData.push([
               (lineNumber++).toString(),
               '1',
-              `*${receptacle.type}`, // Asterisk marking for unfound patterns
-              'MCC',
-              '250',
-              '10',
-              'Black (conduit)',
+              parsedPattern.receptacle || `*${receptacle.type}`, // Use parsed or mark as unfound
+              parsedPattern.cableConduitType || 'MCC',
+              parsedPattern.whipLength || '250',
+              parsedPattern.tailLength || '10',
+              parsedPattern.labelColor || 'Black (conduit)',
               '', '', '', '1', '3', '5', '', '', '', '', '3/4', '6', '8', '208',
               'Standard Power Whip Box',
               '--------', '--------', '--------', '--------', '------->',
@@ -710,6 +726,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const workbook = XLSX.readFile(filePath);
       
       const results = inputPatterns.map((pattern: string) => {
+        // Parse comma-delimited pattern for enhanced processing
+        const parsedPattern = parseReceptaclePattern(pattern);
+        const searchPattern = parsedPattern.receptacle || pattern; // Use receptacle part for matching
+        
         const matchedRows: any[] = [];
         const generatedExpressions: any[] = [];
         
@@ -720,7 +740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           (jsonData as any[][]).forEach((row: any[], rowIdx) => {
             const matchIndex = row.findIndex(cell => 
-              cell && cell.toString().toUpperCase().includes(pattern.toUpperCase())
+              cell && cell.toString().toUpperCase().includes(searchPattern.toUpperCase())
             );
             
             if (matchIndex !== -1) {
@@ -731,8 +751,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 header: (jsonData as any[][])[0]?.[colIdx] || `Column_${colIdx}`
               }));
               
-              // Generate automated expressions based on the row
-              const expressions = generateRowExpressions(pattern, rowData, sheetName);
+              // Generate automated expressions based on the row with parsed pattern data
+              const expressions = generateRowExpressions(pattern, rowData, sheetName, parsedPattern);
               
               matchedRows.push({
                 sheetName,
@@ -748,11 +768,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         return {
           inputPattern: pattern,
+          parsedPattern: parsedPattern,
           matchCount: matchedRows.length,
           foundInSheets: [...new Set(matchedRows.map(r => r.sheetName))],
           matchedRows: matchedRows.slice(0, 5), // Limit for performance
           generatedExpressions,
-          autoFillData: generateAutoFillRow(pattern, matchedRows[0])
+          autoFillData: generateAutoFillRowWithParsedPattern(pattern, matchedRows[0], parsedPattern)
         };
       });
       
@@ -763,9 +784,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Helper function to generate row expressions
-  function generateRowExpressions(pattern: string, rowData: any[], sheetName: string) {
+  // Helper function to generate row expressions with comma-delimited support
+  function generateRowExpressions(pattern: string, rowData: any[], sheetName: string, parsedPattern?: any) {
     const expressions = [];
+    
+    // Use parsed pattern data if available
+    const receptacle = parsedPattern?.receptacle || pattern;
+    const cableType = parsedPattern?.cableConduitType;
+    const whipLength = parsedPattern?.whipLength;
+    const tailLength = parsedPattern?.tailLength;
+    const labelColor = parsedPattern?.labelColor;
     
     // Generate part number expression
     const partNumberExpr = `PW250K-${pattern}T-D${Date.now().toString().slice(-4)}SAL1234`;
@@ -802,7 +830,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return expressions;
   }
 
-  // Helper function to generate auto-fill row data
+  // Helper function to generate auto-fill row data with comma-delimited support
+  function generateAutoFillRowWithParsedPattern(pattern: string, matchedRow: any, parsedPattern?: any) {
+    // Use parsed pattern data if available, otherwise use defaults
+    const baseData = {
+      receptacle: parsedPattern?.receptacle || pattern,
+      cableType: parsedPattern?.cableConduitType || 'MCC',
+      whipLength: parsedPattern?.whipLength || '250',
+      tailLength: parsedPattern?.tailLength || '10',
+      conduitSize: '3/4',
+      conductorAWG: '6',
+      voltage: '208',
+      labelColor: parsedPattern?.labelColor || 'Black (conduit)'
+    };
+    
+    if (!matchedRow) {
+      return {
+        ...baseData,
+        error: parsedPattern?.receptacle ? 
+          `Pattern "${parsedPattern.receptacle}" not found in ConfiguratorModelDatasetEPW, using comma-delimited values` :
+          'No matching row found in ConfiguratorModelDatasetEPW'
+      };
+    }
+    
+    // Extract relevant data from matched row, with parsed pattern overrides
+    const rowData = matchedRow.data;
+    return {
+      receptacle: parsedPattern?.receptacle || pattern,
+      cableType: parsedPattern?.cableConduitType || findValueByHeader(rowData, ['cable', 'conduit', 'type']) || 'MCC',
+      whipLength: parsedPattern?.whipLength || findValueByHeader(rowData, ['whip', 'length', 'feet']) || '250',
+      tailLength: parsedPattern?.tailLength || findValueByHeader(rowData, ['tail', 'length']) || '10',
+      labelColor: parsedPattern?.labelColor || findValueByHeader(rowData, ['label', 'color']) || 'Black (conduit)',
+      conduitSize: findValueByHeader(rowData, ['conduit', 'size']) || '3/4',
+      conductorAWG: findValueByHeader(rowData, ['conductor', 'awg', 'wire']) || '6',
+      greenAWG: findValueByHeader(rowData, ['green', 'ground']) || '8', 
+      voltage: findValueByHeader(rowData, ['voltage', 'volt']) || '208',
+      sourceSheet: matchedRow.sheetName,
+      sourceRow: matchedRow.rowIndex
+    };
+  }
+
+  // Helper function to generate auto-fill row data (original function)
   function generateAutoFillRow(pattern: string, matchedRow: any) {
     if (!matchedRow) {
       return {

@@ -362,18 +362,49 @@ CS8369`);
         {/* Input Patterns Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Input Receptacle Patterns</CardTitle>
+            <CardTitle>Excel Master Bubble Format Transformer</CardTitle>
             <p className="text-sm text-technical-600 dark:text-technical-400">
-              Enter receptacle IDs to find matching configuration data and generate automated row expressions
+              Transform receptacle patterns into Master Bubble Order Entry format with comma-delimited cell entry replacements
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Textarea
-              value={inputPatterns}
-              onChange={(e) => setInputPatterns(e.target.value)}
-              className="min-h-[200px] font-mono text-sm"
-              placeholder="Enter receptacle patterns (one per line)..."
-            />
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Receptacle Pattern Lookup
+              </label>
+              <p className="text-xs text-technical-600 dark:text-technical-400 mb-3">
+                Enter receptacle patterns to lookup in MasterBubbleUpLookup data (one per line)
+                <br />
+                <strong>Enhanced Format:</strong> Use comma-delimited entries to auto-fill specific columns:
+                <br />
+                <code className="bg-technical-100 dark:bg-technical-800 px-1 rounded text-xs">
+                  Pattern, Cable/Conduit, Whip Length, Tail Length, Label Color
+                </code>
+                <br />
+                <span className="text-green-600 dark:text-green-400 font-medium">Examples:</span>
+                <br />
+                • <code className="text-xs bg-green-50 dark:bg-green-900/20 px-1 rounded">460C9W, FMC, 115, 10</code> - Auto-fills cable type and lengths
+                <br />
+                • <code className="text-xs bg-green-50 dark:bg-green-900/20 px-1 rounded">CS8264C, LMZC, 26, 8, Purple</code> - Includes label color
+              </p>
+              <Textarea
+                value={inputPatterns}
+                onChange={(e) => setInputPatterns(e.target.value)}
+                className="min-h-[200px] font-mono text-sm"
+                placeholder={`Enter patterns (one per line):
+460C9W, FMC, 115, 10
+460R9W, LFMC, 25, 8
+560C9W, MMC, 20, 10
+L5-20R, TO, 14, 15
+L5-30R, SO, 52, 10
+L6-15R, LMZC, 22, 10, Purple
+CS8264C, LMZC, 26, 8, Tan
+CS8269A, LMZC, 35, 10, Pink
+CS8369A, FMC, 12, 8, Gray
+9C54U2, FMC, 15, 10, Green
+CS8369, FMC, 15, 10, Yellow`}
+              />
+            </div>
             
             <Button 
               onClick={processWithConfigurator} 
