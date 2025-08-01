@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, RefreshCw, Download } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2, RefreshCw, Download, Upload, FileSpreadsheet } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import ExcelLikeInterface from './ExcelLikeInterface';
 
 interface ConfiguratorAnalysis {
   sheetNames: string[];
@@ -25,6 +28,12 @@ interface ConfiguratorDatasetAnalyzerProps {
 export default function ConfiguratorDatasetAnalyzer({ onToggleView }: ConfiguratorDatasetAnalyzerProps) {
   const [analysis, setAnalysis] = useState<ConfiguratorAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadedFileId, setUploadedFileId] = useState<string | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [currentView, setCurrentView] = useState<'analysis' | 'excel'>('analysis');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
   const [inputPatterns, setInputPatterns] = useState(`460C9W
 460R9W
 560C9W
@@ -49,13 +58,76 @@ CS8369`);
   const analyzeDataset = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/excel/analyze-configurator');
-      const data = await response.json();
-      setAnalysis(data);
+      const endpoint = uploadedFileId 
+        ? `/api/excel/uploaded/${uploadedFileId}`
+        : '/api/excel/analyze-configurator';
+      
+      const response = await fetch(endpoint);
+      if (response.ok) {
+        const data = await response.json();
+        setAnalysis(data.analysis || data);
+      }
     } catch (error) {
-      console.error('Error analyzing dataset:', error);
+      console.error('Analysis failed:', error);
+      toast({
+        title: "Analysis Failed",
+        description: "Failed to analyze the Excel file",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload an Excel file (.xlsx or .xls)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('excelFile', file);
+
+    try {
+      const response = await fetch('/api/excel/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUploadedFileId(data.fileId);
+        setUploadedFileName(data.originalName);
+        setAnalysis(data.analysis);
+        setCurrentView('excel');
+        
+        toast({
+          title: "File Uploaded Successfully",
+          description: `${data.originalName} is ready for editing`,
+        });
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload the Excel file",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -96,21 +168,70 @@ CS8369`);
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-technical-900 dark:text-technical-100">
-              ConfiguratorModelDatasetEPW Analyzer
+              {uploadedFileName ? `Excel Editor: ${uploadedFileName}` : 'ConfiguratorModelDatasetEPW Analyzer'}
             </h2>
             <p className="text-sm text-technical-600 dark:text-technical-400 mt-1">
-              Analyze and process receptacle patterns using the ConfiguratorModelDatasetEPW with automated row expressions
+              {uploadedFileName 
+                ? 'Full Excel editing with functions, expressions, sheets, and VB script capabilities'
+                : 'Analyze and process receptacle patterns using the ConfiguratorModelDatasetEPW with automated row expressions'
+              }
             </p>
           </div>
-          <Button onClick={onToggleView} variant="outline">
-            Back to Design Canvas
-          </Button>
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Button 
+              onClick={() => fileInputRef.current?.click()} 
+              variant="outline" 
+              size="sm"
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Upload className="w-4 h-4 mr-2" />
+              )}
+              {isUploading ? 'Uploading...' : 'Upload Excel'}
+            </Button>
+            {uploadedFileName && (
+              <Button
+                onClick={() => setCurrentView(currentView === 'analysis' ? 'excel' : 'analysis')}
+                variant="outline"
+                size="sm"
+              >
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                {currentView === 'analysis' ? 'Excel Editor' : 'Data Analysis'}
+              </Button>
+            )}
+            <Button onClick={onToggleView} variant="outline">
+              Back to Design Canvas
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto p-6 space-y-6">
         
+        {/* Show Excel Editor when file is uploaded and view is set to excel */}
+        {uploadedFileName && currentView === 'excel' && (
+          <div className="h-full">
+            <ExcelLikeInterface 
+              onToggleView={() => setCurrentView('analysis')}
+              uploadedFileId={uploadedFileId}
+              fileName={uploadedFileName}
+            />
+          </div>
+        )}
+        
+        {/* Show Analysis view when no file uploaded or view is set to analysis */}
+        {(!uploadedFileName || currentView === 'analysis') && (
+          <>
         {/* Analysis Section */}
         <Card>
           <CardHeader>
@@ -299,6 +420,8 @@ CS8369`);
               </div>
             </CardContent>
           </Card>
+        )}
+          </>
         )}
       </div>
     </div>

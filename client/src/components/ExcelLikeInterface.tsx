@@ -51,6 +51,8 @@ function FormulaCell({ formula, cellRef }: { formula: string; cellRef: string })
 
 interface ExcelLikeInterfaceProps {
   onToggleView?: () => void;
+  uploadedFileId?: string | null;
+  fileName?: string;
 }
 
 interface CellData {
@@ -73,7 +75,7 @@ interface WorksheetData {
   headers: string[];
 }
 
-export default function ExcelLikeInterface({ onToggleView }: ExcelLikeInterfaceProps) {
+export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileName }: ExcelLikeInterfaceProps) {
   const [sheets, setSheets] = useState<WorksheetData[]>([]);
   const [activeSheet, setActiveSheet] = useState(0);
   const [selectedCell, setSelectedCell] = useState<string>('A1');
@@ -93,13 +95,18 @@ export default function ExcelLikeInterface({ onToggleView }: ExcelLikeInterfaceP
   const loadConfiguratorData = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/excel/analyze-configurator');
+      const endpoint = uploadedFileId 
+        ? `/api/excel/uploaded/${uploadedFileId}`
+        : '/api/excel/analyze-configurator';
+      
+      const response = await fetch(endpoint);
       if (response.ok) {
         const data = await response.json();
+        const analysisData = data.analysis || data;
         
         // Convert analysis data to Excel-like sheet structure
-        const convertedSheets: WorksheetData[] = data.sheetNames.map((sheetName: string, idx: number) => {
-          const sheetData = data.sheets[sheetName];
+        const convertedSheets: WorksheetData[] = analysisData.sheetNames.map((sheetName: string, idx: number) => {
+          const sheetData = analysisData.sheets[sheetName];
           const worksheet: WorksheetData = {
             name: sheetName,
             rows: Math.max(sheetData.rowCount, 50),

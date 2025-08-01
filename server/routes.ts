@@ -7,6 +7,7 @@ import { parseExcelFile, extractComponentData, analyzeExcelStructure, generateBO
 import * as path from "path";
 import { fileURLToPath } from 'url';
 import multer from "multer";
+import * as XLSX from 'xlsx';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,9 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 200 * 1024 * 1024 } // 200MB limit
 });
+
+// Store uploaded files in memory for processing
+const uploadedFiles = new Map<string, { buffer: Buffer; originalName: string; uploadedAt: Date; workbook: any }>();
 
 // Enhanced categorization functions for drag and drop components
 function determineDragType(component: any): string {
@@ -441,6 +445,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload Excel file for analysis and editing
+  app.post('/api/excel/upload', upload.single('excelFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const fileId = Date.now().toString();
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      
+      uploadedFiles.set(fileId, {
+        buffer: req.file.buffer,
+        originalName: req.file.originalname,
+        uploadedAt: new Date(),
+        workbook
+      });
+
+      // Analyze the uploaded file
+      const analysis = analyzeWorkbook(workbook);
+
+      res.json({
+        fileId,
+        originalName: req.file.originalname,
+        analysis
+      });
+    } catch (error) {
+      console.error('File upload error:', error);
+      res.status(500).json({ error: 'Failed to upload and analyze file' });
+    }
+  });
+
+  // Get analysis of uploaded file by ID
+  app.get('/api/excel/uploaded/:fileId', async (req, res) => {
+    try {
+      const { fileId } = req.params;
+      const fileData = uploadedFiles.get(fileId);
+      
+      if (!fileData) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+
+      const analysis = analyzeWorkbook(fileData.workbook);
+      
+      res.json({
+        fileId,
+        originalName: fileData.originalName,
+        uploadedAt: fileData.uploadedAt,
+        analysis
+      });
+    } catch (error) {
+      console.error('File analysis error:', error);
+      res.status(500).json({ error: 'Failed to analyze uploaded file' });
+    }
+  });
+
+  // Update cell data in uploaded file
+  app.post('/api/excel/uploaded/:fileId/update-cell', async (req, res) => {
+    try {
+      const { fileId } = req.params;
+      const { sheetName, cellRef, value, formula } = req.body;
+      
+      const fileData = uploadedFiles.get(fileId);
+      if (!fileData) {
+        return res.status(404).json({ error: 'File not found' });
+      }
+
+      const worksheet = fileData.workbook.Sheets[sheetName];
+      if (!worksheet) {
+        return res.status(404).json({ error: 'Sheet not found' });
+      }
+
+      // Update the cell
+      if (formula) {
+        worksheet[cellRef] = { f: formula, v: value };
+      } else {
+        worksheet[cellRef] = { v: value };
+      }
+
+      res.json({ success: true, cellRef, value, formula });
+    } catch (error) {
+      console.error('Cell update error:', error);
+      res.status(500).json({ error: 'Failed to update cell' });
+    }
+  });
+
   // Analyze ConfiguratorModelDatasetEPW structure with detailed enum/dropdown detection
   app.get('/api/excel/analyze-configurator', async (req, res) => {
     try {
@@ -750,6 +839,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'VB script execution failed' });
     }
   });
+
+  // Helper function to analyze workbook structure
+  function analyzeWorkbook(workbook: any) {
+    const sheetNames = workbook.SheetNames;
+    const sheets: any = {};
+    const receptacleInputCells: string[] = [];
+    const expressionPatterns: string[] = [];
+    const enumDropdowns: any = {};
+
+    sheetNames.forEach((sheetName: string) => {
+      const worksheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+      const headers = data[0] as string[];
+      
+      sheets[sheetName] = {
+        rowCount: data.length,
+        columnCount: headers.length,
+        headers: headers || [],
+        sampleData: data.slice(1, 6) // First 5 data rows
+      };
+
+      // Look for input patterns and expressions
+      data.forEach((row: any[], rowIndex: number) => {
+        row.forEach((cell: any, colIndex: number) => {
+          const cellValue = cell?.toString() || '';
+          
+          // Detect receptacle patterns
+          if (cellValue.match(/^\d{3}C\d+W$/)) {
+            receptacleInputCells.push(`${sheetName}!${XLSX.utils.encode_cell({r: rowIndex, c: colIndex})}`);
+          }
+          
+          // Detect expression patterns
+          if (cellValue.includes('EXPRESSION_') || cellValue.includes('=${')) {
+            expressionPatterns.push(cellValue);
+          }
+        });
+      });
+    });
+
+    return {
+      sheetNames,
+      sheets,
+      receptacleInputCells,
+      expressionPatterns,
+      enumDropdowns
+    };
+  }
 
   // Helper function for pattern processing
   async function processConfiguratorPattern(pattern: string) {
