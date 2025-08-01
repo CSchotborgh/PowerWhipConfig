@@ -450,15 +450,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return patterns;
   };
 
-  // Helper function to parse comma-delimited patterns
+  // Helper function to parse comma-delimited patterns with quantity support
   const parseReceptaclePattern = (pattern: string) => {
-    const parts = pattern.split(',').map(p => p.trim());
+    // Check for exclamation mark delimiter for quantity
+    const [patternPart, quantityPart] = pattern.split('!').map(p => p.trim());
+    const quantity = quantityPart ? parseInt(quantityPart) : 1;
+    
+    const parts = patternPart.split(',').map(p => p.trim());
+    
     return {
       receptacle: parts[0] || '',
       cableConduitType: parts[1] || '',
       whipLength: parts[2] || '',
       tailLength: parts[3] || '',
-      labelColor: parts[4] || ''
+      labelColor: parts[4] || '',
+      quantity: quantity > 0 ? quantity : 1,
+      hasQuantity: !!quantityPart
     };
   };
 
@@ -507,6 +514,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ]);
           });
           return; // Skip normal processing for natural language patterns
+        }
+        
+        // Handle quantity-based patterns with ! delimiter
+        if (receptacle.isQuantityBased && receptacle.generatedPatterns) {
+          receptacle.generatedPatterns.forEach((generatedPattern: string) => {
+            const parsedPattern = parseReceptaclePattern(generatedPattern);
+            orderEntryData.push([
+              (lineNumber++).toString(),
+              '1', // Each row is 1 unit
+              parsedPattern.receptacle,
+              parsedPattern.cableConduitType,
+              parsedPattern.whipLength,
+              parsedPattern.tailLength,
+              parsedPattern.labelColor,
+              '', '', '', '1', '', '', '', '', '', '', '3/4', '6', '8', '208', 
+              '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 
+              '', '', '', '3 phase', '5', 'yes', '60', '208', '', '', '60AH', '', 
+              '3 Pole, 60A, 240/120V, Bolt in, 22KA, Square D, QOB360VH'
+            ]);
+          });
+          return; // Skip normal processing for quantity-based patterns
         }
         
         // Parse comma-delimited pattern if present
@@ -894,6 +922,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const isNaturalLanguage = pattern.toLowerCase().includes('power whips total') || 
                                   pattern.toLowerCase().includes('whip lengths ranging') ||
                                   pattern.toLowerCase().includes('liquid tight conduit');
+        
+        // Check if this is a quantity-based pattern with ! delimiter
+        const hasQuantityDelimiter = pattern.includes('!');
+        
+        if (hasQuantityDelimiter) {
+          // Process as quantity-based pattern
+          const parsedPattern = parseReceptaclePattern(pattern);
+          const generatedPatterns = [];
+          
+          // Generate the specified quantity of this pattern
+          const basePattern = `${parsedPattern.receptacle}, ${parsedPattern.cableConduitType}, ${parsedPattern.whipLength}, ${parsedPattern.tailLength}, ${parsedPattern.labelColor}`;
+          for (let i = 0; i < parsedPattern.quantity; i++) {
+            generatedPatterns.push(basePattern);
+          }
+          
+          return {
+            inputPattern: pattern,
+            isQuantityBased: true,
+            parsedPattern: parsedPattern,
+            generatedPatterns: generatedPatterns,
+            totalGeneratedRows: generatedPatterns.length,
+            quantitySpecified: parsedPattern.quantity
+          };
+        }
         
         if (isNaturalLanguage) {
           // Process as natural language specification
