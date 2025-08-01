@@ -500,7 +500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           receptacle.generatedPatterns.forEach((generatedPattern: string) => {
             const parsedPattern = parseReceptaclePattern(generatedPattern);
             orderEntryData.push([
-              (lineNumber++).toString(),
+              lineNumber.toString(), // Use current line number
               '1', // Each row is 1 unit
               parsedPattern.receptacle,
               parsedPattern.cableConduitType,
@@ -512,6 +512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               '', '', '', '3 phase', '5', 'yes', '60', '208', '', '', '60AH', '', 
               '3 Pole, 60A, 240/120V, Bolt in, 22KA, Square D, QOB360VH'
             ]);
+            lineNumber++; // Increment line number after each row
           });
           return; // Skip normal processing for natural language patterns
         }
@@ -521,7 +522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           receptacle.generatedPatterns.forEach((generatedPattern: string) => {
             const parsedPattern = parseReceptaclePattern(generatedPattern);
             orderEntryData.push([
-              (lineNumber++).toString(),
+              lineNumber.toString(), // Use current line number
               '1', // Each row is 1 unit
               parsedPattern.receptacle,
               parsedPattern.cableConduitType,
@@ -533,6 +534,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               '', '', '', '3 phase', '5', 'yes', '60', '208', '', '', '60AH', '', 
               '3 Pole, 60A, 240/120V, Bolt in, 22KA, Square D, QOB360VH'
             ]);
+            lineNumber++; // Increment line number after each row
           });
           return; // Skip normal processing for quantity-based patterns
         }
