@@ -158,11 +158,74 @@ CS8369`);
       if (response.ok) {
         const data = await response.json();
         setProcessedResults(data.results);
+        
+        toast({
+          title: "Processing Complete",
+          description: `Processed ${data.processedCount} patterns successfully`,
+        });
       } else {
-        console.error('Failed to process with configurator');
+        throw new Error('Processing failed');
       }
     } catch (error) {
       console.error('Error processing with configurator:', error);
+      toast({
+        title: "Processing Failed",
+        description: "Failed to process patterns with ConfiguratorDataset",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const exportToMasterBubble = async () => {
+    if (!processedResults) return;
+    
+    setIsLoading(true);
+    try {
+      // Convert processed results to the expected format for export
+      const receptacles = processedResults.map((result: any) => ({
+        type: result.inputPattern,
+        generatedPatterns: result.generatedPatterns || [result.inputPattern],
+        isQuantityBased: result.isQuantityBased,
+        totalRows: result.totalGeneratedRows || 1
+      }));
+
+      const response = await fetch('/api/excel/export-master-bubble', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          receptacles: receptacles,
+          rawData: processedResults
+        })
+      });
+
+      if (response.ok) {
+        // Get the blob and create download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'MasterBubbleTransformed.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        toast({
+          title: "Export Successful",
+          description: "Master Bubble format file downloaded successfully",
+        });
+      } else {
+        throw new Error('Export failed');
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export to Master Bubble format",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -449,7 +512,17 @@ Purple, Tan, Pink, Gray, Green`}
         {processedResults && (
           <Card>
             <CardHeader>
-              <CardTitle>Processing Results</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                Processing Results
+                <Button 
+                  onClick={exportToMasterBubble}
+                  disabled={isLoading}
+                  className="flex items-center gap-2"
+                >
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                  Export to Master Bubble Format
+                </Button>
+              </CardTitle>
               <p className="text-sm text-technical-600 dark:text-technical-400">
                 Pattern matching results from ConfiguratorModelDatasetEPW
               </p>

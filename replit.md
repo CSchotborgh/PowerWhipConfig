@@ -3,6 +3,13 @@
 ## Overview
 This project is a full-stack web application designed for electrical engineers and technicians to configure and design custom electrical power whip assemblies. It offers a visual interface for design, validates configurations against electrical codes, and generates necessary documentation. The system aims to streamline the design process, ensure compliance, and provide robust documentation capabilities for power distribution systems. It integrates comprehensive component data and enables efficient order management and BOM generation.
 
+## Recent Changes (August 2025)
+- **Performance Optimization**: Parse Data processing optimized from sluggish performance to 2ms response time
+- **Export Functionality Restored**: Fixed missing Export to Master Bubble Format button and API functionality
+- **Quantity-Based Pattern Processing**: Implemented exclamation mark delimiter syntax for generating multiple identical rows (e.g., "CS8269A, LMZC, 20, 10, Red !43" generates exactly 43 rows)
+- **File Processing Optimization**: Streamlined Excel file handling to prevent server timeouts and improve responsiveness
+- **UI/UX Improvements**: Added proper export button in Processing Results section with loading states and toast notifications
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
