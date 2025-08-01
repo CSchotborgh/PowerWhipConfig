@@ -189,6 +189,36 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
     setSheets(updatedSheets);
   };
 
+  // Handle multi-cell paste from Excel/other spreadsheets
+  const handleMultiCellPaste = (startCell: string, pastedData: string) => {
+    const rows = pastedData.split('\n').filter(row => row.trim());
+    const startPos = parseCellReference(startCell);
+    
+    const updatedSheets = [...sheets];
+    const sheet = updatedSheets[activeSheet];
+    
+    if (sheet) {
+      rows.forEach((row, rowOffset) => {
+        const cells = row.split('\t');
+        cells.forEach((cellValue, colOffset) => {
+          const newRow = startPos.row + rowOffset;
+          const newCol = startPos.col + colOffset;
+          
+          if (newRow < sheet.rows && newCol < sheet.cols) {
+            const cellAddress = getCellReference(newRow, newCol);
+            sheet.cells[cellAddress] = {
+              value: cellValue.trim(),
+              type: isNaN(Number(cellValue.trim())) ? 'text' : 'number',
+              style: sheet.cells[cellAddress]?.style
+            };
+          }
+        });
+      });
+      
+      setSheets(updatedSheets);
+    }
+  };
+
   const executeFormula = async (formula: string, cellRef: string): Promise<string> => {
     try {
       if (formula.startsWith('=')) {
@@ -278,17 +308,63 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
     }
   };
 
+  const [editingCell, setEditingCell] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
+
+  const handleCellDoubleClick = (cellRef: string) => {
+    const cell = sheets[activeSheet]?.cells[cellRef];
+    if (cell?.type !== 'dropdown') {
+      setEditingCell(cellRef);
+      setEditValue(cell?.value || '');
+    }
+  };
+
+  const handleSaveEdit = () => {
+    if (editingCell) {
+      updateCell(editingCell, editValue);
+      setEditingCell(null);
+      setEditValue('');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCell(null);
+    setEditValue('');
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
+  };
+
+  const handleEditPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text');
+    
+    // Check if it's multi-cell data (from Excel)
+    if (pastedData.includes('\t') || pastedData.includes('\n')) {
+      handleMultiCellPaste(editingCell!, pastedData);
+      setEditingCell(null);
+    } else {
+      setEditValue(pastedData);
+    }
+  };
+
   const renderCell = (row: number, col: number) => {
     const cellRef = getCellReference(row, col);
     const cell = sheets[activeSheet]?.cells[cellRef];
     const isSelected = selectedCell === cellRef;
     const isHeader = row === 0;
+    const isEditing = editingCell === cellRef;
     
     return (
       <div
-        key={cellRef}
+        key={`${activeSheet}-${cellRef}`}
         className={cn(
-          "border border-technical-200 dark:border-technical-600 p-1 min-w-24 h-8 text-xs cursor-pointer",
+          "border border-technical-200 dark:border-technical-600 p-1 min-w-24 h-8 text-xs cursor-pointer relative",
           "hover:bg-technical-50 dark:hover:bg-technical-800",
           isSelected && "bg-blue-100 dark:bg-blue-900/30 border-blue-500",
           isHeader && "bg-technical-100 dark:bg-technical-700 font-medium",
@@ -304,13 +380,20 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
           setSelectedCell(cellRef);
           setFormulaBar(cell?.formula || cell?.value || '');
         }}
-        onDoubleClick={() => {
-          if (cell?.type === 'dropdown') {
-            // Handle dropdown interaction
-          }
-        }}
+        onDoubleClick={() => handleCellDoubleClick(cellRef)}
       >
-        {cell?.type === 'dropdown' ? (
+        {isEditing ? (
+          <input
+            type="text"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={handleSaveEdit}
+            onKeyDown={handleEditKeyDown}
+            onPaste={handleEditPaste}
+            className="w-full h-full px-1 text-xs border-none outline-none bg-white dark:bg-technical-800 text-technical-900 dark:text-technical-100"
+            autoFocus
+          />
+        ) : cell?.type === 'dropdown' ? (
           <Select
             value={cell.value}
             onValueChange={(value) => updateCell(cellRef, value)}
@@ -404,9 +487,23 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
                 }
               }
             }}
-            placeholder="Enter formula or value..."
+            onPaste={(e) => {
+              e.preventDefault();
+              const pastedData = e.clipboardData.getData('text');
+              
+              // Check if it's multi-cell data (from Excel)
+              if (pastedData.includes('\t') || pastedData.includes('\n')) {
+                handleMultiCellPaste(selectedCell, pastedData);
+              } else {
+                setFormulaBar(pastedData);
+              }
+            }}
+            placeholder="Enter formula, value, or paste from Excel..."
             className="flex-1"
           />
+          <div className="text-xs text-technical-600 dark:text-technical-400">
+            💡 Double-click cells to edit, Ctrl+V to paste from Excel
+          </div>
         </div>
         
         {/* Sheet Tabs */}
@@ -467,6 +564,25 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
                   }}>
                     Insert Sample Formula
                   </Button>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Copy & Paste Features</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="text-xs space-y-1">
+                    <div><strong>Direct Editing:</strong></div>
+                    <div>• Double-click any cell to edit</div>
+                    <div>• Type directly into cells</div>
+                    <div>• Enter to save, Escape to cancel</div>
+                    <div><strong>Paste Support:</strong></div>
+                    <div>• Copy from Excel/Google Sheets</div>
+                    <div>• Paste multi-cell ranges (Ctrl+V)</div>
+                    <div>• Tab-separated data support</div>
+                    <div>• Automatic cell range expansion</div>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
