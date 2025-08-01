@@ -444,7 +444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Analyze ConfiguratorModelDatasetEPW structure with detailed enum/dropdown detection
   app.get('/api/excel/analyze-configurator', async (req, res) => {
     try {
-      const filePath = './attached_assets/ConfiguratorModelDatasetEPW_1754005314009.xlsx';
+      const filePath = './attached_assets/ConfiguratorModelDatasetEPW_1754006250837.xlsx';
       const workbook = XLSX.readFile(filePath);
       
       const analysis = {
@@ -544,7 +544,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/excel/process-configurator', async (req, res) => {
     try {
       const { inputPatterns } = req.body;
-      const filePath = './attached_assets/ConfiguratorModelDatasetEPW_1754005314009.xlsx';
+      const filePath = './attached_assets/ConfiguratorModelDatasetEPW_1754006250837.xlsx';
       const workbook = XLSX.readFile(filePath);
       
       const results = inputPatterns.map((pattern: string) => {
@@ -754,7 +754,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Helper function for pattern processing
   async function processConfiguratorPattern(pattern: string) {
     try {
-      const filePath = './attached_assets/ConfiguratorModelDatasetEPW_1754005314009.xlsx';
+      const filePath = './attached_assets/ConfiguratorModelDatasetEPW_1754006250837.xlsx';
       const workbook = XLSX.readFile(filePath);
       
       let matchFound = false;

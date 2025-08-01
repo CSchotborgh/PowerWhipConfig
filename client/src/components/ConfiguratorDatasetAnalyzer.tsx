@@ -126,38 +126,38 @@ CS8369`);
             {analysis ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-4 flex-wrap">
-                  <Badge variant="outline">{analysis.sheetNames.length} Sheets</Badge>
+                  <Badge variant="outline">{analysis.sheetNames?.length || 0} Sheets</Badge>
                   <Badge variant="secondary">
-                    {Object.values(analysis.sheets).reduce((total, sheet) => total + sheet.rowCount, 0)} Total Rows
+                    {Object.values(analysis.sheets || {}).reduce((total, sheet) => total + sheet.rowCount, 0)} Total Rows
                   </Badge>
-                  <Badge variant="default">{analysis.receptacleInputCells.length} Input Cells</Badge>
-                  <Badge variant="outline">{analysis.expressionPatterns.length} Expressions</Badge>
-                  <Badge variant="secondary">{Object.keys(analysis.enumDropdowns).length} Enum Columns</Badge>
+                  <Badge variant="default">{analysis.receptacleInputCells?.length || 0} Input Cells</Badge>
+                  <Badge variant="outline">{analysis.expressionPatterns?.length || 0} Expressions</Badge>
+                  <Badge variant="secondary">{Object.keys(analysis.enumDropdowns || {}).length} Enum Columns</Badge>
                 </div>
                 
-                <Tabs defaultValue={analysis.sheetNames[0]} className="w-full">
+                <Tabs defaultValue={analysis.sheetNames?.[0]} className="w-full">
                   <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
-                    {analysis.sheetNames.slice(0, 6).map(sheetName => (
+                    {(analysis.sheetNames || []).slice(0, 6).map(sheetName => (
                       <TabsTrigger key={sheetName} value={sheetName} className="text-xs">
                         {sheetName.substring(0, 8)}...
                       </TabsTrigger>
                     ))}
                   </TabsList>
                   
-                  {analysis.sheetNames.map(sheetName => (
+                  {(analysis.sheetNames || []).map(sheetName => (
                     <TabsContent key={sheetName} value={sheetName} className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <h4 className="font-medium mb-2">Sheet Info</h4>
                           <div className="text-sm space-y-1">
-                            <div>Rows: {analysis.sheets[sheetName].rowCount}</div>
-                            <div>Columns: {analysis.sheets[sheetName].columnCount}</div>
+                            <div>Rows: {analysis.sheets?.[sheetName]?.rowCount || 0}</div>
+                            <div>Columns: {analysis.sheets?.[sheetName]?.columnCount || 0}</div>
                           </div>
                         </div>
                         <div>
                           <h4 className="font-medium mb-2">Headers</h4>
                           <div className="text-xs space-y-1 max-h-32 overflow-y-auto">
-                            {analysis.sheets[sheetName].headers.slice(0, 10).map((header, idx) => (
+                            {(analysis.sheets?.[sheetName]?.headers || []).slice(0, 10).map((header, idx) => (
                               <div key={idx} className="font-mono">{header}</div>
                             ))}
                           </div>
@@ -169,7 +169,7 @@ CS8369`);
                         <div className="overflow-x-auto">
                           <table className="w-full text-xs border border-technical-200 dark:border-technical-600">
                             <tbody>
-                              {analysis.sheets[sheetName].sampleData.slice(0, 5).map((row, rowIdx) => (
+                              {(analysis.sheets?.[sheetName]?.sampleData || []).slice(0, 5).map((row, rowIdx) => (
                                 <tr key={rowIdx} className="border-b border-technical-100 dark:border-technical-700">
                                   {row.slice(0, 6).map((cell, cellIdx) => (
                                     <td key={cellIdx} className="p-2 border-r border-technical-100 dark:border-technical-700">
