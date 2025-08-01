@@ -426,7 +426,7 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
       <div
         key={`${activeSheet}-${cellRef}`}
         className={cn(
-          "border border-technical-200 dark:border-technical-600 p-1 min-w-24 h-8 text-xs cursor-pointer relative",
+          "border-r border-b border-technical-200 dark:border-technical-600 p-1 w-24 h-8 text-xs cursor-pointer relative",
           "hover:bg-technical-50 dark:hover:bg-technical-800",
           isSelected && "bg-blue-100 dark:bg-blue-900/30 border-blue-500",
           isHeader && "bg-technical-100 dark:bg-technical-700 font-medium",
@@ -492,11 +492,36 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
     const cols = Array.from({ length: sheet.cols }, (_, i) => i);
     
     return (
-      <div className="overflow-auto border border-technical-200 dark:border-technical-600" ref={gridRef}>
-        <div className="grid" style={{ gridTemplateColumns: `repeat(${sheet.cols}, minmax(96px, 1fr))` }}>
-          {rows.map(row => 
-            cols.map(col => renderCell(row, col))
-          )}
+      <div className="border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-900 rounded-lg overflow-hidden">
+        {/* Column Headers */}
+        <div className="flex bg-technical-50 dark:bg-technical-800 border-b border-technical-200 dark:border-technical-600" style={{ minWidth: 'max-content' }}>
+          <div className="w-12 h-8 border-r border-technical-200 dark:border-technical-600 bg-technical-100 dark:bg-technical-700 flex-shrink-0"></div>
+          {cols.map(i => (
+            <div
+              key={i}
+              className="w-24 h-8 border-r border-technical-200 dark:border-technical-600 flex items-center justify-center text-xs font-medium bg-technical-50 dark:bg-technical-800 text-technical-700 dark:text-technical-300 flex-shrink-0"
+            >
+              {String.fromCharCode(65 + (i % 26))}
+            </div>
+          ))}
+        </div>
+        
+        {/* Grid Rows */}
+        <div style={{ minWidth: 'max-content' }}>
+          {rows.map(row => (
+            <div key={row} className="flex">
+              {/* Row Header */}
+              <div className="w-12 h-8 border-r border-b border-technical-200 dark:border-technical-600 bg-technical-100 dark:bg-technical-700 flex items-center justify-center text-xs font-medium text-technical-700 dark:text-technical-300 flex-shrink-0">
+                {row + 1}
+              </div>
+              {/* Row Cells */}
+              {cols.map(col => (
+                <div key={`${row}-${col}`} className="flex-shrink-0">
+                  {renderCell(row, col)}
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -604,14 +629,15 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
 
       <div className="flex-1 flex">
         {/* Main Grid */}
-        <div className="flex-1 p-4 overflow-auto">
+        <div className="flex-1 p-4 overflow-auto" style={{ scrollBehavior: 'smooth' }}>
           <div 
             ref={gridRef}
             style={{ 
               transform: `scale(${zoomLevel / 100})`,
               transformOrigin: 'top left',
-              minWidth: zoomLevel < 100 ? `${100 / (zoomLevel / 100)}%` : 'auto',
-              minHeight: zoomLevel < 100 ? `${100 / (zoomLevel / 100)}%` : 'auto'
+              minWidth: zoomLevel < 100 ? `${100 / (zoomLevel / 100)}%` : 'max-content',
+              minHeight: zoomLevel < 100 ? `${100 / (zoomLevel / 100)}%` : 'auto',
+              width: 'max-content'
             }}
           >
             {renderGrid()}
