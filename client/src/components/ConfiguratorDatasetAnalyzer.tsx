@@ -107,7 +107,6 @@ CS8369`);
         setUploadedFileId(data.fileId);
         setUploadedFileName(data.originalName);
         setAnalysis(data.analysis);
-        setCurrentView('excel');
         
         toast({
           title: "File Uploaded Successfully",
@@ -132,8 +131,11 @@ CS8369`);
   };
 
   useEffect(() => {
-    analyzeDataset();
-  }, []);
+    // Only analyze if no file is uploaded
+    if (!uploadedFileId) {
+      analyzeDataset();
+    }
+  }, [uploadedFileId]);
 
   const processWithConfigurator = async () => {
     if (!analysis) return;
@@ -200,12 +202,16 @@ CS8369`);
             </Button>
             {uploadedFileName && (
               <Button
-                onClick={() => setCurrentView(currentView === 'analysis' ? 'excel' : 'analysis')}
+                onClick={() => {
+                  setUploadedFileId(null);
+                  setUploadedFileName('');
+                  setCurrentView('analysis');
+                }}
                 variant="outline"
                 size="sm"
               >
                 <FileSpreadsheet className="w-4 h-4 mr-2" />
-                {currentView === 'analysis' ? 'Excel Editor' : 'Data Analysis'}
+                Close Excel File
               </Button>
             )}
             <Button onClick={onToggleView} variant="outline">
@@ -218,33 +224,112 @@ CS8369`);
       {/* Main Content */}
       <div className="flex-1 overflow-auto p-6 space-y-6">
         
-        {/* Show Excel Editor when file is uploaded and view is set to excel */}
-        {uploadedFileName && currentView === 'excel' && (
+        {/* Show Excel Editor when file is uploaded */}
+        {uploadedFileName && (
           <div className="h-full">
             <ExcelLikeInterface 
-              onToggleView={() => setCurrentView('analysis')}
+              onToggleView={() => {
+                setUploadedFileId(null);
+                setUploadedFileName('');
+                setCurrentView('analysis');
+              }}
               uploadedFileId={uploadedFileId}
               fileName={uploadedFileName}
             />
           </div>
         )}
         
-        {/* Show Analysis view when no file uploaded or view is set to analysis */}
-        {(!uploadedFileName || currentView === 'analysis') && (
+        {/* Show Analysis view when no file uploaded */}
+        {!uploadedFileName && (
           <>
-        {/* Analysis Section */}
+        {/* File Upload Prompt */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              ConfiguratorModelDatasetEPW Structure
-              <Button onClick={analyzeDataset} disabled={isLoading} size="sm" variant="outline">
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                {isLoading ? 'Analyzing...' : 'Refresh Analysis'}
-              </Button>
+              Excel File Editor
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => fileInputRef.current?.click()} 
+                  size="sm"
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Upload className="w-4 h-4 mr-2" />
+                  )}
+                  {isUploading ? 'Uploading...' : 'Upload Excel File'}
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {analysis ? (
+            <div className="text-center py-12">
+              <FileSpreadsheet className="w-16 h-16 mx-auto mb-4 text-technical-400" />
+              <h3 className="text-lg font-medium mb-2">Upload Excel File for Editing</h3>
+              <p className="text-technical-600 dark:text-technical-400 mb-6">
+                Upload any Excel file (.xlsx/.xls) to view and edit it with full spreadsheet functionality including:
+              </p>
+              <div className="grid grid-cols-2 gap-4 text-sm text-left max-w-2xl mx-auto mb-6">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span>View all sheets and tabs</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>Edit cells with formulas</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span>Execute VB scripts</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span>API integration capabilities</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span>Function calculations</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span>Expression processing</span>
+                  </div>
+                </div>
+              </div>
+              <Button 
+                onClick={() => fileInputRef.current?.click()}
+                size="lg"
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                ) : (
+                  <Upload className="w-5 h-5 mr-2" />
+                )}
+                Choose Excel File
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Analysis Section - Only show if analysis data exists */}
+        {analysis && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                ConfiguratorModelDatasetEPW Analysis (Reference)
+                <Button onClick={analyzeDataset} disabled={isLoading} size="sm" variant="outline">
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  {isLoading ? 'Analyzing...' : 'Refresh Analysis'}
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {analysis ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-4 flex-wrap">
                   <Badge variant="outline">{analysis.sheetNames?.length || 0} Sheets</Badge>
@@ -307,14 +392,10 @@ CS8369`);
                   ))}
                 </Tabs>
               </div>
-            ) : (
-              <div className="text-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-                <p>Loading ConfiguratorModelDatasetEPW analysis...</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            ) : null}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Input Patterns Section */}
         <Card>

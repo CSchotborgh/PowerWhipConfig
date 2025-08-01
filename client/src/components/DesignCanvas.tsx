@@ -7,7 +7,7 @@ import AGGridOrderEntry from "./AGGridOrderEntry";
 import VirtualizedOrderEntry from "./VirtualizedOrderEntry";
 import PerformanceOrderEntry from "./PerformanceOrderEntry";
 import ExcelTransformer from "./ExcelTransformer";
-import ConfiguratorDatasetAnalyzer from "./ConfiguratorDatasetAnalyzer";
+import ExcelFileViewer from "./ExcelFileViewer";
 import ExcelLikeInterface from "./ExcelLikeInterface";
 
 interface DroppedComponent {
@@ -116,7 +116,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   }
 
   if (viewMode === "configurator") {
-    return <ConfiguratorDatasetAnalyzer onToggleView={toggleViewMode} />;
+    return <ExcelFileViewer onToggleView={toggleViewMode} />;
   }
 
   if (viewMode === "excel") {

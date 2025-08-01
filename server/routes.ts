@@ -842,7 +842,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Helper function to analyze workbook structure
   function analyzeWorkbook(workbook: any) {
-    const sheetNames = workbook.SheetNames;
+    const sheetNames = workbook.SheetNames || [];
     const sheets: any = {};
     const receptacleInputCells: string[] = [];
     const expressionPatterns: string[] = [];
@@ -850,18 +850,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     sheetNames.forEach((sheetName: string) => {
       const worksheet = workbook.Sheets[sheetName];
+      if (!worksheet) return;
+      
       const data = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
-      const headers = data[0] as string[];
+      const headers = (data[0] as string[]) || [];
       
       sheets[sheetName] = {
-        rowCount: data.length,
-        columnCount: headers.length,
-        headers: headers || [],
-        sampleData: data.slice(1, 6) // First 5 data rows
+        rowCount: data.length || 0,
+        columnCount: headers.length || 0,
+        headers: headers,
+        sampleData: data.slice(1, 6) || [] // First 5 data rows
       };
 
       // Look for input patterns and expressions
       data.forEach((row: any[], rowIndex: number) => {
+        if (!row || !Array.isArray(row)) return;
+        
         row.forEach((cell: any, colIndex: number) => {
           const cellValue = cell?.toString() || '';
           
