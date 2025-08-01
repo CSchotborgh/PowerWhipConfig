@@ -56,9 +56,16 @@ export default function AGGridExcelViewer({ onToggleView, uploadedFileId, fileNa
 
   // AG-Grid options with Excel clipboard integration
   const gridOptions: GridOptions = useMemo(() => ({
-    // Enable Excel-like features
-    enableRangeSelection: true,
-    enableFillHandle: true,
+    // Theme configuration
+    theme: 'legacy', // Use legacy theme to avoid CSS conflicts
+    
+    // Enable Excel-like features with modern API
+    cellSelection: { 
+      mode: 'range',
+      handle: {
+        mode: 'fill'
+      }
+    },
     enableCellChangeFlash: true,
     suppressCopyRowsToClipboard: false,
     suppressCopySingleCellRanges: false,
@@ -79,10 +86,11 @@ export default function AGGridExcelViewer({ onToggleView, uploadedFileId, fileNa
       cellDataType: false,
     },
     
-    // Excel-like navigation
-    suppressRowClickSelection: true,
-    rowSelection: 'multiple',
-    suppressMultiRangeSelection: false,
+    // Excel-like navigation with modern API
+    rowSelection: {
+      mode: 'multiRow',
+      enableClickSelection: false
+    },
     
     // Performance
     animateRows: true,

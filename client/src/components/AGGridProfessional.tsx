@@ -193,6 +193,9 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
 
   // AG-Grid Enterprise options
   const gridOptions: GridOptions = useMemo(() => ({
+    // Theme configuration
+    theme: 'legacy', // Use legacy theme to avoid CSS conflicts
+    
     // Modern Cell Selection API
     cellSelection: !isMobile ? { 
       mode: 'range',
