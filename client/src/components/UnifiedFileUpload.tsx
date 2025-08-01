@@ -77,7 +77,7 @@ export default function UnifiedFileUpload({
         return [
           { icon: Database, title: 'Pattern Matching', desc: 'Matches receptacle patterns' },
           { icon: Calculator, title: 'Expression Generation', desc: 'Auto-generates expressions' },
-          { icon: Layers, title: 'Data Integration', desc: 'Integrates with dataset' },
+          { icon: Layers, title: 'Data Integration', desc: 'Excel & CSV support' },
           { icon: FileSpreadsheet, title: 'Row Processing', desc: 'Processes configurator data' }
         ];
       default:
@@ -86,7 +86,17 @@ export default function UnifiedFileUpload({
   };
 
   const handleFile = async (file: File) => {
-    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+    const isExcelFile = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+    const isCsvFile = file.name.endsWith('.csv');
+    
+    if (mode === 'configurator' && !isExcelFile && !isCsvFile) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload an Excel file (.xlsx, .xls) or CSV file (.csv)",
+        variant: "destructive"
+      });
+      return;
+    } else if (mode !== 'configurator' && !isExcelFile) {
       toast({
         title: "Invalid File Type",
         description: "Please upload an Excel file (.xlsx or .xls)",
@@ -115,9 +125,10 @@ export default function UnifiedFileUpload({
           });
           onAnalysisComplete?.(data.analysis);
         } else {
+          const fileType = data.fileType || 'excel';
           toast({
             title: "File Uploaded Successfully",
-            description: `${file.name} is ready for use`,
+            description: `${file.name} (${fileType.toUpperCase()}) is ready for use`,
           });
           onFileUploaded?.(data.fileId || data.analysisId, file.name, data.analysis);
         }
@@ -224,7 +235,10 @@ export default function UnifiedFileUpload({
                 </div>
 
                 <div className="text-xs text-technical-500 dark:text-technical-400 mb-6">
-                  Supports .xlsx and .xls files up to 200MB
+                  {mode === 'configurator' 
+                    ? 'Supports .xlsx, .xls, and .csv files up to 200MB'
+                    : 'Supports .xlsx and .xls files up to 200MB'
+                  }
                 </div>
 
                 {features.length > 0 && (
@@ -251,7 +265,7 @@ export default function UnifiedFileUpload({
           <input
             ref={fileInputRef}
             type="file"
-            accept=".xlsx,.xls"
+            accept={mode === 'configurator' ? '.xlsx,.xls,.csv' : '.xlsx,.xls'}
             onChange={handleFileInput}
             className="hidden"
           />

@@ -9,6 +9,7 @@ import * as path from "path";
 import { fileURLToPath } from 'url';
 import multer from "multer";
 import * as XLSX from 'xlsx';
+import Papa from 'papaparse';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -446,7 +447,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload Excel file for analysis and editing
+  // Helper function to process CSV files
+  const processCSVFile = (buffer: Buffer): any => {
+    const csvString = buffer.toString('utf8');
+    const result = Papa.parse(csvString, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (header) => header.trim()
+    });
+
+    // Convert CSV data to Excel-like structure
+    const headers = result.meta.fields || [];
+    const data = result.data as any[];
+    
+    return {
+      sheetNames: ['Sheet1'],
+      sheets: {
+        'Sheet1': {
+          rowCount: data.length + 1, // +1 for header
+          columnCount: headers.length,
+          headers,
+          sampleData: [headers, ...data.slice(0, 10).map(row => headers.map(h => row[h]))]
+        }
+      }
+    };
+  };
+
+  // Helper function to analyze workbook structure for uploaded files
+  const analyzeUploadedWorkbook = (workbook: any): any => {
+    const sheetNames = workbook.SheetNames || [];
+    const sheets: any = {};
+    
+    sheetNames.forEach((sheetName: string) => {
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      sheets[sheetName] = {
+        rowCount: jsonData.length,
+        columnCount: jsonData.length > 0 ? (jsonData[0] as any[]).length : 0,
+        headers: jsonData[0] || [],
+        sampleData: jsonData.slice(0, 10)
+      };
+    });
+    
+    return { sheetNames, sheets };
+  };
+
+  // Upload Excel or CSV file for analysis and editing
   app.post('/api/excel/upload', upload.single('excelFile'), async (req, res) => {
     try {
       if (!req.file) {
@@ -454,7 +501,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const fileId = Date.now().toString();
-      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const isCSV = req.file.originalname.toLowerCase().endsWith('.csv');
+      
+      let workbook: any;
+      let analysis: any;
+
+      if (isCSV) {
+        // Process CSV file
+        analysis = processCSVFile(req.file.buffer);
+        // Create a mock workbook structure for CSV
+        const csvData = Papa.parse(req.file.buffer.toString('utf8'), { header: false }).data;
+        workbook = {
+          SheetNames: ['Sheet1'],
+          Sheets: {
+            'Sheet1': XLSX.utils.aoa_to_sheet(csvData)
+          }
+        };
+      } else {
+        // Process Excel file
+        workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+        analysis = analyzeUploadedWorkbook(workbook);
+      }
       
       uploadedFiles.set(fileId, {
         buffer: req.file.buffer,
@@ -463,12 +530,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         workbook
       });
 
-      // Analyze the uploaded file
-      const analysis = analyzeWorkbook(workbook);
-
       res.json({
         fileId,
         originalName: req.file.originalname,
+        fileType: isCSV ? 'csv' : 'excel',
         analysis
       });
     } catch (error) {
@@ -487,7 +552,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'File not found' });
       }
 
-      const analysis = analyzeWorkbook(fileData.workbook);
+      const analysis = analyzeUploadedWorkbook(fileData.workbook);
       
       res.json({
         fileId,
@@ -535,6 +600,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/excel/analyze-configurator', async (req, res) => {
     try {
       const filePath = './attached_assets/ConfiguratorModelDatasetEPW_1754006250837.xlsx';
+      
+      // Check if file exists before processing
+      const fs = require('fs');
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'ConfiguratorModelDatasetEPW file not found' });
+      }
+      
       const workbook = XLSX.readFile(filePath);
       
       const analysis = {
