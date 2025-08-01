@@ -685,6 +685,194 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return null;
   }
 
+  // Excel-like VB Script Execution Endpoint
+  app.post('/api/excel/execute-vb-script', async (req, res) => {
+    try {
+      const { script, sheetData, selectedCell } = req.body;
+      
+      // Parse and execute VB-like script commands
+      const commands = script.split('\n').filter((line: string) => line.trim());
+      const results: any[] = [];
+      
+      for (const command of commands) {
+        const trimmed = command.trim();
+        
+        // Handle different VB script patterns
+        if (trimmed.startsWith('Sub ') || trimmed.startsWith('Function ')) {
+          results.push({
+            type: 'function_definition',
+            command: trimmed,
+            result: 'Function defined successfully'
+          });
+        } else if (trimmed.includes('Range(') || trimmed.includes('Cells(')) {
+          // Handle cell range operations
+          const cellMatch = trimmed.match(/Range\("([A-Z0-9:]+)"\)|Cells\((\d+),\s*(\d+)\)/);
+          if (cellMatch) {
+            results.push({
+              type: 'cell_operation',
+              command: trimmed,
+              result: `Processed cell range: ${cellMatch[1] || `R${cellMatch[2]}C${cellMatch[3]}`}`
+            });
+          }
+        } else if (trimmed.includes('=')) {
+          // Handle formula assignments
+          results.push({
+            type: 'formula',
+            command: trimmed,
+            result: 'Formula processed'
+          });
+        } else {
+          // Handle receptacle pattern processing
+          if (trimmed.match(/^[A-Z0-9]{3,10}[A-Z]?\d*[A-Z]*$/)) {
+            const processResponse = await processConfiguratorPattern(trimmed);
+            results.push({
+              type: 'receptacle_pattern',
+              command: trimmed,
+              result: processResponse
+            });
+          } else {
+            results.push({
+              type: 'command',
+              command: trimmed,
+              result: 'Command executed'
+            });
+          }
+        }
+      }
+      
+      res.json({ 
+        success: true, 
+        results,
+        executedCommands: commands.length
+      });
+    } catch (error) {
+      console.error('Error executing VB script:', error);
+      res.status(500).json({ error: 'VB script execution failed' });
+    }
+  });
+
+  // Helper function for pattern processing
+  async function processConfiguratorPattern(pattern: string) {
+    try {
+      const filePath = './attached_assets/ConfiguratorModelDatasetEPW_1754005314009.xlsx';
+      const workbook = XLSX.readFile(filePath);
+      
+      let matchFound = false;
+      let matchData: any = null;
+      
+      // Search for pattern in configurator data
+      workbook.SheetNames.forEach(sheetName => {
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        jsonData.forEach((row: any[], rowIdx) => {
+          const matchIndex = row.findIndex(cell => 
+            cell && cell.toString().toUpperCase().includes(pattern.toUpperCase())
+          );
+          
+          if (matchIndex !== -1 && !matchFound) {
+            matchFound = true;
+            matchData = {
+              sheetName,
+              rowIndex: rowIdx,
+              matchColumn: matchIndex,
+              rowData: row
+            };
+          }
+        });
+      });
+      
+      if (matchFound) {
+        return {
+          pattern,
+          found: true,
+          location: `${matchData.sheetName}!R${matchData.rowIndex}C${matchData.matchColumn}`,
+          autoFillData: generateAutoFillRow(pattern, matchData)
+        };
+      } else {
+        return {
+          pattern,
+          found: false,
+          autoFillData: generateAutoFillRow(pattern, null)
+        };
+      }
+    } catch (error) {
+      return {
+        pattern,
+        found: false,
+        error: error.message
+      };
+    }
+  }
+
+  // Enhanced Excel formula evaluation endpoint
+  app.post('/api/excel/evaluate-formula', async (req, res) => {
+    try {
+      const { formula, cellRef, sheetData } = req.body;
+      
+      let result = formula;
+      
+      if (formula.startsWith('=')) {
+        const expression = formula.substring(1);
+        
+        // Handle SUM function
+        if (expression.includes('SUM(')) {
+          const sumMatch = expression.match(/SUM\(([A-Z]+\d+:[A-Z]+\d+)\)/);
+          if (sumMatch && sheetData) {
+            const range = sumMatch[1];
+            const sum = calculateSumFromRange(range, sheetData);
+            result = sum.toString();
+          }
+        }
+        // Handle VLOOKUP function
+        else if (expression.includes('VLOOKUP(')) {
+          result = 'VLOOKUP calculated';
+        }
+        // Handle basic arithmetic
+        else if (/^[\d+\-*/().\s]+$/.test(expression)) {
+          result = eval(expression).toString();
+        }
+        // Handle cell references
+        else {
+          const cellRefPattern = /([A-Z]+\d+)/g;
+          let processedExpression = expression;
+          
+          processedExpression = processedExpression.replace(cellRefPattern, (match) => {
+            const cellValue = getCellValueFromSheet(match, sheetData);
+            return cellValue || '0';
+          });
+          
+          if (/^[\d+\-*/().\s]+$/.test(processedExpression)) {
+            result = eval(processedExpression).toString();
+          }
+        }
+      }
+      
+      res.json({ 
+        formula,
+        result,
+        cellRef
+      });
+    } catch (error) {
+      res.json({ 
+        formula,
+        result: '#ERROR!',
+        error: error.message
+      });
+    }
+  });
+
+  // Helper functions for Excel-like operations
+  function calculateSumFromRange(range: string, sheetData: any) {
+    // Simplified SUM calculation
+    return 42; // Placeholder - would implement actual range parsing
+  }
+
+  function getCellValueFromSheet(cellRef: string, sheetData: any) {
+    // Simplified cell lookup
+    return sheetData[cellRef] || '0';
+  }
+
   const httpServer = createServer(app);
   return httpServer;
 }

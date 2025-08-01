@@ -8,6 +8,7 @@ import VirtualizedOrderEntry from "./VirtualizedOrderEntry";
 import PerformanceOrderEntry from "./PerformanceOrderEntry";
 import ExcelTransformer from "./ExcelTransformer";
 import ConfiguratorDatasetAnalyzer from "./ConfiguratorDatasetAnalyzer";
+import ExcelLikeInterface from "./ExcelLikeInterface";
 
 interface DroppedComponent {
   id: string;
@@ -29,7 +30,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   const [droppedComponents, setDroppedComponents] = useState<DroppedComponent[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
-  const [viewMode, setViewMode] = useState<"design" | "order" | "transformer" | "configurator">("design");
+  const [viewMode, setViewMode] = useState<"design" | "order" | "transformer" | "configurator" | "excel">("design");
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const handleDrop = (e: React.DragEvent) => {
@@ -98,6 +99,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
       if (prev === "design") return "order";
       if (prev === "order") return "transformer";
       if (prev === "transformer") return "configurator";
+      if (prev === "configurator") return "excel";
       return "design";
     });
   };
@@ -117,6 +119,10 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
     return <ConfiguratorDatasetAnalyzer onToggleView={toggleViewMode} />;
   }
 
+  if (viewMode === "excel") {
+    return <ExcelLikeInterface onToggleView={toggleViewMode} />;
+  }
+
   return (
     <div className="flex-1 flex h-full">
       {/* Canvas Area */}
@@ -129,7 +135,8 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
                 {viewMode === "design" ? "Design Canvas" : 
                  viewMode === "order" ? "Order Entry System" : 
                  viewMode === "transformer" ? "Excel Transformer" :
-                 "ConfiguratorDataset Analyzer"}
+                 viewMode === "configurator" ? "ConfiguratorDataset Analyzer" :
+                 "Excel-like Interface"}
               </h2>
               <div className="flex items-center gap-2">
                 <Button
@@ -164,7 +171,8 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
                 <Button onClick={toggleViewMode} variant="outline">
                   {viewMode === "design" ? "Switch to Order Entry" : 
                    viewMode === "order" ? "Switch to Excel Transformer" :
-                   viewMode === "transformer" ? "Switch to Configurator" : 
+                   viewMode === "transformer" ? "Switch to Configurator" :
+                   viewMode === "configurator" ? "Switch to Excel Interface" :
                    "Switch to Design Canvas"}
                 </Button>
                 <Button 
