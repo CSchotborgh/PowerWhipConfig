@@ -10,7 +10,6 @@ import { useToast } from '@/hooks/use-toast';
 import ExcelLikeInterface from './ExcelLikeInterface';
 import ExcelFormulaLibrary from './ExcelFormulaLibrary';
 import UnifiedFileUpload from './UnifiedFileUpload';
-import { masterBubbleLookup } from '@/lib/masterBubbleLookup';
 
 interface ConfiguratorAnalysis {
   sheetNames: string[];
@@ -144,49 +143,26 @@ CS8369`);
   }, [uploadedFileId]);
 
   const processWithConfigurator = async () => {
+    if (!analysis) return;
+    
     setIsLoading(true);
     try {
       const patterns = inputPatterns.split('\n').filter(p => p.trim());
       
-      // Use client-side processor for immediate results
-      const data = await masterBubbleLookup.processPatterns(patterns);
-      setProcessedResults(data.results);
-      
-      toast({
-        title: "Processing Complete",
-        description: `Processed ${data.processedCount} patterns with real lookup data`,
+      const response = await fetch('/api/excel/process-configurator', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inputPatterns: patterns })
       });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setProcessedResults(data.results);
+      } else {
+        console.error('Failed to process with configurator');
+      }
     } catch (error) {
       console.error('Error processing with configurator:', error);
-      toast({
-        title: "Processing Failed",
-        description: "Failed to process patterns with MasterBubbleLookup",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const exportToMasterBubble = async () => {
-    if (!processedResults) return;
-    
-    setIsLoading(true);
-    try {
-      // Use client-side processor for immediate export
-      await masterBubbleLookup.exportToMasterBubble(processedResults);
-      
-      toast({
-        title: "Export Successful",
-        description: "Master Bubble format file downloaded with real lookup data",
-      });
-    } catch (error) {
-      console.error('Export failed:', error);
-      toast({
-        title: "Export Failed",
-        description: "Failed to export to Master Bubble format",
-        variant: "destructive"
-      });
     } finally {
       setIsLoading(false);
     }
@@ -413,12 +389,6 @@ CS8369`);
                   860 power whips total | Whip lengths ranging from 20'-80' | Liquid tight conduit | Four colors: Red, Orange, Blue, Yellow | IEC pinned and sleeve plug
                 </code>
                 <br />
-                <span className="text-orange-600 dark:text-orange-400 font-medium">3. Quantity-Based Patterns (! delimiter):</span>
-                <br />
-                <code className="text-xs bg-orange-50 dark:bg-orange-900/20 px-1 rounded">
-                  CS8269A, LMZC, 20, 10, Red !43 | 460C9W, LMZC, 20, 10, Orange !43
-                </code>
-                <br />
                 <strong className="text-purple-600 dark:text-purple-400">Translation Examples:</strong>
                 <br />
                 • "Liquid tight conduit" = LMZC
@@ -426,8 +396,6 @@ CS8369`);
                 • "IEC pinned and sleeve plug" = CS8269A or 460C9W
                 <br />
                 • "860 power whips total" = 860 output rows with equal distribution
-                <br />
-                • "CS8269A, LMZC, 20, 10, Red !43" = 43 identical rows of that pattern
               </p>
               <Textarea
                 value={inputPatterns}
@@ -439,11 +407,6 @@ COMMA-DELIMITED PATTERNS:
 460C9W, FMC, 115, 10
 CS8264C, LMZC, 26, 8, Purple
 L6-15R, LMZC, 22, 10, Purple
-
-QUANTITY-BASED PATTERNS (! delimiter):
-CS8269A, LMZC, 20, 10, Red !43
-460C9W, LMZC, 20, 10, Orange !43
-L6-15R, LMZC, 30, 15, Blue !25
 
 NATURAL LANGUAGE SPECIFICATIONS:
 860 power whips total
@@ -460,7 +423,7 @@ Purple, Tan, Pink, Gray, Green`}
             
             <Button 
               onClick={processWithConfigurator} 
-              disabled={isLoading}
+              disabled={!analysis || isLoading}
               className="flex items-center gap-2"
             >
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
@@ -473,17 +436,7 @@ Purple, Tan, Pink, Gray, Green`}
         {processedResults && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Processing Results
-                <Button 
-                  onClick={exportToMasterBubble}
-                  disabled={isLoading}
-                  className="flex items-center gap-2"
-                >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                  Export to Master Bubble Format
-                </Button>
-              </CardTitle>
+              <CardTitle>Processing Results</CardTitle>
               <p className="text-sm text-technical-600 dark:text-technical-400">
                 Pattern matching results from ConfiguratorModelDatasetEPW
               </p>
@@ -497,13 +450,11 @@ Purple, Tan, Pink, Gray, Green`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-mono font-medium text-lg">
-                        {result.isNaturalLanguage ? 'Natural Language Specification' : 
-                         result.isQuantityBased ? 'Quantity-Based Pattern' : 
-                         result.inputPattern}
+                        {result.isNaturalLanguage ? 'Natural Language Specification' : result.inputPattern}
                       </span>
                       <div className="flex gap-2">
-                        {result.isNaturalLanguage || result.isQuantityBased ? (
-                          <Badge variant="default" className={result.isQuantityBased ? "bg-orange-600" : "bg-green-600"}>
+                        {result.isNaturalLanguage ? (
+                          <Badge variant="default" className="bg-green-600">
                             {result.totalGeneratedRows} rows generated
                           </Badge>
                         ) : (
@@ -513,56 +464,6 @@ Purple, Tan, Pink, Gray, Green`}
                         )}
                       </div>
                     </div>
-
-                    {/* Quantity-Based Pattern Display */}
-                    {result.isQuantityBased && (
-                      <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                        <h5 className="font-medium text-orange-800 dark:text-orange-200 mb-2">Quantity-Based Pattern Results</h5>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="font-medium">Original Pattern:</span> {result.inputPattern.split('!')[0]}
-                          </div>
-                          <div>
-                            <span className="font-medium">Quantity Specified:</span> {result.quantitySpecified}
-                          </div>
-                          <div>
-                            <span className="font-medium">Receptacle:</span> {result.parsedPattern?.receptacle}
-                          </div>
-                          <div>
-                            <span className="font-medium">Conduit Type:</span> {result.parsedPattern?.cableConduitType}
-                          </div>
-                          <div>
-                            <span className="font-medium">Whip Length:</span> {result.parsedPattern?.whipLength}'
-                          </div>
-                          <div>
-                            <span className="font-medium">Tail Length:</span> {result.parsedPattern?.tailLength}'
-                          </div>
-                          <div className="col-span-2">
-                            <span className="font-medium">Label Color:</span> {result.parsedPattern?.labelColor}
-                          </div>
-                        </div>
-                        
-                        <div className="mt-3">
-                          <details>
-                            <summary className="cursor-pointer text-sm font-medium text-orange-700 dark:text-orange-300">
-                              View Generated Patterns (first 10 of {result.totalGeneratedRows})
-                            </summary>
-                            <div className="mt-2 p-2 bg-white dark:bg-technical-900 rounded font-mono text-xs max-h-40 overflow-y-auto">
-                              {result.generatedPatterns?.slice(0, 10).map((pattern: string, idx: number) => (
-                                <div key={idx} className="py-1 border-b border-technical-100 dark:border-technical-700">
-                                  {pattern}
-                                </div>
-                              ))}
-                              {result.generatedPatterns?.length > 10 && (
-                                <div className="py-1 text-technical-500 italic">
-                                  ... and {result.generatedPatterns.length - 10} more identical patterns
-                                </div>
-                              )}
-                            </div>
-                          </details>
-                        </div>
-                      </div>
-                    )}
 
                     {/* Natural Language Processing Display */}
                     {result.isNaturalLanguage && (
@@ -624,8 +525,8 @@ Purple, Tan, Pink, Gray, Green`}
                       </div>
                     )}
                     
-                    {/* Auto-Fill Data - Only show for regular patterns */}
-                    {!result.isNaturalLanguage && !result.isQuantityBased && (
+                    {/* Auto-Fill Data - Only show for non-natural language patterns */}
+                    {!result.isNaturalLanguage && (
                       <div className="bg-technical-50 dark:bg-technical-800 p-3 rounded">
                         <h4 className="font-medium mb-2 text-sm">Auto-Generated Row Data</h4>
                         <div className="grid grid-cols-2 gap-2 text-xs">
