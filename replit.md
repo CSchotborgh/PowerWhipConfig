@@ -34,11 +34,16 @@ Preferred communication style: Simple, everyday language.
 - **Factory Pattern**: Component library system.
 
 ### Core Features & Technical Implementations
-- **Data Schema**: `powerWhipConfigurations` and `electricalComponents` using JSONB for flexibility.
+- **Data Schema**: `powerWhipConfigurations`, `electricalComponents`, `excelFormulaLibrary`, `excelPatternLibrary`, and `excelFileArchive` using JSONB for flexibility.
+- **Formula Extraction Engine**: Advanced Excel formula parsing with category classification and complexity analysis.
+- **Pattern Recognition System**: Automated detection of repeating patterns and formula sequences in Excel files.
 - **Validation Engine**: Electrical code compliance checking.
 - **Excel Data Integration**: Parsing of `.xlsx` files for component data, order entry, and BOM generation.
 - **Performance Optimization**: Virtualized rendering (react-window), intelligent caching, pre-processed text indexing, memoization.
 - **Automated Row Expression System**: Generates expressions based on receptacle input patterns, auto-filling data from matched configurations.
+- **Excel Formula Archive System**: Advanced formula extraction, pattern recognition, and reusable library building from uploaded Excel files.
+- **Formula Library**: Categorized storage of Excel formulas with complexity analysis, dependency tracking, and searchable archive.
+- **Pattern Recognition**: Automatic detection of formula sequences, calculation chains, and business logic patterns.
 - **Electrical Calculations**: Voltage drop, thermal analysis, NEC compliance, component compatibility.
 - **Mobile Responsiveness**: Touch-optimized AG-Grid interactions, responsive layouts, mobile-first design patterns, collapsible side panels.
 - **Loading Experience**: Professional loading screen with progressive indicators and feature highlights.

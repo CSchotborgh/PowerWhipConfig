@@ -5,9 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Loader2, RefreshCw, Download, Upload, FileSpreadsheet } from 'lucide-react';
+import { Loader2, RefreshCw, Download, Upload, FileSpreadsheet, Database } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ExcelLikeInterface from './ExcelLikeInterface';
+import ExcelFormulaLibrary from './ExcelFormulaLibrary';
 
 interface ConfiguratorAnalysis {
   sheetNames: string[];
@@ -31,7 +32,7 @@ export default function ConfiguratorDatasetAnalyzer({ onToggleView }: Configurat
   const [uploadedFileId, setUploadedFileId] = useState<string | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
-  const [currentView, setCurrentView] = useState<'analysis' | 'excel'>('analysis');
+  const [currentView, setCurrentView] = useState<'analysis' | 'excel' | 'formula-library'>('analysis');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [inputPatterns, setInputPatterns] = useState(`460C9W
@@ -214,6 +215,14 @@ CS8369`);
                 Close Excel File
               </Button>
             )}
+            <Button 
+              onClick={() => setCurrentView('formula-library')} 
+              variant="outline"
+              size="sm"
+            >
+              <Database className="w-4 h-4 mr-2" />
+              Formula Library
+            </Button>
             <Button onClick={onToggleView} variant="outline">
               Back to Design Canvas
             </Button>
@@ -224,8 +233,17 @@ CS8369`);
       {/* Main Content */}
       <div className="flex-1 overflow-auto p-6 space-y-6">
         
+        {/* Show Formula Library */}
+        {currentView === 'formula-library' && (
+          <div className="h-full">
+            <ExcelFormulaLibrary 
+              onToggleView={() => setCurrentView('analysis')}
+            />
+          </div>
+        )}
+
         {/* Show Excel Editor when file is uploaded */}
-        {uploadedFileName && (
+        {uploadedFileName && currentView !== 'formula-library' && (
           <div className="h-full">
             <ExcelLikeInterface 
               onToggleView={() => {
@@ -240,7 +258,7 @@ CS8369`);
         )}
         
         {/* Show Analysis view when no file uploaded */}
-        {!uploadedFileName && (
+        {!uploadedFileName && currentView === 'analysis' && (
           <>
         {/* File Upload Prompt */}
         <Card>

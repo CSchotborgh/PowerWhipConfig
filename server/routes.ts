@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertPowerWhipConfigurationSchema, insertElectricalComponentSchema } from "@shared/schema";
+import { ExcelFormulaExtractor } from "./excelFormulaExtractor";
 import { z } from "zod";
 import { parseExcelFile, extractComponentData, analyzeExcelStructure, generateBOM } from "./excelParser";
 import * as path from "path";
@@ -1012,6 +1013,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Simplified cell lookup
     return sheetData[cellRef] || '0';
   }
+
+  // Excel Formula Archive routes
+  app.post('/api/excel/analyze-formulas', upload.single('excelFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const extractor = new ExcelFormulaExtractor();
+      const analysis = extractor.extractFromBuffer(req.file.buffer, req.file.originalname);
+      
+      // Save to archive
+      const fileArchive = await storage.saveFileToArchive({
+        fileName: analysis.fileName,
+        fileSize: req.file.size,
+        sheetCount: analysis.sheetCount,
+        formulaCount: analysis.formulaCount,
+        patternCount: analysis.patternCount,
+        analysisResults: analysis,
+        extractedFormulas: analysis.extractedFormulas,
+        extractedPatterns: analysis.extractedPatterns,
+        businessDomain: analysis.businessDomain,
+        complexity: analysis.complexity,
+        isProcessed: true
+      });
+
+      // Save individual formulas to library
+      for (const formula of analysis.extractedFormulas) {
+        await storage.saveFormulaToLibrary({
+          formulaText: formula.formulaText,
+          cellReference: formula.cellReference,
+          sheetName: formula.sheetName,
+          fileName: analysis.fileName,
+          category: formula.category,
+          complexity: formula.complexity,
+          description: formula.description,
+          parameters: formula.parameters,
+          dependencies: formula.dependencies
+        });
+      }
+
+      // Save patterns to library
+      for (const pattern of analysis.extractedPatterns) {
+        await storage.savePatternToLibrary({
+          patternName: pattern.patternName,
+          patternType: pattern.patternType,
+          cellRange: pattern.cellRange,
+          sheetName: pattern.sheetName,
+          fileName: analysis.fileName,
+          patternData: pattern.patternData,
+          businessLogic: pattern.businessLogic,
+          inputRequirements: pattern.inputRequirements,
+          outputFormat: pattern.outputFormat,
+          tags: pattern.tags
+        });
+      }
+
+      res.json({
+        analysisId: fileArchive.id,
+        analysis: analysis,
+        message: `Successfully analyzed ${analysis.formulaCount} formulas and ${analysis.patternCount} patterns`
+      });
+
+    } catch (error) {
+      console.error('Formula analysis error:', error);
+      res.status(500).json({ error: 'Failed to analyze Excel formulas' });
+    }
+  });
+
+  // Get formulas from library
+  app.get('/api/excel/formulas', async (req, res) => {
+    try {
+      const category = req.query.category as string;
+      const formulas = await storage.getFormulasFromLibrary(category);
+      res.json(formulas);
+    } catch (error) {
+      console.error('Error fetching formulas:', error);
+      res.status(500).json({ error: 'Failed to fetch formulas' });
+    }
+  });
+
+  // Get patterns from library  
+  app.get('/api/excel/patterns', async (req, res) => {
+    try {
+      const patternType = req.query.patternType as string;
+      const patterns = await storage.getPatternsFromLibrary(patternType);
+      res.json(patterns);
+    } catch (error) {
+      console.error('Error fetching patterns:', error);
+      res.status(500).json({ error: 'Failed to fetch patterns' });
+    }
+  });
+
+  // Search formulas
+  app.get('/api/excel/formulas/search', async (req, res) => {
+    try {
+      const searchTerm = req.query.q as string;
+      if (!searchTerm) {
+        return res.status(400).json({ error: 'Search term required' });
+      }
+      const formulas = await storage.searchFormulas(searchTerm);
+      res.json(formulas);
+    } catch (error) {
+      console.error('Error searching formulas:', error);
+      res.status(500).json({ error: 'Failed to search formulas' });
+    }
+  });
+
+  // Search patterns
+  app.get('/api/excel/patterns/search', async (req, res) => {
+    try {
+      const searchTerm = req.query.q as string;
+      if (!searchTerm) {
+        return res.status(400).json({ error: 'Search term required' });
+      }
+      const patterns = await storage.searchPatterns(searchTerm);
+      res.json(patterns);
+    } catch (error) {
+      console.error('Error searching patterns:', error);
+      res.status(500).json({ error: 'Failed to search patterns' });
+    }
+  });
+
+  // Get archived files
+  app.get('/api/excel/archive', async (req, res) => {
+    try {
+      const files = await storage.getArchivedFiles();
+      res.json(files);
+    } catch (error) {
+      console.error('Error fetching archived files:', error);
+      res.status(500).json({ error: 'Failed to fetch archived files' });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

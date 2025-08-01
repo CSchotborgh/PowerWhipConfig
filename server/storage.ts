@@ -1,4 +1,15 @@
-import { type PowerWhipConfiguration, type InsertPowerWhipConfiguration, type ElectricalComponent, type InsertElectricalComponent } from "@shared/schema";
+import { 
+  type PowerWhipConfiguration, 
+  type InsertPowerWhipConfiguration, 
+  type ElectricalComponent, 
+  type InsertElectricalComponent,
+  type ExcelFormulaLibrary,
+  type InsertExcelFormulaLibrary,
+  type ExcelPatternLibrary,
+  type InsertExcelPatternLibrary,
+  type ExcelFileArchive,
+  type InsertExcelFileArchive
+} from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -14,15 +25,31 @@ export interface IStorage {
   getAllComponents(): Promise<ElectricalComponent[]>;
   getComponentsByType(type: string): Promise<ElectricalComponent[]>;
   createComponent(component: InsertElectricalComponent): Promise<ElectricalComponent>;
+  
+  // Excel Formula Library methods
+  saveFormulaToLibrary(formula: InsertExcelFormulaLibrary): Promise<ExcelFormulaLibrary>;
+  savePatternToLibrary(pattern: InsertExcelPatternLibrary): Promise<ExcelPatternLibrary>;
+  saveFileToArchive(fileData: InsertExcelFileArchive): Promise<ExcelFileArchive>;
+  getFormulasFromLibrary(category?: string): Promise<ExcelFormulaLibrary[]>;
+  getPatternsFromLibrary(patternType?: string): Promise<ExcelPatternLibrary[]>;
+  getArchivedFiles(): Promise<ExcelFileArchive[]>;
+  searchFormulas(searchTerm: string): Promise<ExcelFormulaLibrary[]>;
+  searchPatterns(searchTerm: string): Promise<ExcelPatternLibrary[]>;
 }
 
 export class MemStorage implements IStorage {
   private configurations: Map<string, PowerWhipConfiguration>;
   private components: Map<string, ElectricalComponent>;
+  private formulaLibrary: Map<string, ExcelFormulaLibrary>;
+  private patternLibrary: Map<string, ExcelPatternLibrary>;
+  private fileArchive: Map<string, ExcelFileArchive>;
 
   constructor() {
     this.configurations = new Map();
     this.components = new Map();
+    this.formulaLibrary = new Map();
+    this.patternLibrary = new Map();
+    this.fileArchive = new Map();
     this.initializeDefaultComponents();
   }
 
@@ -223,6 +250,92 @@ export class MemStorage implements IStorage {
     };
     this.components.set(id, fullComponent);
     return fullComponent;
+  }
+
+  // Excel Formula Library methods
+  async saveFormulaToLibrary(formula: InsertExcelFormulaLibrary): Promise<ExcelFormulaLibrary> {
+    const id = randomUUID();
+    const now = new Date();
+    const fullFormula: ExcelFormulaLibrary = {
+      ...formula,
+      id,
+      usage: formula.usage ?? 0,
+      isActive: formula.isActive ?? true,
+      createdAt: now
+    };
+    this.formulaLibrary.set(id, fullFormula);
+    return fullFormula;
+  }
+
+  async savePatternToLibrary(pattern: InsertExcelPatternLibrary): Promise<ExcelPatternLibrary> {
+    const id = randomUUID();
+    const now = new Date();
+    const fullPattern: ExcelPatternLibrary = {
+      ...pattern,
+      id,
+      usage: pattern.usage ?? 0,
+      isTemplate: pattern.isTemplate ?? false,
+      createdAt: now
+    };
+    this.patternLibrary.set(id, fullPattern);
+    return fullPattern;
+  }
+
+  async saveFileToArchive(fileData: InsertExcelFileArchive): Promise<ExcelFileArchive> {
+    const id = randomUUID();
+    const now = new Date();
+    const fullFileData: ExcelFileArchive = {
+      ...fileData,
+      id,
+      isProcessed: fileData.isProcessed ?? false,
+      createdAt: now
+    };
+    this.fileArchive.set(id, fullFileData);
+    return fullFileData;
+  }
+
+  async getFormulasFromLibrary(category?: string): Promise<ExcelFormulaLibrary[]> {
+    const formulas = Array.from(this.formulaLibrary.values());
+    if (category) {
+      return formulas.filter(f => f.category === category && f.isActive);
+    }
+    return formulas.filter(f => f.isActive);
+  }
+
+  async getPatternsFromLibrary(patternType?: string): Promise<ExcelPatternLibrary[]> {
+    const patterns = Array.from(this.patternLibrary.values());
+    if (patternType) {
+      return patterns.filter(p => p.patternType === patternType);
+    }
+    return patterns;
+  }
+
+  async getArchivedFiles(): Promise<ExcelFileArchive[]> {
+    return Array.from(this.fileArchive.values());
+  }
+
+  async searchFormulas(searchTerm: string): Promise<ExcelFormulaLibrary[]> {
+    const formulas = Array.from(this.formulaLibrary.values());
+    const term = searchTerm.toLowerCase();
+    return formulas.filter(f => 
+      f.isActive && (
+        f.formulaText.toLowerCase().includes(term) ||
+        f.description?.toLowerCase().includes(term) ||
+        f.category?.toLowerCase().includes(term)
+      )
+    );
+  }
+
+  async searchPatterns(searchTerm: string): Promise<ExcelPatternLibrary[]> {
+    const patterns = Array.from(this.patternLibrary.values());
+    const term = searchTerm.toLowerCase();
+    return patterns.filter(p => 
+      p.patternName.toLowerCase().includes(term) ||
+      p.businessLogic?.toLowerCase().includes(term) ||
+      (p.tags && p.tags.some((tag: any) => 
+        typeof tag === 'string' && tag.toLowerCase().includes(term)
+      ))
+    );
   }
 }
 
