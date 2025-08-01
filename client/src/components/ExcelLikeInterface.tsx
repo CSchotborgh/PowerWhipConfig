@@ -22,6 +22,7 @@ import {
   Minimize2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 // Formula Cell Component for async formula evaluation
 function FormulaCell({ formula, cellRef }: { formula: string; cellRef: string }) {
@@ -90,6 +91,7 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
   const [apiEndpoint, setApiEndpoint] = useState('/api/excel/analyze-configurator');
   const [expressionMode, setExpressionMode] = useState<'formula' | 'vb' | 'api'>('formula');
   const [zoomLevel, setZoomLevel] = useState<number>(100);
+  const { toast } = useToast();
   
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -97,7 +99,7 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
     loadConfiguratorData();
   }, []);
 
-  // Keyboard shortcuts for zoom
+  // Keyboard shortcuts for zoom and paste
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && !e.shiftKey) {
@@ -115,13 +117,39 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
             e.preventDefault();
             resetZoom();
             break;
+          case 'v':
+            // Paste will be handled by the global paste handler
+            break;
+        }
+      }
+    };
+
+    const handlePaste = (e: ClipboardEvent) => {
+      // Only handle paste if we're not in an input field
+      if (!(e.target as HTMLElement)?.tagName.match(/^(INPUT|TEXTAREA)$/)) {
+        e.preventDefault();
+        const pastedData = e.clipboardData?.getData('text') || '';
+        
+        if (pastedData.includes('\t') || pastedData.includes('\n')) {
+          handleMultiCellPaste(selectedCell, pastedData);
+        } else {
+          // Single cell paste
+          updateCell(selectedCell, pastedData);
+          toast({
+            title: "Value Pasted",
+            description: `Updated cell ${selectedCell}`,
+          });
         }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    document.addEventListener('paste', handlePaste);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('paste', handlePaste);
+    };
+  }, [selectedCell]);
 
   const loadConfiguratorData = async () => {
     setIsLoading(true);
@@ -229,24 +257,50 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
     const sheet = updatedSheets[activeSheet];
     
     if (sheet) {
+      // Calculate required dimensions
+      const maxCols = Math.max(...rows.map(row => row.split('\t').length));
+      const requiredRows = startPos.row + rows.length;
+      const requiredCols = startPos.col + maxCols;
+      
+      // Auto-expand sheet if necessary
+      if (requiredRows > sheet.rows || requiredCols > sheet.cols) {
+        sheet.rows = Math.max(sheet.rows, requiredRows);
+        sheet.cols = Math.max(sheet.cols, requiredCols);
+      }
+      
       rows.forEach((row, rowOffset) => {
         const cells = row.split('\t');
         cells.forEach((cellValue, colOffset) => {
           const newRow = startPos.row + rowOffset;
           const newCol = startPos.col + colOffset;
+          const cellAddress = getCellReference(newRow, newCol);
           
-          if (newRow < sheet.rows && newCol < sheet.cols) {
-            const cellAddress = getCellReference(newRow, newCol);
-            sheet.cells[cellAddress] = {
-              value: cellValue.trim(),
-              type: isNaN(Number(cellValue.trim())) ? 'text' : 'number',
-              style: sheet.cells[cellAddress]?.style
-            };
+          // Detect cell type based on content
+          let cellType: 'text' | 'number' | 'formula' = 'text';
+          let processedValue = cellValue.trim();
+          
+          if (processedValue.startsWith('=')) {
+            cellType = 'formula';
+          } else if (!isNaN(Number(processedValue)) && processedValue !== '') {
+            cellType = 'number';
           }
+          
+          sheet.cells[cellAddress] = {
+            value: processedValue,
+            formula: cellType === 'formula' ? processedValue : undefined,
+            type: cellType,
+            style: sheet.cells[cellAddress]?.style
+          };
         });
       });
       
       setSheets(updatedSheets);
+      
+      // Show success message
+      toast({
+        title: "Row Data Pasted Successfully",
+        description: `Pasted ${rows.length} row(s) with ${maxCols} column(s) starting at ${startCell}`,
+      });
     }
   };
 
@@ -608,7 +662,7 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
             className="flex-1"
           />
           <div className="text-xs text-technical-600 dark:text-technical-400">
-            💡 Double-click cells to edit, Ctrl+V to paste from Excel, Ctrl+/- to zoom
+            💡 Double-click to edit • Ctrl+V to paste rows from Excel (1:1) • Ctrl+/-/0 for zoom
           </div>
         </div>
         
@@ -694,11 +748,12 @@ export default function ExcelLikeInterface({ onToggleView, uploadedFileId, fileN
                     <div>• Double-click any cell to edit</div>
                     <div>• Type directly into cells</div>
                     <div>• Enter to save, Escape to cancel</div>
-                    <div><strong>Paste Support:</strong></div>
-                    <div>• Copy from Excel/Google Sheets</div>
-                    <div>• Paste multi-cell ranges (Ctrl+V)</div>
-                    <div>• Tab-separated data support</div>
-                    <div>• Automatic cell range expansion</div>
+                    <div><strong>1:1 Row Pasting:</strong></div>
+                    <div>• Copy entire rows from Excel/Google Sheets</div>
+                    <div>• Paste with Ctrl+V for exact replication</div>
+                    <div>• Automatic grid expansion when needed</div>
+                    <div>• Preserves formulas, numbers, and text types</div>
+                    <div>• Multi-row paste support</div>
                   </div>
                 </CardContent>
               </Card>
