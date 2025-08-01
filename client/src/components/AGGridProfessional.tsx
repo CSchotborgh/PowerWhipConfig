@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { AgGridReact } from 'ag-grid-react';
-import { ColDef, GridApi, GridOptions, RangeSelectionChangedEvent, ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+import { ColDef, GridApi, GridOptions, CellSelectionChangedEvent, ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+import { AllEnterpriseModule } from 'ag-grid-enterprise';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
-import 'ag-grid-enterprise';
 
 // Register AG-Grid modules
-ModuleRegistry.registerModules([AllCommunityModule]);
+ModuleRegistry.registerModules([AllCommunityModule, AllEnterpriseModule]);
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -139,8 +139,6 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
               sortable: true,
               filter: isMobile ? false : true, // Disable filters on mobile for better performance
               editable: true,
-              enableRangeSelection: !isMobile, // Disable range selection on mobile
-              enableFillHandle: !isMobile, // Disable fill handle on mobile
               width: isMobile ? 120 : 150, // Narrower columns on mobile
               minWidth: isMobile ? 80 : 100,
               suppressKeyboardEvent: (params: any) => {
@@ -195,24 +193,29 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
 
   // AG-Grid Enterprise options
   const gridOptions: GridOptions = useMemo(() => ({
-    // Enterprise Features (disabled on mobile for better touch experience)
-    enableRangeSelection: !isMobile,
-    enableFillHandle: !isMobile,
+    // Modern Cell Selection API
+    cellSelection: !isMobile ? { 
+      mode: 'range',
+      handle: {
+        mode: 'fill'
+      }
+    } : true,
     
     // Mobile optimizations
     suppressHorizontalScroll: false,
     suppressScrollOnNewData: true,
     animateRows: !isMobile, // Disable animations on mobile for performance
     suppressCellFocus: isMobile, // Disable cell focus border on mobile
-    suppressRowClickSelection: false,
-    rowSelection: isMobile ? 'single' : 'multiple',
+    rowSelection: {
+      mode: isMobile ? 'singleRow' : 'multiRow',
+      enableClickSelection: true
+    },
     
     // Touch-friendly sizing
     rowHeight: isMobile ? 48 : 28, // Larger row height for touch
     headerHeight: isMobile ? 48 : 32,
     
     // Excel Features
-    enableClipboard: true,
     clipboardDelimiter: '\t',
     suppressExcelExport: false,
     
@@ -249,41 +252,26 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
       setSelectedCell(cellId);
     },
     
-    onRangeSelectionChanged: (event: RangeSelectionChangedEvent) => {
-      const ranges = gridApi.current?.getCellRanges();
-      if (ranges && ranges.length > 0) {
-        const range = ranges[0];
-        const startCol = range.startColumn?.getColId() || '';
-        const endCol = range.columns?.[range.columns.length - 1]?.getColId() || startCol;
-        const startRow = (range.startRow?.rowIndex || 0) + 1;
-        const endRow = (range.endRow?.rowIndex || 0) + 1;
-        
-        setSelectedRange(`${startCol}${startRow}:${endCol}${endRow}`);
-        setSelectedCell(`${startCol}${startRow}`);
+    onCellSelectionChanged: (event: CellSelectionChangedEvent) => {
+      if (!isMobile) {
+        const ranges = gridApi.current?.getCellRanges();
+        if (ranges && ranges.length > 0) {
+          const range = ranges[0];
+          const startCol = range.startColumn?.getColId() || '';
+          const endCol = range.columns?.[range.columns.length - 1]?.getColId() || startCol;
+          const startRow = (range.startRow?.rowIndex || 0) + 1;
+          const endRow = (range.endRow?.rowIndex || 0) + 1;
+          
+          setSelectedRange(`${startCol}${startRow}:${endCol}${endRow}`);
+          setSelectedCell(`${startCol}${startRow}`);
+        } else {
+          setSelectedRange('');
+        }
       }
     },
     
-    onCellValueChanged: (event) => {
+    onCellValueChanged: (event: any) => {
       console.log('Cell value changed:', event);
-    },
-    
-    // Excel paste processing
-    processCellFromClipboard: (params) => {
-      return params.value;
-    },
-    
-    processDataFromClipboard: (params) => {
-      // Handle multi-row Excel paste
-      return params.data;
-    },
-    
-    // Touch event handling
-    onCellTouchEnd: (event: any) => {
-      // Handle touch end for mobile interactions
-      if (isMobile) {
-        const cellId = `${event.colDef.field}${(event.rowIndex || 0) + 1}`;
-        setSelectedCell(cellId);
-      }
     }
   }), [toast, isMobile]);
 
