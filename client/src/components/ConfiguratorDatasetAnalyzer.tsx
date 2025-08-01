@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import ExcelLikeInterface from './ExcelLikeInterface';
 import ExcelFormulaLibrary from './ExcelFormulaLibrary';
 import UnifiedFileUpload from './UnifiedFileUpload';
+import { masterBubbleLookup } from '@/lib/masterBubbleLookup';
 
 interface ConfiguratorAnalysis {
   sheetNames: string[];
@@ -143,34 +144,23 @@ CS8369`);
   }, [uploadedFileId]);
 
   const processWithConfigurator = async () => {
-    if (!analysis) return;
-    
     setIsLoading(true);
     try {
       const patterns = inputPatterns.split('\n').filter(p => p.trim());
       
-      const response = await fetch('/api/excel/process-configurator', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inputPatterns: patterns })
-      });
+      // Use client-side processor for immediate results
+      const data = await masterBubbleLookup.processPatterns(patterns);
+      setProcessedResults(data.results);
       
-      if (response.ok) {
-        const data = await response.json();
-        setProcessedResults(data.results);
-        
-        toast({
-          title: "Processing Complete",
-          description: `Processed ${data.processedCount} patterns successfully`,
-        });
-      } else {
-        throw new Error('Processing failed');
-      }
+      toast({
+        title: "Processing Complete",
+        description: `Processed ${data.processedCount} patterns with real lookup data`,
+      });
     } catch (error) {
       console.error('Error processing with configurator:', error);
       toast({
         title: "Processing Failed",
-        description: "Failed to process patterns with ConfiguratorDataset",
+        description: "Failed to process patterns with MasterBubbleLookup",
         variant: "destructive"
       });
     } finally {
@@ -183,42 +173,13 @@ CS8369`);
     
     setIsLoading(true);
     try {
-      // Convert processed results to the expected format for export
-      const receptacles = processedResults.map((result: any) => ({
-        type: result.inputPattern,
-        generatedPatterns: result.generatedPatterns || [result.inputPattern],
-        isQuantityBased: result.isQuantityBased,
-        totalRows: result.totalGeneratedRows || 1
-      }));
-
-      const response = await fetch('/api/excel/export-master-bubble', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          receptacles: receptacles,
-          rawData: processedResults
-        })
+      // Use client-side processor for immediate export
+      await masterBubbleLookup.exportToMasterBubble(processedResults);
+      
+      toast({
+        title: "Export Successful",
+        description: "Master Bubble format file downloaded with real lookup data",
       });
-
-      if (response.ok) {
-        // Get the blob and create download
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'MasterBubbleTransformed.xlsx';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-
-        toast({
-          title: "Export Successful",
-          description: "Master Bubble format file downloaded successfully",
-        });
-      } else {
-        throw new Error('Export failed');
-      }
     } catch (error) {
       console.error('Export failed:', error);
       toast({
@@ -499,7 +460,7 @@ Purple, Tan, Pink, Gray, Green`}
             
             <Button 
               onClick={processWithConfigurator} 
-              disabled={!analysis || isLoading}
+              disabled={isLoading}
               className="flex items-center gap-2"
             >
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
