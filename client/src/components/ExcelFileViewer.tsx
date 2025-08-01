@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Upload, FileSpreadsheet, X, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ExcelLikeInterface from './ExcelLikeInterface';
+import AGGridExcelViewer from './AGGridExcelViewer';
 
 interface ExcelFileViewerProps {
   onToggleView: () => void;
@@ -17,6 +18,8 @@ export default function ExcelFileViewer({ onToggleView }: ExcelFileViewerProps) 
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [analysis, setAnalysis] = useState<any>(null);
+  const [showExcelInterface, setShowExcelInterface] = useState(false);
+  const [viewMode, setViewMode] = useState<'basic' | 'professional'>('professional');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -135,11 +138,51 @@ export default function ExcelFileViewer({ onToggleView }: ExcelFileViewerProps) 
       <div className="flex-1 overflow-auto">
         {/* Show Excel Editor when file is uploaded */}
         {uploadedFileName && uploadedFileId ? (
-          <ExcelLikeInterface 
-            onToggleView={closeFile}
-            uploadedFileId={uploadedFileId}
-            fileName={uploadedFileName}
-          />
+          <div className="h-full">
+            {/* View Mode Selector */}
+            <div className="p-4 border-b border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-900">
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-medium text-technical-700 dark:text-technical-300">
+                  Viewer Mode:
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={viewMode === 'professional' ? 'default' : 'outline'}
+                    onClick={() => setViewMode('professional')}
+                  >
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Professional (AG-Grid)
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={viewMode === 'basic' ? 'default' : 'outline'}
+                    onClick={() => setViewMode('basic')}
+                  >
+                    Basic Interface
+                  </Button>
+                </div>
+                <Badge variant="outline" className="ml-auto">
+                  Excel Paste: {viewMode === 'professional' ? 'Full 1:1 Support' : 'Basic Support'}
+                </Badge>
+              </div>
+            </div>
+            
+            {/* Render appropriate interface */}
+            {viewMode === 'professional' ? (
+              <AGGridExcelViewer 
+                onToggleView={closeFile}
+                uploadedFileId={uploadedFileId}
+                fileName={uploadedFileName}
+              />
+            ) : (
+              <ExcelLikeInterface 
+                onToggleView={closeFile}
+                uploadedFileId={uploadedFileId}
+                fileName={uploadedFileName}
+              />
+            )}
+          </div>
         ) : (
           /* Upload Prompt */
           <div className="p-6">
