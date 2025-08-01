@@ -114,15 +114,19 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
         const data = await response.json();
         console.log('AG-Grid Professional: Loading data', data);
         
-        if (data.analysis?.sheets && data.analysis.sheets.length > 0) {
-          const currentSheet = data.analysis.sheets[activeSheet] || data.analysis.sheets[0];
-          setSheets(data.analysis.sheets.map((sheet: any) => sheet.name));
+        if (data.analysis?.sheets) {
+          const sheetNames = data.analysis.sheetNames || Object.keys(data.analysis.sheets);
+          setSheets(sheetNames);
           
-          if (currentSheet.data && currentSheet.data.length > 0) {
-            // Generate column definitions
-            const headers = Object.keys(currentSheet.data[0]);
-            const cols: ColDef[] = headers.map((header, index) => ({
-              field: header,
+          const currentSheetName = sheetNames[activeSheet] || sheetNames[0];
+          const currentSheet = data.analysis.sheets[currentSheetName];
+          
+          console.log('Processing sheet:', currentSheetName, currentSheet);
+          
+          if (currentSheet && currentSheet.headers && currentSheet.sampleData) {
+            // Create column definitions from headers
+            const cols: ColDef[] = currentSheet.headers.map((header: string, index: number) => ({
+              field: `col_${index}`,
               headerName: header || `Column ${index + 1}`,
               resizable: true,
               sortable: true,
@@ -130,6 +134,7 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
               editable: true,
               enableRangeSelection: true,
               enableFillHandle: true,
+              width: 150,
               suppressKeyboardEvent: (params) => {
                 // Allow Excel-like navigation
                 if (params.event?.key === 'Tab' || params.event?.key === 'Enter') {
@@ -139,13 +144,28 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
               }
             }));
             
+            // Transform sample data to row objects
+            const transformedData = currentSheet.sampleData.map((row: any[]) => {
+              const rowObj: any = {};
+              row.forEach((value, index) => {
+                rowObj[`col_${index}`] = value || '';
+              });
+              return rowObj;
+            });
+            
+            console.log('Transformed data:', { cols: cols.length, rows: transformedData.length });
+            
             setColumnDefs(cols);
-            setRowData(currentSheet.data);
+            setRowData(transformedData);
             
             toast({
               title: "AG-Grid Professional Loaded",
-              description: `${currentSheet.data.length} rows loaded with enterprise features enabled`,
+              description: `${transformedData.length} rows loaded from "${currentSheetName}" with enterprise features enabled`,
             });
+          } else {
+            console.log('No valid sheet data found');
+            setColumnDefs([]);
+            setRowData([]);
           }
         }
       }
@@ -393,6 +413,9 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
               Range: {selectedRange}
             </Badge>
           )}
+          <Badge variant="secondary">
+            Data: {rowData?.length || 0} rows × {columnDefs?.length || 0} cols
+          </Badge>
           <div className="text-xs text-technical-600 dark:text-technical-400">
             ✨ Enterprise Features: Range selection • Fill handle • Advanced clipboard • Excel export
           </div>
@@ -419,7 +442,7 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
       {/* AG-Grid Container */}
       <div className="flex-1 flex">
         <div className="flex-1 p-4">
-          {rowData.length === 0 && columnDefs.length === 0 ? (
+          {(!rowData || rowData.length === 0) && (!columnDefs || columnDefs.length === 0) ? (
             <div className="flex items-center justify-center h-64 border border-dashed border-technical-300 dark:border-technical-600 rounded-lg">
               <div className="text-center">
                 <FileSpreadsheet className="w-16 h-16 mx-auto mb-4 text-technical-400" />
