@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Upload, FileSpreadsheet, X, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ExcelLikeInterface from './ExcelLikeInterface';
-import AGGridExcelViewer from './AGGridExcelViewer';
+import AGGridProfessional from './AGGridProfessional';
 
 interface ExcelFileViewerProps {
   onToggleView: () => void;
@@ -169,12 +169,10 @@ export default function ExcelFileViewer({ onToggleView }: ExcelFileViewerProps) 
             </div>
             
             {/* Render appropriate interface */}
-            <div className="text-xs p-2 bg-gray-100 dark:bg-gray-800">
-              Current Mode: {viewMode} | File ID: {uploadedFileId}
-            </div>
+
             {viewMode === 'professional' ? (
               <div className="h-full">
-                <AGGridExcelViewer 
+                <AGGridProfessional 
                   onToggleView={closeFile}
                   uploadedFileId={uploadedFileId}
                   fileName={uploadedFileName}
