@@ -293,14 +293,21 @@ export default function AGGridExcelViewer({ onToggleView, uploadedFileId, fileNa
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-technical-600 mx-auto mb-4"></div>
-          <p className="text-technical-600 dark:text-technical-400">Loading Excel data...</p>
+          <p className="text-technical-600 dark:text-technical-400">Loading Excel data for AG-Grid...</p>
         </div>
       </div>
     );
   }
 
+  // Debug: Check if data loaded properly
+  console.log('AG-Grid Data:', { rowData: rowData.length, columnDefs: columnDefs.length, sheets });
+
   return (
     <div className="h-full flex flex-col bg-white dark:bg-technical-950">
+      {/* Debug info */}
+      <div className="text-xs text-gray-500 p-2">
+        AG-Grid Professional Mode | Rows: {rowData.length} | Cols: {columnDefs.length}
+      </div>
       {/* Header */}
       <div className="border-b border-technical-200 dark:border-technical-600 p-4">
         <div className="flex items-center justify-between mb-4">
@@ -386,25 +393,37 @@ export default function AGGridExcelViewer({ onToggleView, uploadedFileId, fileNa
       {/* AG-Grid Container */}
       <div className="flex-1 flex">
         <div className="flex-1 p-4">
-          <div 
-            className="ag-theme-alpine h-full"
-            style={{ 
-              transform: `scale(${zoomLevel / 100})`,
-              transformOrigin: 'top left',
-              width: zoomLevel !== 100 ? `${100 / (zoomLevel / 100)}%` : '100%',
-              height: zoomLevel !== 100 ? `${100 / (zoomLevel / 100)}%` : '100%'
-            }}
-          >
-            <AgGridReact
-              ref={gridRef}
-              rowData={rowData}
-              columnDefs={columnDefs}
-              gridOptions={gridOptions}
-              onGridReady={(params) => {
-                gridApi.current = params.api;
+          {rowData.length === 0 && columnDefs.length === 0 ? (
+            <div className="flex items-center justify-center h-64 border border-dashed border-technical-300 dark:border-technical-600 rounded-lg">
+              <div className="text-center">
+                <FileSpreadsheet className="w-16 h-16 mx-auto mb-4 text-technical-400" />
+                <p className="text-technical-600 dark:text-technical-400">No data available for AG-Grid</p>
+                <p className="text-xs text-technical-500 mt-2">Upload an Excel file to populate the grid</p>
+              </div>
+            </div>
+          ) : (
+            <div 
+              className="ag-theme-alpine h-full"
+              style={{ 
+                transform: `scale(${zoomLevel / 100})`,
+                transformOrigin: 'top left',
+                width: zoomLevel !== 100 ? `${100 / (zoomLevel / 100)}%` : '100%',
+                height: zoomLevel !== 100 ? `${100 / (zoomLevel / 100)}%` : '100%',
+                minHeight: '400px'
               }}
-            />
-          </div>
+            >
+              <AgGridReact
+                ref={gridRef}
+                rowData={rowData}
+                columnDefs={columnDefs}
+                gridOptions={gridOptions}
+                onGridReady={(params) => {
+                  gridApi.current = params.api;
+                  console.log('AG-Grid ready with', rowData.length, 'rows');
+                }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Side Panel for Advanced Features */}

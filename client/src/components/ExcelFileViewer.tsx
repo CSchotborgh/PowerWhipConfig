@@ -169,12 +169,17 @@ export default function ExcelFileViewer({ onToggleView }: ExcelFileViewerProps) 
             </div>
             
             {/* Render appropriate interface */}
+            <div className="text-xs p-2 bg-gray-100 dark:bg-gray-800">
+              Current Mode: {viewMode} | File ID: {uploadedFileId}
+            </div>
             {viewMode === 'professional' ? (
-              <AGGridExcelViewer 
-                onToggleView={closeFile}
-                uploadedFileId={uploadedFileId}
-                fileName={uploadedFileName}
-              />
+              <div className="h-full">
+                <AGGridExcelViewer 
+                  onToggleView={closeFile}
+                  uploadedFileId={uploadedFileId}
+                  fileName={uploadedFileName}
+                />
+              </div>
             ) : (
               <ExcelLikeInterface 
                 onToggleView={closeFile}
