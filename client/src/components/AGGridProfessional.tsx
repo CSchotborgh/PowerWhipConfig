@@ -18,7 +18,9 @@ import {
   RotateCcw,
   Grid3X3,
   MousePointer,
-  Settings
+  Settings,
+  Upload,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -37,18 +39,77 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
   const [zoomLevel, setZoomLevel] = useState(100);
   const [sheets, setSheets] = useState<string[]>([]);
   const [activeSheet, setActiveSheet] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [currentFileId, setCurrentFileId] = useState<string>(uploadedFileId);
+  const [currentFileName, setCurrentFileName] = useState<string>(fileName);
   const { toast } = useToast();
   
   const gridRef = useRef<AgGridReact>(null);
   const gridApi = useRef<GridApi | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload an Excel file (.xlsx or .xls)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('excelFile', file);
+
+    try {
+      const response = await fetch('/api/excel/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentFileId(data.fileId);
+        setCurrentFileName(data.originalName);
+        
+        toast({
+          title: "File Uploaded Successfully",
+          description: `${data.originalName} is ready for AG-Grid professional editing`,
+        });
+        
+        // Load the new file data
+        await loadExcelData(data.fileId);
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload the Excel file",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   // Load Excel data
-  const loadExcelData = useCallback(async () => {
-    if (!uploadedFileId) return;
+  const loadExcelData = useCallback(async (fileId?: string) => {
+    const targetFileId = fileId || currentFileId;
+    if (!targetFileId) return;
     
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/excel/uploaded/${uploadedFileId}`);
+      const response = await fetch(`/api/excel/uploaded/${targetFileId}`);
       if (response.ok) {
         const data = await response.json();
         console.log('AG-Grid Professional: Loading data', data);
@@ -98,7 +159,7 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
     } finally {
       setIsLoading(false);
     }
-  }, [uploadedFileId, activeSheet, toast]);
+  }, [currentFileId, activeSheet, toast]);
 
   useEffect(() => {
     loadExcelData();
@@ -215,19 +276,19 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
   const exportToExcel = useCallback(() => {
     if (gridApi.current) {
       gridApi.current.exportDataAsExcel({
-        fileName: `${fileName.replace('.xlsx', '')}_edited.xlsx`,
+        fileName: `${currentFileName.replace('.xlsx', '')}_edited.xlsx`,
         sheetName: sheets[activeSheet] || 'Sheet1'
       });
     }
-  }, [fileName, sheets, activeSheet]);
+  }, [currentFileName, sheets, activeSheet]);
 
   const exportToCSV = useCallback(() => {
     if (gridApi.current) {
       gridApi.current.exportDataAsCsv({
-        fileName: `${fileName.replace('.xlsx', '')}_edited.csv`
+        fileName: `${currentFileName.replace('.xlsx', '')}_edited.csv`
       });
     }
-  }, [fileName]);
+  }, [currentFileName]);
 
   if (isLoading) {
     return (
@@ -252,11 +313,33 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
               AG-Grid Enterprise
             </Badge>
             <h3 className="text-lg font-semibold text-technical-900 dark:text-technical-100">
-              {fileName}
+              {currentFileName || 'No file loaded'}
             </h3>
           </div>
           
           <div className="flex items-center gap-2">
+            {/* File Upload */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Upload className="w-4 h-4 mr-2" />
+              )}
+              {isUploading ? 'Uploading...' : 'Upload Excel'}
+            </Button>
+            
             {/* Zoom Controls */}
             <div className="flex items-center gap-1 border rounded-md">
               <Button size="sm" variant="ghost" onClick={() => setZoomLevel(prev => Math.max(50, prev - 10))}>
@@ -292,7 +375,7 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
             <Button size="sm" variant="outline" onClick={onToggleView}>
               Back to Design Canvas
             </Button>
-            <Button size="sm" variant="default" onClick={loadExcelData}>
+            <Button size="sm" variant="default" onClick={() => loadExcelData()}>
               <RotateCcw className="w-4 h-4 mr-2" />
               Refresh Data
             </Button>
@@ -341,7 +424,19 @@ export default function AGGridProfessional({ onToggleView, uploadedFileId, fileN
               <div className="text-center">
                 <FileSpreadsheet className="w-16 h-16 mx-auto mb-4 text-technical-400" />
                 <p className="text-technical-600 dark:text-technical-400">No data available for AG-Grid Enterprise</p>
-                <p className="text-xs text-technical-500 mt-2">Upload an Excel file to populate the grid</p>
+                <p className="text-xs text-technical-500 mt-2">Upload an Excel file to populate the professional grid</p>
+                <Button 
+                  className="mt-4"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Upload className="w-4 h-4 mr-2" />
+                  )}
+                  {isUploading ? 'Uploading...' : 'Upload Excel File'}
+                </Button>
               </div>
             </div>
           ) : (
