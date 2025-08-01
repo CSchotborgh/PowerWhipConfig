@@ -472,7 +472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/excel/export-master-bubble", async (req, res) => {
     try {
       const { receptacles, rawData } = req.body;
-      const XLSX = await import('xlsx');
+      const XLSX = require('xlsx');
       
       // Create workbook with Order Entry format matching MasterBubbleUpLookup structure
       const workbook = XLSX.utils.book_new();
@@ -914,6 +914,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/excel/process-configurator', async (req, res) => {
     try {
       const { inputPatterns } = req.body;
+      const XLSX = require('xlsx');
       const filePath = './attached_assets/ConfiguratorModelDatasetEPW_1754006250837.xlsx';
       const workbook = XLSX.readFile(filePath);
       
