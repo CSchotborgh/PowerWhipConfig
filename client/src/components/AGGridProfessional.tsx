@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { AgGridReact } from 'ag-grid-react';
-import { ColDef, GridApi, GridOptions, RangeSelectionChangedEvent } from 'ag-grid-community';
+import { ColDef, GridApi, GridOptions, RangeSelectionChangedEvent, ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import 'ag-grid-enterprise';
+
+// Register AG-Grid modules
+ModuleRegistry.registerModules([AllCommunityModule]);
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
