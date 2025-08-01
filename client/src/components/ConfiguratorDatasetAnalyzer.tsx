@@ -370,39 +370,54 @@ CS8369`);
           <CardContent className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Receptacle Pattern Lookup
+                Natural Language Pattern Generator
               </label>
               <p className="text-xs text-technical-600 dark:text-technical-400 mb-3">
-                Enter receptacle patterns to lookup in MasterBubbleUpLookup data (one per line)
+                Transform human specifications into structured patterns with equal distribution logic
                 <br />
-                <strong>Enhanced Format:</strong> Use comma-delimited entries to auto-fill specific columns:
+                <strong>Enhanced Formats:</strong>
+                <br />
+                <span className="text-blue-600 dark:text-blue-400 font-medium">1. Comma-Delimited Patterns:</span>
                 <br />
                 <code className="bg-technical-100 dark:bg-technical-800 px-1 rounded text-xs">
                   Pattern, Cable/Conduit, Whip Length, Tail Length, Label Color
                 </code>
                 <br />
-                <span className="text-green-600 dark:text-green-400 font-medium">Examples:</span>
+                <span className="text-green-600 dark:text-green-400 font-medium">2. Natural Language Specifications:</span>
                 <br />
-                • <code className="text-xs bg-green-50 dark:bg-green-900/20 px-1 rounded">460C9W, FMC, 115, 10</code> - Auto-fills cable type and lengths
+                <code className="text-xs bg-green-50 dark:bg-green-900/20 px-1 rounded">
+                  860 power whips total | Whip lengths ranging from 20'-80' | Liquid tight conduit | Four colors: Red, Orange, Blue, Yellow | IEC pinned and sleeve plug
+                </code>
                 <br />
-                • <code className="text-xs bg-green-50 dark:bg-green-900/20 px-1 rounded">CS8264C, LMZC, 26, 8, Purple</code> - Includes label color
+                <strong className="text-purple-600 dark:text-purple-400">Translation Examples:</strong>
+                <br />
+                • "Liquid tight conduit" = LMZC
+                <br />
+                • "IEC pinned and sleeve plug" = CS8269A or 460C9W
+                <br />
+                • "860 power whips total" = 860 output rows with equal distribution
               </p>
               <Textarea
                 value={inputPatterns}
                 onChange={(e) => setInputPatterns(e.target.value)}
                 className="min-h-[200px] font-mono text-sm"
                 placeholder={`Enter patterns (one per line):
+
+COMMA-DELIMITED PATTERNS:
 460C9W, FMC, 115, 10
-460R9W, LFMC, 25, 8
-560C9W, MMC, 20, 10
-L5-20R, TO, 14, 15
-L5-30R, SO, 52, 10
+CS8264C, LMZC, 26, 8, Purple
 L6-15R, LMZC, 22, 10, Purple
-CS8264C, LMZC, 26, 8, Tan
-CS8269A, LMZC, 35, 10, Pink
-CS8369A, FMC, 12, 8, Gray
-9C54U2, FMC, 15, 10, Green
-CS8369, FMC, 15, 10, Yellow`}
+
+NATURAL LANGUAGE SPECIFICATIONS:
+860 power whips total
+Whip lengths ranging from 20'-80'
+Liquid tight conduit
+Four colors of liquid tight: Red, Orange, Blue, Yellow
+IEC pinned and sleeve plug
+IP67 bell box included
+60A
+5 wires - #6 AWG
+Purple, Tan, Pink, Gray, Green`}
               />
             </div>
             
@@ -434,36 +449,108 @@ CS8369, FMC, 15, 10, Yellow`}
                     className="p-4 border border-technical-200 dark:border-technical-600 rounded-lg space-y-4"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-mono font-medium text-lg">{result.inputPattern}</span>
-                      <Badge variant={result.matchCount > 0 ? "default" : "secondary"}>
-                        {result.matchCount > 0 ? `${result.matchCount} matches in ${result.foundInSheets.length} sheet(s)` : 'No matches - using defaults'}
-                      </Badge>
-                    </div>
-                    
-                    {/* Auto-Fill Data */}
-                    <div className="bg-technical-50 dark:bg-technical-800 p-3 rounded">
-                      <h4 className="font-medium mb-2 text-sm">Auto-Generated Row Data</h4>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div><strong>Receptacle:</strong> {result.autoFillData?.receptacle}</div>
-                        <div><strong>Cable Type:</strong> {result.autoFillData?.cableType}</div>
-                        <div><strong>Whip Length:</strong> {result.autoFillData?.whipLength} ft</div>
-                        <div><strong>Tail Length:</strong> {result.autoFillData?.tailLength} ft</div>
-                        <div><strong>Conduit Size:</strong> {result.autoFillData?.conduitSize}</div>
-                        <div><strong>Conductor AWG:</strong> {result.autoFillData?.conductorAWG}</div>
-                        <div><strong>Voltage:</strong> {result.autoFillData?.voltage}V</div>
-                        <div><strong>Label Color:</strong> {result.autoFillData?.labelColor}</div>
+                      <span className="font-mono font-medium text-lg">
+                        {result.isNaturalLanguage ? 'Natural Language Specification' : result.inputPattern}
+                      </span>
+                      <div className="flex gap-2">
+                        {result.isNaturalLanguage ? (
+                          <Badge variant="default" className="bg-green-600">
+                            {result.totalGeneratedRows} rows generated
+                          </Badge>
+                        ) : (
+                          <Badge variant={result.matchCount > 0 ? "default" : "secondary"}>
+                            {result.matchCount > 0 ? `${result.matchCount} matches in ${result.foundInSheets?.length || 0} sheet(s)` : 'No matches - using defaults'}
+                          </Badge>
+                        )}
                       </div>
-                      {result.autoFillData?.sourceSheet && (
-                        <div className="text-xs text-technical-600 dark:text-technical-400 mt-2">
-                          Source: {result.autoFillData.sourceSheet} (Row {result.autoFillData.sourceRow})
-                        </div>
-                      )}
-                      {result.autoFillData?.error && (
-                        <div className="text-xs text-orange-600 dark:text-orange-400 mt-2">
-                          {result.autoFillData.error}
-                        </div>
-                      )}
                     </div>
+
+                    {/* Natural Language Processing Display */}
+                    {result.isNaturalLanguage && (
+                      <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <h5 className="font-medium text-green-800 dark:text-green-200 mb-2">Natural Language Processing Results</h5>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="font-medium">Total Quantity:</span> {result.specification?.totalQuantity}
+                          </div>
+                          <div>
+                            <span className="font-medium">Receptacle Type:</span> {result.specification?.receptacleType}
+                          </div>
+                          <div>
+                            <span className="font-medium">Conduit Type:</span> {result.specification?.conduitType}
+                          </div>
+                          <div>
+                            <span className="font-medium">Length Range:</span> {result.specification?.lengthRange?.min}' - {result.specification?.lengthRange?.max}'
+                          </div>
+                          <div className="col-span-2">
+                            <span className="font-medium">Colors:</span> {result.specification?.colors?.join(', ')}
+                          </div>
+                          {result.specification?.features && result.specification.features.length > 0 && (
+                            <div className="col-span-2">
+                              <span className="font-medium">Features:</span> {result.specification.features.join(', ')}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {result.distributionSummary && (
+                          <div className="mt-3 p-2 bg-white dark:bg-technical-800 rounded border">
+                            <h6 className="font-medium mb-2">Equal Distribution Summary</h6>
+                            <div className="text-xs space-y-1">
+                              <div>Base quantity per configuration: {result.distributionSummary.baseQuantityPerConfig}</div>
+                              <div>Total configurations: {result.distributionSummary.configurationsCount}</div>
+                              <div>Lengths: {result.distributionSummary.lengths?.join(', ')} feet</div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="mt-3">
+                          <details>
+                            <summary className="cursor-pointer text-sm font-medium text-green-700 dark:text-green-300">
+                              View Generated Patterns (first 10 of {result.totalGeneratedRows})
+                            </summary>
+                            <div className="mt-2 p-2 bg-white dark:bg-technical-900 rounded font-mono text-xs max-h-40 overflow-y-auto">
+                              {result.generatedPatterns?.slice(0, 10).map((pattern: string, idx: number) => (
+                                <div key={idx} className="py-1 border-b border-technical-100 dark:border-technical-700">
+                                  {pattern}
+                                </div>
+                              ))}
+                              {result.generatedPatterns?.length > 10 && (
+                                <div className="py-1 text-technical-500 italic">
+                                  ... and {result.generatedPatterns.length - 10} more patterns
+                                </div>
+                              )}
+                            </div>
+                          </details>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Auto-Fill Data - Only show for non-natural language patterns */}
+                    {!result.isNaturalLanguage && (
+                      <div className="bg-technical-50 dark:bg-technical-800 p-3 rounded">
+                        <h4 className="font-medium mb-2 text-sm">Auto-Generated Row Data</h4>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div><strong>Receptacle:</strong> {result.autoFillData?.receptacle}</div>
+                          <div><strong>Cable Type:</strong> {result.autoFillData?.cableType}</div>
+                          <div><strong>Whip Length:</strong> {result.autoFillData?.whipLength} ft</div>
+                          <div><strong>Tail Length:</strong> {result.autoFillData?.tailLength} ft</div>
+                          <div><strong>Conduit Size:</strong> {result.autoFillData?.conduitSize}</div>
+                          <div><strong>Conductor AWG:</strong> {result.autoFillData?.conductorAWG}</div>
+                          <div><strong>Voltage:</strong> {result.autoFillData?.voltage}V</div>
+                          <div><strong>Label Color:</strong> {result.autoFillData?.labelColor}</div>
+                        </div>
+                        {result.autoFillData?.sourceSheet && (
+                          <div className="text-xs text-technical-600 dark:text-technical-400 mt-2">
+                            Source: {result.autoFillData.sourceSheet} (Row {result.autoFillData.sourceRow})
+                          </div>
+                        )}
+                        {result.autoFillData?.error && (
+                          <div className="text-xs text-orange-600 dark:text-orange-400 mt-2">
+                            {result.autoFillData.error}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     
                     {/* Generated Expressions */}
                     <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded">

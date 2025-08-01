@@ -307,6 +307,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Natural language to technical mapping
+  const naturalLanguageMappings = {
+    conduitTypes: {
+      'liquid tight conduit': 'LMZC',
+      'liquid tight': 'LMZC', 
+      'flexible metal conduit': 'FMC',
+      'metal conduit': 'MCC',
+      'liquidtight flexible metal conduit': 'LFMC',
+      'thermoplastic': 'TO',
+      'service cable': 'SO'
+    },
+    receptacleTypes: {
+      'iec pinned and sleeve plug': 'CS8269A',
+      'iec pin and sleeve': 'CS8269A',
+      'nema 5-15': '460C9W',
+      'nema 5-20': '460R9W',
+      'nema 6-15': 'L6-15R',
+      'nema 6-20': 'L6-20R',
+      'nema l5-20': 'L5-20R',
+      'nema l5-30': 'L5-30R'
+    },
+    colors: {
+      'red': 'Red',
+      'orange': 'Orange', 
+      'blue': 'Blue',
+      'yellow': 'Yellow',
+      'purple': 'Purple',
+      'tan': 'Tan',
+      'pink': 'Pink',
+      'gray': 'Gray',
+      'grey': 'Gray',
+      'green': 'Green',
+      'black': 'Black'
+    }
+  };
+
+  // Parse natural language specifications into structured patterns
+  const parseNaturalLanguageSpecification = (text: string) => {
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+    
+    const specification = {
+      totalQuantity: 0,
+      lengthRange: { min: 20, max: 80, step: 20 },
+      conduitType: 'LMZC',
+      receptacleType: 'CS8269A',
+      colors: ['Red', 'Orange', 'Blue', 'Yellow'],
+      tailLength: '10',
+      features: [] as string[]
+    };
+
+    // Parse each line for specifications
+    lines.forEach(line => {
+      const lowerLine = line.toLowerCase();
+      
+      // Extract total quantity
+      const quantityMatch = line.match(/(\d+)\s*power\s*whips?\s*total/i);
+      if (quantityMatch) {
+        specification.totalQuantity = parseInt(quantityMatch[1]);
+      }
+      
+      // Extract length range
+      const lengthMatch = line.match(/(\d+)['']?\s*-\s*(\d+)['']?/);
+      if (lengthMatch && lowerLine.includes('length')) {
+        specification.lengthRange.min = parseInt(lengthMatch[1]);
+        specification.lengthRange.max = parseInt(lengthMatch[2]);
+      }
+      
+      // Map conduit types
+      Object.entries(naturalLanguageMappings.conduitTypes).forEach(([key, value]) => {
+        if (lowerLine.includes(key)) {
+          specification.conduitType = value;
+        }
+      });
+      
+      // Map receptacle types
+      Object.entries(naturalLanguageMappings.receptacleTypes).forEach(([key, value]) => {
+        if (lowerLine.includes(key)) {
+          specification.receptacleType = value;
+        }
+      });
+      
+      // Extract colors
+      const colorMatches = Object.keys(naturalLanguageMappings.colors).filter(color => 
+        lowerLine.includes(color)
+      );
+      if (colorMatches.length > 0) {
+        specification.colors = colorMatches.map(color => 
+          naturalLanguageMappings.colors[color as keyof typeof naturalLanguageMappings.colors]
+        );
+      }
+      
+      // Store additional features
+      if (lowerLine.includes('ip67') || lowerLine.includes('bell box')) {
+        specification.features.push('IP67 bell box included');
+      }
+      if (lowerLine.includes('60a') || lowerLine.includes('60 amp')) {
+        specification.features.push('60A');
+      }
+      if (lowerLine.includes('#6 awg') || lowerLine.includes('5 wires')) {
+        specification.features.push('5 wires - #6 AWG');
+      }
+    });
+
+    return specification;
+  };
+
+  // Generate equal distribution patterns from natural language specification
+  const generateDistributionPatterns = (specification: any) => {
+    const patterns = [];
+    const { totalQuantity, lengthRange, conduitType, receptacleType, colors, tailLength } = specification;
+    
+    if (totalQuantity === 0) return [];
+    
+    // Calculate length steps (20', 40', 60', 80')
+    const lengths = [];
+    for (let length = lengthRange.min; length <= lengthRange.max; length += lengthRange.step) {
+      lengths.push(length);
+    }
+    
+    // Calculate equal distribution
+    const totalConfigurations = lengths.length * colors.length;
+    const baseQuantityPerConfig = Math.floor(totalQuantity / totalConfigurations);
+    const remainder = totalQuantity % totalConfigurations;
+    
+    let configIndex = 0;
+    
+    // Generate patterns with equal distribution
+    lengths.forEach(length => {
+      colors.forEach(color => {
+        const quantity = baseQuantityPerConfig + (configIndex < remainder ? 1 : 0);
+        
+        // Generate the specified quantity of this configuration
+        for (let i = 0; i < quantity; i++) {
+          patterns.push(`${receptacleType}, ${conduitType}, ${length}, ${tailLength}, ${color}`);
+        }
+        
+        configIndex++;
+      });
+    });
+    
+    return patterns;
+  };
+
   // Helper function to parse comma-delimited patterns
   const parseReceptaclePattern = (pattern: string) => {
     const parts = pattern.split(',').map(p => p.trim());
@@ -345,6 +488,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add receptacle data based on lookup results with comma-delimited parsing
       let lineNumber = 1;
       receptacles.forEach((receptacle: any) => {
+        // Handle natural language generated patterns
+        if (receptacle.generatedPatterns && receptacle.generatedPatterns.length > 0) {
+          receptacle.generatedPatterns.forEach((generatedPattern: string) => {
+            const parsedPattern = parseReceptaclePattern(generatedPattern);
+            orderEntryData.push([
+              (lineNumber++).toString(),
+              '1', // Each row is 1 unit
+              parsedPattern.receptacle,
+              parsedPattern.cableConduitType,
+              parsedPattern.whipLength,
+              parsedPattern.tailLength,
+              parsedPattern.labelColor,
+              '', '', '', '1', '', '', '', '', '', '', '3/4', '6', '8', '208', 
+              '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 
+              '', '', '', '3 phase', '5', 'yes', '60', '208', '', '', '60AH', '', 
+              '3 Pole, 60A, 240/120V, Bolt in, 22KA, Square D, QOB360VH'
+            ]);
+          });
+          return; // Skip normal processing for natural language patterns
+        }
+        
         // Parse comma-delimited pattern if present
         const parsedPattern = parseReceptaclePattern(receptacle.type);
         
@@ -726,6 +890,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const workbook = XLSX.readFile(filePath);
       
       const results = inputPatterns.map((pattern: string) => {
+        // Check if this is a natural language specification
+        const isNaturalLanguage = pattern.toLowerCase().includes('power whips total') || 
+                                  pattern.toLowerCase().includes('whip lengths ranging') ||
+                                  pattern.toLowerCase().includes('liquid tight conduit');
+        
+        if (isNaturalLanguage) {
+          // Process as natural language specification
+          const specification = parseNaturalLanguageSpecification(pattern);
+          const generatedPatterns = generateDistributionPatterns(specification);
+          
+          return {
+            inputPattern: pattern,
+            isNaturalLanguage: true,
+            specification: specification,
+            generatedPatterns: generatedPatterns,
+            totalGeneratedRows: generatedPatterns.length,
+            distributionSummary: {
+              totalQuantity: specification.totalQuantity,
+              configurationsCount: specification.lengthRange ? 
+                ((specification.lengthRange.max - specification.lengthRange.min) / specification.lengthRange.step + 1) * specification.colors.length : 0,
+              baseQuantityPerConfig: Math.floor(specification.totalQuantity / 
+                (((specification.lengthRange.max - specification.lengthRange.min) / specification.lengthRange.step + 1) * specification.colors.length)),
+              lengths: specification.lengthRange ? 
+                Array.from({length: (specification.lengthRange.max - specification.lengthRange.min) / specification.lengthRange.step + 1}, 
+                  (_, i) => specification.lengthRange.min + i * specification.lengthRange.step) : [],
+              colors: specification.colors
+            }
+          };
+        }
+        
         // Parse comma-delimited pattern for enhanced processing
         const parsedPattern = parseReceptaclePattern(pattern);
         const searchPattern = parsedPattern.receptacle || pattern; // Use receptacle part for matching
