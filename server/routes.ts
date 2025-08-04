@@ -720,7 +720,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Helper function to parse comma-delimited patterns
   const parseReceptaclePattern = (pattern: string) => {
-    const parts = pattern.split(',').map(p => p.trim());
+    let parts: string[] = [];
+    
+    // Enhanced pattern parsing: Support comma-delimited, tab-delimited, and space-delimited
+    if (pattern.includes(',')) {
+      // Comma-delimited: "460C9W,MMC,115,10,red"
+      parts = pattern.split(',').map(p => p.trim());
+    } else if (pattern.includes('\t')) {
+      // Tab-delimited: "460C9W MMC     115     10      red"
+      parts = pattern.split('\t').map(p => p.trim()).filter(p => p.length > 0);
+    } else {
+      // Space-delimited: "460C9W MMC 115 10 red"
+      // Use regex to split on whitespace while preserving multi-word values
+      parts = pattern.trim().split(/\s+/).filter(p => p.length > 0);
+    }
+    
     return {
       receptacle: parts[0] || '',
       cableConduitType: parts[1] || '',
@@ -1280,12 +1294,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Handle comma-delimited patterns with enhanced speed
+      // Handle multi-format patterns (comma, tab, space delimited) with enhanced speed
       if (patterns && Array.isArray(patterns)) {
         processedPatterns = patterns.map((pattern: string) => {
           const parsed = parseReceptaclePattern(pattern);
+          
+          // Determine format type for reporting
+          let formatType = 'comma-delimited';
+          if (pattern.includes('\t')) {
+            formatType = 'tab-delimited';
+          } else if (!pattern.includes(',') && pattern.includes(' ')) {
+            formatType = 'space-delimited';
+          }
+          
           return {
             original: pattern,
+            formatType: formatType,
             parsed: parsed,
             formatted: `${parsed.receptacle}, ${parsed.cableConduitType || 'LMZC'}, ${parsed.whipLength || '25'}, ${parsed.tailLength || '10'}${parsed.labelColor ? ', ' + parsed.labelColor : ''}`
           };
@@ -1299,6 +1323,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         processingTimeMs: processingTime,
         processedPatterns: processedPatterns,
         totalPatterns: processedPatterns.length,
+        supportedFormats: ['comma-delimited', 'tab-delimited', 'space-delimited'],
+        formatExamples: {
+          'comma-delimited': '460C9W,MMC,115,10,red',
+          'tab-delimited': '460C9W\tMMC\t115\t10\tred',
+          'space-delimited': '460C9W MMC 115 10 red'
+        },
         optimized: true
       });
       

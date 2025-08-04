@@ -40,25 +40,11 @@ export default function ConfiguratorDatasetAnalyzer({ onToggleView }: Configurat
   const [currentView, setCurrentView] = useState<'analysis' | 'excel' | 'formula-library' | 'pattern-builder'>('analysis');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const [inputPatterns, setInputPatterns] = useState(`460C9W
-460R9W
-560C9W
-L5-20R
-L5-30R
-L6-15R
-L6-20R
-L6-30R
-L15-20R
-L15-30R
-L21-20R
-L21-30R
-L22-20R
-L22-30R
-CS8264C
-CS8269A
-CS8369A
-9C54U2
-CS8369`);
+  const [inputPatterns, setInputPatterns] = useState(`460C9W,MMC,115,10,red
+460C9W  LFMC    5       8       yellow
+460C9W MMC 115 10 blue
+CS8269A,LMZC,30,12,orange
+L6-30R  FMC     25      10      green`);
   const [processedResults, setProcessedResults] = useState<any>(null);
 
   const analyzeDataset = async () => {

@@ -1,0 +1,3 @@
+Comma-delimited: 460C9W,MMC,115,10,red
+Tab-delimited: 460C9W	LFMC	5	8	yellow  
+Space-delimited: 460C9W MMC 115 10 blue
