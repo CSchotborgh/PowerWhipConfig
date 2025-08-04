@@ -524,7 +524,7 @@ Purple, Tan, Pink, Gray, Green`}
               />
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button 
                 onClick={processWithConfigurator} 
                 disabled={!analysis || isLoading}
@@ -570,6 +570,119 @@ Purple, Tan, Pink, Gray, Green`}
               >
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
                 Fast Transform
+              </Button>
+
+              <Button 
+                onClick={async () => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = '.xlsx,.xls';
+                  input.onchange = async (e: any) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    setIsLoading(true);
+                    try {
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      
+                      const response = await fetch('/api/excel/transform-whip-labels', {
+                        method: 'POST',
+                        body: formData
+                      });
+                      
+                      if (response.ok) {
+                        const result = await response.json();
+                        setProcessedResults([{
+                          inputPattern: `WHIP LABEL Transformation from ${result.fileName}`,
+                          isWhipLabelTransform: true,
+                          transformedData: result.transformedData,
+                          analysis: result.analysis,
+                          fileName: result.fileName
+                        }]);
+                        
+                        toast({
+                          title: "WHIP LABEL Transform Complete",
+                          description: `Processed ${result.analysis.originalRows} rows into ${result.analysis.transformedRows} transformed entries`,
+                        });
+                      } else {
+                        throw new Error('Transform failed');
+                      }
+                    } catch (error) {
+                      console.error('WHIP LABEL transform error:', error);
+                      toast({
+                        title: "Transform Failed",
+                        description: "Failed to transform WHIP LABEL file",
+                        variant: "destructive"
+                      });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  };
+                  input.click();
+                }}
+                disabled={isLoading}
+                variant="secondary"
+                className="flex items-center gap-2"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
+                Transform WHIP LABELS
+              </Button>
+
+              <Button 
+                onClick={async () => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = '.xlsx,.xls';
+                  input.onchange = async (e: any) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    setIsLoading(true);
+                    try {
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      
+                      const response = await fetch('/api/excel/export-transformed-whip', {
+                        method: 'POST',
+                        body: formData
+                      });
+                      
+                      if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `transformed_${file.name}`;
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        
+                        toast({
+                          title: "Export Complete",
+                          description: `Downloaded transformed_${file.name}`,
+                        });
+                      } else {
+                        throw new Error('Export failed');
+                      }
+                    } catch (error) {
+                      console.error('Export error:', error);
+                      toast({
+                        title: "Export Failed",
+                        description: "Failed to export transformed file",
+                        variant: "destructive"
+                      });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  };
+                  input.click();
+                }}
+                disabled={isLoading}
+                variant="default"
+                className="flex items-center gap-2"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                Export Transformed Excel
               </Button>
             </div>
 
@@ -661,7 +774,8 @@ Purple, Tan, Pink, Gray, Green`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-mono font-medium text-lg">
-                        {result.isNaturalLanguage ? 'Natural Language Specification' : result.inputPattern}
+                        {result.isNaturalLanguage ? 'Natural Language Specification' : 
+                         result.isWhipLabelTransform ? 'WHIP LABEL Transformation' : result.inputPattern}
                       </span>
                       <div className="flex gap-2">
                         {result.isNaturalLanguage ? (

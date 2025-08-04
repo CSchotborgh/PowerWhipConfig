@@ -634,6 +634,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return `${receptacle},${conduit},${length},${tailLength},${color}`;
   };
 
+  // Advanced Excel transformation for WHIP LABEL processing
+  const transformWhipLabelData = (workbook: any) => {
+    const transformedRows: any[] = [];
+    const analysisData = {
+      totalSheets: workbook.SheetNames.length,
+      sheetsProcessed: [],
+      originalRows: 0,
+      transformedRows: 0,
+      labelSourcesSplit: 0
+    };
+
+    workbook.SheetNames.forEach((sheetName: string) => {
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      if (jsonData.length === 0) return;
+      
+      const headers = jsonData[0] as string[];
+      const sheetAnalysis = {
+        name: sheetName,
+        originalRows: jsonData.length - 1,
+        transformedRows: 0,
+        headersFound: headers
+      };
+      
+      // Find column indices for required fields
+      const columnMap = {
+        whipLabelSource1: headers.findIndex(h => h?.toString().toLowerCase().includes('whip label source 1')),
+        source1Length: headers.findIndex(h => h?.toString().toLowerCase().includes('source 1 length')),
+        whipLabelSource2: headers.findIndex(h => h?.toString().toLowerCase().includes('whip label source 2')),
+        source2Length: headers.findIndex(h => h?.toString().toLowerCase().includes('source 2 length')),
+        rowNum: headers.findIndex(h => h?.toString().toLowerCase().includes('row #')),
+        rackNum: headers.findIndex(h => h?.toString().toLowerCase().includes('rack#')),
+        receptacleType: headers.findIndex(h => h?.toString().toLowerCase().includes('receptacle type')),
+        sealtight: headers.findIndex(h => h?.toString().toLowerCase().includes('sealtight')),
+        conductors: headers.findIndex(h => h?.toString().toLowerCase().includes('conductors'))
+      };
+      
+      // Process data rows (skip header)
+      for (let i = 1; i < jsonData.length; i++) {
+        const row = jsonData[i] as any[];
+        if (!row || row.length === 0) continue;
+        
+        analysisData.originalRows++;
+        sheetAnalysis.originalRows++;
+        
+        // Extract data from current row
+        const baseData = {
+          rowNum: row[columnMap.rowNum] || '',
+          rackNum: row[columnMap.rackNum] || '',
+          receptacleType: row[columnMap.receptacleType] || '',
+          sealtight: row[columnMap.sealtight] || '',
+          conductors: row[columnMap.conductors] || '',
+          sourceSheet: sheetName,
+          originalRowIndex: i
+        };
+        
+        // Process Source 1 if exists
+        const whipLabelSource1 = row[columnMap.whipLabelSource1];
+        const source1Length = row[columnMap.source1Length];
+        if (whipLabelSource1) {
+          transformedRows.push({
+            ...baseData,
+            whipLabel: whipLabelSource1,
+            sourceLength: source1Length || '',
+            sourceNumber: 1,
+            transformedId: `${sheetName}_${i}_S1`
+          });
+          analysisData.transformedRows++;
+          analysisData.labelSourcesSplit++;
+          sheetAnalysis.transformedRows++;
+        }
+        
+        // Process Source 2 if exists
+        const whipLabelSource2 = row[columnMap.whipLabelSource2];
+        const source2Length = row[columnMap.source2Length];
+        if (whipLabelSource2) {
+          transformedRows.push({
+            ...baseData,
+            whipLabel: whipLabelSource2,
+            sourceLength: source2Length || '',
+            sourceNumber: 2,
+            transformedId: `${sheetName}_${i}_S2`
+          });
+          analysisData.transformedRows++;
+          analysisData.labelSourcesSplit++;
+          sheetAnalysis.transformedRows++;
+        }
+      }
+      
+      analysisData.sheetsProcessed.push(sheetAnalysis);
+    });
+    
+    return {
+      transformedData: transformedRows,
+      analysis: analysisData
+    };
+  };
+
+  // Generate Excel output from transformed data
+  const generateTransformedExcel = (transformedData: any[]) => {
+    const outputHeaders = [
+      'WHIP LABEL',
+      'SOURCE LENGTH', 
+      'ROW #',
+      'RACK#',
+      'RECEPTACLE TYPE',
+      'SEALTIGHT',
+      'CONDUCTORS',
+      'SOURCE NUMBER',
+      'SOURCE SHEET',
+      'ORIGINAL ROW'
+    ];
+    
+    const outputData = [
+      outputHeaders,
+      ...transformedData.map(row => [
+        row.whipLabel,
+        row.sourceLength,
+        row.rowNum,
+        row.rackNum,
+        row.receptacleType,
+        row.sealtight,
+        row.conductors,
+        row.sourceNumber,
+        row.sourceSheet,
+        row.originalRowIndex
+      ])
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet(outputData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Transformed_Data');
+    
+    return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  };
+
   // Excel transformation routes with intelligent pattern extraction
   app.post("/api/excel/transform", upload.single('file'), async (req, res) => {
     try {
@@ -644,7 +781,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Parse the uploaded Excel file
-      const XLSX = require('xlsx');
       const workbook = XLSX.read(file.buffer);
       
       // Extract receptacle patterns using enhanced parsing
@@ -681,6 +817,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error transforming Excel file:', error);
       res.status(500).json({ error: 'Failed to transform Excel file' });
+    }
+  });
+
+  // New WHIP LABEL transformation endpoint
+  app.post("/api/excel/transform-whip-labels", upload.single('file'), async (req, res) => {
+    try {
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Parse the uploaded Excel file
+      const workbook = XLSX.read(file.buffer);
+      
+      // Transform WHIP LABEL data
+      const transformResult = transformWhipLabelData(workbook);
+      
+      res.json({
+        success: true,
+        fileName: file.originalname,
+        transformedData: transformResult.transformedData,
+        analysis: transformResult.analysis,
+        processingMethod: 'whip_label_transformation'
+      });
+    } catch (error) {
+      console.error('Error transforming WHIP LABEL file:', error);
+      res.status(500).json({ error: 'Failed to transform WHIP LABEL file' });
+    }
+  });
+
+  // Export transformed WHIP LABEL data as Excel
+  app.post("/api/excel/export-transformed-whip", upload.single('file'), async (req, res) => {
+    try {
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Parse and transform the Excel file
+      const workbook = XLSX.read(file.buffer);
+      const transformResult = transformWhipLabelData(workbook);
+      
+      // Generate Excel output
+      const excelBuffer = generateTransformedExcel(transformResult.transformedData);
+      
+      // Set headers for file download
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="transformed_${file.originalname}"`);
+      
+      res.send(excelBuffer);
+    } catch (error) {
+      console.error('Error exporting transformed WHIP LABEL file:', error);
+      res.status(500).json({ error: 'Failed to export transformed WHIP LABEL file' });
     }
   });
 
