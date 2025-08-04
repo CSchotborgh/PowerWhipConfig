@@ -421,14 +421,54 @@ Purple, Tan, Pink, Gray, Green`}
               />
             </div>
             
-            <Button 
-              onClick={processWithConfigurator} 
-              disabled={!analysis || isLoading}
-              className="flex items-center gap-2"
-            >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              Process with ConfiguratorDataset
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={processWithConfigurator} 
+                disabled={!analysis || isLoading}
+                className="flex items-center gap-2"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                Process with ConfiguratorDataset
+              </Button>
+              
+              <Button 
+                onClick={async () => {
+                  setIsLoading(true);
+                  try {
+                    const response = await fetch('/api/excel/fast-transform', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ 
+                        naturalLanguageInput: inputPatterns
+                      })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                      setProcessedResults([{
+                        inputPattern: inputPatterns,
+                        isNaturalLanguage: true,
+                        specification: result.specification,
+                        generatedPatterns: result.patterns,
+                        totalGeneratedRows: result.totalGeneratedRows,
+                        distributionSummary: result.distributionSummary,
+                        processingTimeMs: result.processingTimeMs
+                      }]);
+                    }
+                  } catch (error) {
+                    console.error('Fast transform error:', error);
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+                disabled={!inputPatterns || isLoading}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                Fast Transform
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -436,9 +476,9 @@ Purple, Tan, Pink, Gray, Green`}
         {processedResults && (
           <Card>
             <CardHeader>
-              <CardTitle>Processing Results</CardTitle>
+              <CardTitle>Excel Master Bubble Format Transformer Results</CardTitle>
               <p className="text-sm text-technical-600 dark:text-technical-400">
-                Pattern matching results from ConfiguratorModelDatasetEPW
+                Enhanced pattern processing with optimized speed and accuracy
               </p>
             </CardHeader>
             <CardContent>
@@ -507,6 +547,11 @@ Purple, Tan, Pink, Gray, Green`}
                           <details>
                             <summary className="cursor-pointer text-sm font-medium text-green-700 dark:text-green-300">
                               View Generated Patterns (first 10 of {result.totalGeneratedRows})
+                              {result.processingTimeMs && (
+                                <span className="text-xs ml-2 text-green-600">
+                                  Generated in {result.processingTimeMs}ms
+                                </span>
+                              )}
                             </summary>
                             <div className="mt-2 p-2 bg-white dark:bg-technical-900 rounded font-mono text-xs max-h-40 overflow-y-auto">
                               {result.generatedPatterns?.slice(0, 10).map((pattern: string, idx: number) => (
