@@ -46,6 +46,7 @@ export default function ConfiguratorDatasetAnalyzer({ onToggleView }: Configurat
 CS8269A,LMZC,30,12,orange
 L6-30R  FMC     25      10      green`);
   const [processedResults, setProcessedResults] = useState<any>(null);
+  const [extractedPatterns, setExtractedPatterns] = useState<any>(null);
 
   const analyzeDataset = async () => {
     setIsLoading(true);
@@ -128,6 +129,70 @@ L6-30R  FMC     25      10      green`);
       analyzeDataset();
     }
   }, [uploadedFileId]);
+
+  const handleExcelPatternExtraction = async (event: any) => {
+    const files = event.target?.files || event.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append('file', file as File);
+
+        const response = await fetch('/api/excel/transform', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          
+          // Add extracted patterns to the input patterns
+          if (result.extractedPatterns && result.extractedPatterns.length > 0) {
+            const newPatterns = result.extractedPatterns
+              .map((p: any) => p.original)
+              .join('\n');
+            
+            setInputPatterns(prev => {
+              const existingPatterns = prev.trim();
+              return existingPatterns 
+                ? `${existingPatterns}\n\n# Extracted from ${result.fileName}:\n${newPatterns}`
+                : `# Extracted from ${result.fileName}:\n${newPatterns}`;
+            });
+            
+            setExtractedPatterns(result);
+            
+            toast({
+              title: "Pattern Extraction Complete",
+              description: `Extracted ${result.totalPatterns} receptacle patterns from ${result.fileName}`,
+            });
+          } else {
+            toast({
+              title: "No Patterns Found",
+              description: `No receptacle patterns detected in ${result.fileName || file.name}`,
+              variant: "destructive"
+            });
+          }
+        } else {
+          throw new Error('Failed to extract patterns');
+        }
+      }
+    } catch (error) {
+      console.error('Pattern extraction failed:', error);
+      toast({
+        title: "Extraction Failed",
+        description: "Failed to extract patterns from Excel file",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+      // Clear the input
+      if (event.target) {
+        event.target.value = '';
+      }
+    }
+  };
 
   const processWithConfigurator = async () => {
     if (!analysis) return;
@@ -370,9 +435,45 @@ L6-30R  FMC     25      10      green`);
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Excel File Upload for Pattern Extraction */}
+            <div className="border-2 border-dashed border-technical-300 dark:border-technical-600 rounded-lg p-4 bg-technical-50 dark:bg-technical-800">
+              <div className="text-center">
+                <Upload className="mx-auto h-8 w-8 text-technical-400 mb-2" />
+                <h3 className="text-sm font-medium text-technical-900 dark:text-technical-100 mb-1">
+                  Upload Excel Files for Automatic Pattern Extraction
+                </h3>
+                <p className="text-xs text-technical-500 dark:text-technical-400 mb-3">
+                  Drag and drop .xlsx files to parse tabs, sheets, and cells for receptacle patterns
+                </p>
+                <Button 
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.xlsx,.xls';
+                    input.multiple = true;
+                    input.onchange = handleExcelPatternExtraction;
+                    input.click();
+                  }} 
+                  variant="outline"
+                  size="sm"
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  )}
+                  {isUploading ? 'Processing...' : 'Browse Excel Files'}
+                </Button>
+                <p className="text-xs text-technical-500 mt-2">
+                  Limit 200MB per file • Automatically extracts receptacle patterns
+                </p>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium mb-2">
-                Natural Language Pattern Generator
+                Natural Language Pattern Generator & Manual Pattern Input
               </label>
               <p className="text-xs text-technical-600 dark:text-technical-400 mb-3">
                 Transform human specifications into structured patterns with equal distribution logic
@@ -471,6 +572,74 @@ Purple, Tan, Pink, Gray, Green`}
                 Fast Transform
               </Button>
             </div>
+
+            {/* Display Extracted Patterns */}
+            {extractedPatterns && (
+              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2 flex items-center gap-2">
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Extracted Patterns from {extractedPatterns.fileName}
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                  <div>
+                    <strong>Total Patterns:</strong> {extractedPatterns.totalPatterns}
+                  </div>
+                  <div>
+                    <strong>Sheets Analyzed:</strong> {extractedPatterns.analysis?.totalSheets || 0}
+                  </div>
+                  <div>
+                    <strong>Cells Scanned:</strong> {extractedPatterns.analysis?.cellsScanned || 0}
+                  </div>
+                </div>
+                
+                {extractedPatterns.extractedPatterns?.length > 0 && (
+                  <div className="mt-3">
+                    <details className="cursor-pointer">
+                      <summary className="text-xs text-green-700 dark:text-green-300 font-medium">
+                        View Extracted Patterns ({extractedPatterns.extractedPatterns.length})
+                      </summary>
+                      <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
+                        {extractedPatterns.extractedPatterns.slice(0, 10).map((pattern: any, idx: number) => (
+                          <div key={idx} className="bg-white dark:bg-technical-900 p-2 rounded text-xs border">
+                            <div className="font-mono text-green-600 dark:text-green-400">
+                              {pattern.original}
+                            </div>
+                            <div className="text-technical-600 dark:text-technical-400 text-xs">
+                              Format: {pattern.formatType} • Receptacle: {pattern.parsed?.receptacle}
+                            </div>
+                          </div>
+                        ))}
+                        {extractedPatterns.extractedPatterns.length > 10 && (
+                          <div className="text-xs text-technical-500 italic">
+                            ... and {extractedPatterns.extractedPatterns.length - 10} more patterns
+                          </div>
+                        )}
+                      </div>
+                    </details>
+                  </div>
+                )}
+                
+                {extractedPatterns.analysis?.sheetsAnalyzed && (
+                  <div className="mt-3">
+                    <details className="cursor-pointer">
+                      <summary className="text-xs text-green-700 dark:text-green-300 font-medium">
+                        Sheet Analysis Details
+                      </summary>
+                      <div className="mt-2 space-y-2">
+                        {extractedPatterns.analysis.sheetsAnalyzed.map((sheet: any, idx: number) => (
+                          <div key={idx} className="bg-white dark:bg-technical-900 p-2 rounded text-xs border">
+                            <div className="font-medium">{sheet.name}</div>
+                            <div className="text-technical-600 dark:text-technical-400">
+                              Rows: {sheet.totalRows} • Patterns: {sheet.patternsFound}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 

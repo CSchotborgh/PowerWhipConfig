@@ -518,11 +518,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Excel transformation routes
+  // Enhanced Excel file parsing to extract receptacle patterns
+  const extractReceptaclePatternsFromExcel = (workbook: any) => {
+    const extractedPatterns: string[] = [];
+    const analysisData: any = {
+      totalSheets: workbook.SheetNames.length,
+      sheetsAnalyzed: [],
+      patternsFound: 0,
+      cellsScanned: 0
+    };
+    
+    // Pre-compiled regex patterns for faster receptacle identification
+    const receptaclePatterns = [
+      /\b(460[A-Z]\d+[A-Z]*)\b/gi,           // NEMA standard (460C9W, 460R9W)
+      /\b(CS\d{4}[A-Z]?)\b/gi,               // IEC pin & sleeve (CS8269A)
+      /\b(L\d+-\d+[A-Z])\b/gi,               // NEMA locking (L6-30R, L14-30R)
+      /\b(\d+-\d+[A-Z])\b/gi,                // NEMA standard short (5-20R)
+      /\b([A-Z]\d+[A-Z]\d+[A-Z]*)\b/gi       // Generic electrical patterns
+    ];
+    
+    workbook.SheetNames.forEach((sheetName: string) => {
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      const sheetAnalysis = {
+        name: sheetName,
+        totalRows: jsonData.length,
+        patternsFound: 0,
+        cellsWithReceptacles: []
+      };
+      
+      jsonData.forEach((row: any[], rowIndex) => {
+        if (!row || row.length === 0) return;
+        
+        row.forEach((cell, colIndex) => {
+          if (!cell || typeof cell !== 'string') return;
+          
+          analysisData.cellsScanned++;
+          const cellValue = cell.toString().trim();
+          
+          // Check for receptacle patterns
+          receptaclePatterns.forEach(pattern => {
+            const matches = cellValue.match(pattern);
+            if (matches) {
+              matches.forEach(match => {
+                // Try to extract full pattern from surrounding cells
+                const fullPattern = extractFullPatternFromRow(row, colIndex, match);
+                if (fullPattern) {
+                  extractedPatterns.push(fullPattern);
+                  sheetAnalysis.patternsFound++;
+                  sheetAnalysis.cellsWithReceptacles.push({
+                    cell: `${String.fromCharCode(65 + colIndex)}${rowIndex + 1}`,
+                    receptacle: match,
+                    fullPattern: fullPattern,
+                    rawValue: cellValue
+                  });
+                }
+              });
+            }
+          });
+        });
+      });
+      
+      analysisData.sheetsAnalyzed.push(sheetAnalysis);
+      analysisData.patternsFound += sheetAnalysis.patternsFound;
+    });
+    
+    return {
+      patterns: [...new Set(extractedPatterns)], // Remove duplicates
+      analysis: analysisData
+    };
+  };
+  
+  // Helper function to extract full patterns from Excel rows
+  const extractFullPatternFromRow = (row: any[], receptacleIndex: number, receptacle: string): string | null => {
+    const nearby = 3; // Check 3 cells on each side
+    let conduit = '', length = '', tailLength = '10', color = '';
+    
+    // Look for conduit, length, and color in nearby cells
+    for (let i = Math.max(0, receptacleIndex - nearby); i < Math.min(row.length, receptacleIndex + nearby + 1); i++) {
+      if (i === receptacleIndex) continue;
+      
+      const cellValue = row[i]?.toString().trim();
+      if (!cellValue) continue;
+      
+      // Check for conduit type
+      const conduitMatch = cellValue.match(/\b(MMC|LFMC|FMC|LMZC|SO|MC|EMT)\b/i);
+      if (conduitMatch && !conduit) {
+        conduit = conduitMatch[1].toUpperCase();
+      }
+      
+      // Check for length (prefer larger numbers for whip length)
+      const lengthMatch = cellValue.match(/\b(\d+)['"]?\s*(?:ft|feet|foot)?\b/i);
+      if (lengthMatch && !length) {
+        const num = parseInt(lengthMatch[1]);
+        if (num > 15) { // Likely whip length
+          length = num.toString();
+        } else if (num <= 15 && !tailLength) { // Likely tail length
+          tailLength = num.toString();
+        }
+      }
+      
+      // Check for color
+      const colorMatch = cellValue.match(/\b(red|blue|green|yellow|orange|purple|black|white|gray|grey)\b/i);
+      if (colorMatch && !color) {
+        color = colorMatch[1].toLowerCase();
+      }
+    }
+    
+    // Use defaults if not found
+    if (!conduit) conduit = 'MMC';
+    if (!length) length = '25';
+    if (!color) color = 'red';
+    
+    return `${receptacle},${conduit},${length},${tailLength},${color}`;
+  };
+
+  // Excel transformation routes with intelligent pattern extraction
   app.post("/api/excel/transform", upload.single('file'), async (req, res) => {
     try {
       const file = req.file;
-      const patterns = JSON.parse(req.body.patterns || '[]');
       
       if (!file) {
         return res.status(400).json({ error: 'No file uploaded' });
@@ -531,28 +646,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse the uploaded Excel file
       const XLSX = require('xlsx');
       const workbook = XLSX.read(file.buffer);
-      const sheetNames = workbook.SheetNames;
       
-      let allData: any[] = [];
+      // Extract receptacle patterns using enhanced parsing
+      const extractionResult = extractReceptaclePatternsFromExcel(workbook);
       
-      // Extract data from all sheets
-      for (const sheetName of sheetNames) {
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      // Process extracted patterns through the multi-format parser
+      const processedPatterns = extractionResult.patterns.map((pattern: string) => {
+        const parsed = parseReceptaclePattern(pattern);
         
-        jsonData.forEach((row: any[], rowIndex: number) => {
-          if (row.length > 0) {
-            allData.push({
-              sheet: sheetName,
-              row: rowIndex + 1,
-              data: row,
-              content: row.join(' ')
-            });
-          }
-        });
-      }
+        let formatType = 'comma-delimited';
+        if (pattern.includes('\t')) {
+          formatType = 'tab-delimited';
+        } else if (!pattern.includes(',') && pattern.includes(' ')) {
+          formatType = 'space-delimited';
+        }
+        
+        return {
+          original: pattern,
+          formatType,
+          parsed,
+          formatted: `${parsed.receptacle}, ${parsed.cableConduitType}, ${parsed.whipLength}, ${parsed.tailLength}, ${parsed.labelColor}`
+        };
+      });
 
-      res.json({ data: allData });
+      res.json({
+        success: true,
+        fileName: file.originalname,
+        extractedPatterns: processedPatterns,
+        totalPatterns: processedPatterns.length,
+        analysis: extractionResult.analysis,
+        supportedFormats: ['comma-delimited', 'tab-delimited', 'space-delimited'],
+        processingMethod: 'intelligent_excel_extraction'
+      });
     } catch (error) {
       console.error('Error transforming Excel file:', error);
       res.status(500).json({ error: 'Failed to transform Excel file' });
