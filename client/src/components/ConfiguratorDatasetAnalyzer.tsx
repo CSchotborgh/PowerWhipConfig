@@ -775,7 +775,7 @@ Purple, Tan, Pink, Gray, Green`}
                     <div className="flex items-center justify-between">
                       <span className="font-mono font-medium text-lg">
                         {result.isNaturalLanguage ? 'Natural Language Specification' : 
-                         result.isWhipLabelTransform ? 'WHIP LABEL Transformation' : result.inputPattern}
+                         result.isWhipLabelTransform ? `WHIP LABEL Transformation: ${result.fileName}` : result.inputPattern}
                       </span>
                       <div className="flex gap-2">
                         {result.isNaturalLanguage ? (

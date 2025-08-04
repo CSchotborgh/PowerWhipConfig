@@ -140,8 +140,16 @@ CS8369`);
         
         if (response.ok) {
           const result = await response.json();
-          // Extract patterns from uploaded data
-          inputPatterns = result.data.map((item: any) => item.content).filter((content: string) => content.trim());
+          // Extract patterns from uploaded data with null checks
+          if (result && result.data && Array.isArray(result.data)) {
+            inputPatterns = result.data.map((item: any) => item.content).filter((content: string) => content.trim());
+          } else if (result && result.extractedPatterns && Array.isArray(result.extractedPatterns)) {
+            // Handle the new format from Excel pattern extraction
+            inputPatterns = result.extractedPatterns.map((pattern: any) => pattern.original).filter((content: string) => content.trim());
+          } else {
+            console.warn('Unexpected response format:', result);
+            inputPatterns = [];
+          }
         }
       } else if (textInput.trim()) {
         // Parse text input for receptacle patterns (like "460R9W")
@@ -150,7 +158,8 @@ CS8369`);
 
       // Now lookup each pattern in the MasterBubbleUpLookup data
       const lookupResponse = await fetch('/api/excel/components');
-      const lookupData = await lookupResponse.json();
+      const lookupResult = await lookupResponse.json();
+      const lookupData = Array.isArray(lookupResult) ? lookupResult : [];
       
       const receptacleMatches: { [key: string]: any[] } = {};
       let totalFoundRows = 0;
@@ -164,6 +173,7 @@ CS8369`);
       Object.entries(patternCounts).forEach(([pattern, count]) => {
         // Enhanced pattern matching - search multiple possible field names
         const matches = lookupData.filter((row: any) => {
+          if (!row) return false;
           const specs = row.specifications || {};
           const searchFields = [
             specs['Choose receptacle'],
@@ -251,6 +261,12 @@ CS8369`);
       });
     } catch (error) {
       console.error('Error processing data:', error);
+      setProcessedData({
+        patterns: [],
+        matches: {},
+        totalRows: 0,
+        processing: 'Error occurred during processing. Please check the console for details.'
+      });
     } finally {
       setIsProcessing(false);
     }
