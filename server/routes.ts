@@ -2157,6 +2157,216 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // EXAMPLE03 Builder Sheet Transform - Power Cable Specification Processing  
+  app.post('/api/excel/transform-builder-sheet', upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      
+      // Look for Builder sheet specifically
+      const builderSheetName = workbook.SheetNames.find(name => 
+        name.toLowerCase().includes('builder')
+      );
+      
+      if (!builderSheetName) {
+        return res.status(400).json({ error: 'Builder sheet not found in uploaded file' });
+      }
+
+      const worksheet = workbook.Sheets[builderSheetName];
+      const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+      
+      // Find the header row (contains "Power Cable Number", "Labels", etc.)
+      let headerRowIndex = -1;
+      for (let i = 0; i < rawData.length; i++) {
+        const row = rawData[i];
+        if (row && row.some((cell: any) => 
+          cell && cell.toString().toLowerCase().includes('power cable number')
+        )) {
+          headerRowIndex = i;
+          break;
+        }
+      }
+
+      if (headerRowIndex === -1) {
+        return res.status(400).json({ error: 'Header row not found in Builder sheet' });
+      }
+
+      const headers = rawData[headerRowIndex];
+      const dataRows = rawData.slice(headerRowIndex + 2); // Skip header and sub-header
+      
+      // Transform data into structured format
+      const transformedData = [];
+      let transformedCount = 0;
+
+      for (let rowIndex = 0; rowIndex < dataRows.length; rowIndex++) {
+        const row = dataRows[rowIndex];
+        if (!row || row.every((cell: any) => !cell)) continue; // Skip empty rows
+        
+        // Map row data to structured object based on Builder sheet format
+        const powerCableEntry = {
+          id: transformedCount + 1,
+          powerCableNumber: row[0] || '',
+          pduLabel: row[1] || '',
+          panelLabel: row[2] || '',
+          circuitNumber: row[3] || '',
+          equipment: row[4] || '',
+          other: row[5] || '',
+          receptacleType: row[10] || '',
+          terminatingDevice: row[12] || '',
+          phaseCount: row[13] || '',
+          panelPhase: row[14] || '',
+          volts: row[15] || '',
+          amps: row[16] || '',
+          cableLength: row[17] || '',
+          pigtailLength: row[18] || '',
+          boxType: row[19] || '',
+          mountingHardware: row[20] || '',
+          mountingHardwareSize: row[21] || '',
+          conduitType: row[22] || '',
+          conduitDiameter: row[23] || '',
+          conduitColor: row[24] || '',
+          hotWireGauge: row[25] || '',
+          groundWireGauge: row[26] || '',
+          wireCount: row[27] || '',
+          hotWireColors: row[28] || '',
+          breakerBrand: row[29] || '',
+          breakerAmps: row[30] || '',
+          breakerPoles: row[31] || '',
+          notes: row[32] || '',
+          validation: row[33] || '',
+          originalRowIndex: rowIndex + headerRowIndex + 2
+        };
+
+        transformedData.push(powerCableEntry);
+        transformedCount++;
+      }
+
+      const analysis = {
+        fileName: req.file.originalname,
+        originalRows: dataRows.length,
+        transformedRows: transformedCount,
+        sheetName: builderSheetName,
+        headersFound: headers.filter((h: any) => h).slice(0, 10),
+        powerCableCount: transformedCount,
+        transformationType: 'Builder Sheet - Power Cable Specifications'
+      };
+
+      res.json({
+        success: true,
+        fileName: req.file.originalname,
+        analysis,
+        transformedData: transformedData.slice(0, 20), // Send first 20 for preview
+        isBuilderSheetTransform: true,
+        totalTransformed: transformedCount
+      });
+
+    } catch (error) {
+      console.error('Builder sheet transformation error:', error);
+      res.status(500).json({ 
+        error: 'Failed to transform Builder sheet',
+        details: error.message 
+      });
+    }
+  });
+
+  // Export Builder Sheet transformed data
+  app.post('/api/excel/export-transformed-builder', upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Process the file using the same logic as transform-builder-sheet
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const builderSheetName = workbook.SheetNames.find(name => 
+        name.toLowerCase().includes('builder')
+      );
+      
+      if (!builderSheetName) {
+        return res.status(400).json({ error: 'Builder sheet not found' });
+      }
+
+      const worksheet = workbook.Sheets[builderSheetName];
+      const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+      
+      let headerRowIndex = -1;
+      for (let i = 0; i < rawData.length; i++) {
+        const row = rawData[i];
+        if (row && row.some((cell: any) => 
+          cell && cell.toString().toLowerCase().includes('power cable number')
+        )) {
+          headerRowIndex = i;
+          break;
+        }
+      }
+
+      const headers = rawData[headerRowIndex];
+      const dataRows = rawData.slice(headerRowIndex + 2);
+      
+      // Create new workbook with transformed data
+      const newWorkbook = XLSX.utils.book_new();
+      
+      // Create structured output data
+      const outputData = [
+        [
+          'ID', 'Power Cable Number', 'PDU Label', 'Panel Label', 'Circuit Number',
+          'Equipment', 'Receptacle Type', 'Terminating Device', 'Phase Count',
+          'Panel Phase', 'Volts', 'Amps', 'Cable Length', 'Pigtail Length',
+          'Box Type', 'Mounting Hardware', 'Conduit Type', 'Wire Gauge',
+          'Wire Colors', 'Breaker Brand', 'Notes', 'Original Row'
+        ]
+      ];
+      
+      let transformedCount = 0;
+      for (let rowIndex = 0; rowIndex < dataRows.length; rowIndex++) {
+        const row = dataRows[rowIndex];
+        if (!row || row.every((cell: any) => !cell)) continue;
+        
+        outputData.push([
+          transformedCount + 1,
+          row[0] || '', // Power Cable Number
+          row[1] || '', // PDU Label
+          row[2] || '', // Panel Label
+          row[3] || '', // Circuit Number
+          row[4] || '', // Equipment
+          row[10] || '', // Receptacle Type
+          row[12] || '', // Terminating Device
+          row[13] || '', // Phase Count
+          row[14] || '', // Panel Phase
+          row[15] || '', // Volts
+          row[16] || '', // Amps
+          row[17] || '', // Cable Length
+          row[18] || '', // Pigtail Length
+          row[19] || '', // Box Type
+          row[20] || '', // Mounting Hardware
+          row[22] || '', // Conduit Type
+          row[25] || '', // Wire Gauge
+          row[28] || '', // Wire Colors
+          row[29] || '', // Breaker Brand
+          row[32] || '', // Notes
+          rowIndex + headerRowIndex + 2 // Original Row
+        ]);
+        transformedCount++;
+      }
+
+      const newWorksheet = XLSX.utils.aoa_to_sheet(outputData);
+      XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, 'Transformed_Builder_Data');
+
+      const buffer = XLSX.write(newWorkbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="TransformedBuilderSheet.xlsx"');
+      res.send(buffer);
+
+    } catch (error) {
+      console.error('Export Builder sheet error:', error);
+      res.status(500).json({ error: 'Failed to export transformed Builder sheet' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

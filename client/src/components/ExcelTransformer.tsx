@@ -261,11 +261,10 @@ CS8369`);
       });
     } catch (error) {
       console.error('Error processing data:', error);
-      setProcessedData({
-        patterns: [],
-        matches: {},
-        totalRows: 0,
-        processing: 'Error occurred during processing. Please check the console for details.'
+      setParsedData({
+        receptacles: [],
+        totalMatches: 0,
+        rawData: []
       });
     } finally {
       setIsProcessing(false);

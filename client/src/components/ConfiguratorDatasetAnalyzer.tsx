@@ -684,6 +684,64 @@ Purple, Tan, Pink, Gray, Green`}
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 Export Transformed Excel
               </Button>
+              
+              <Button 
+                onClick={async () => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = '.xlsx,.xls';
+                  input.onchange = async (e: any) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    setIsLoading(true);
+                    try {
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      
+                      const response = await fetch('/api/excel/transform-builder-sheet', {
+                        method: 'POST',
+                        body: formData
+                      });
+                      
+                      if (response.ok) {
+                        const result = await response.json();
+                        setProcessedResults([{
+                          inputPattern: `Builder Sheet: ${result.fileName}`,
+                          isBuilderSheetTransform: true,
+                          fileName: result.fileName,
+                          analysis: result.analysis,
+                          transformedData: result.transformedData,
+                          totalTransformed: result.totalTransformed
+                        }]);
+                        
+                        toast({
+                          title: "Builder Sheet Transform Complete",
+                          description: `Processed ${result.analysis.originalRows} rows into ${result.analysis.transformedRows} power cable entries`,
+                        });
+                      } else {
+                        throw new Error('Transform failed');
+                      }
+                    } catch (error) {
+                      console.error('Builder sheet transform error:', error);
+                      toast({
+                        title: "Transform Failed",
+                        description: "Failed to transform Builder sheet file",
+                        variant: "destructive"
+                      });
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  };
+                  input.click();
+                }}
+                disabled={isLoading}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileSpreadsheet className="w-4 h-4" />}
+                Transform Builder Sheet (EXAMPLE03)
+              </Button>
             </div>
 
             {/* Display Extracted Patterns */}
