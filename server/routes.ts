@@ -87,6 +87,135 @@ function enhanceSpecifications(component: any): Record<string, any> {
   return enhanced;
 }
 
+// Optimized component extraction for faster Excel processing
+function extractComponentDataOptimized(sheets: any): any[] {
+  const components: any[] = [];
+  const startTime = Date.now();
+  
+  // Pre-compiled patterns for faster receptacle matching
+  const receptaclePatterns = [
+    /^[A-Z0-9]{2,10}[A-Z]?\d*[A-Z]*$/,  // Standard receptacle codes
+    /^L\d+-\d+[A-Z]?$/,                  // NEMA L-series
+    /^CS\d+[A-Z]*$/,                     // CS series
+    /^\d+[A-Z]\d+[A-Z]?$/                // Numeric prefix codes
+  ];
+  
+  // Enhanced field mapping for accurate parsing
+  const fieldMappings = {
+    receptacle: ['receptacle', 'plug', 'connector', 'choose'],
+    cableType: ['cable', 'conduit', 'type', 'select'],
+    whipLength: ['whip', 'length', 'feet', 'ft'],
+    tailLength: ['tail', 'length'],
+    labelColor: ['label', 'color', 'background'],
+    voltage: ['voltage', 'volt', 'v'],
+    current: ['current', 'amp', 'a'],
+    awg: ['awg', 'wire', 'conductor']
+  };
+  
+  Object.keys(sheets).forEach(sheetName => {
+    const sheetData = sheets[sheetName];
+    
+    if (!sheetData || !Array.isArray(sheetData) || sheetData.length === 0) return;
+    
+    // Process headers for optimized field mapping
+    const headers = sheetData[0];
+    const headerMap = new Map();
+    
+    headers.forEach((header: string, index: number) => {
+      if (typeof header === 'string') {
+        const lowerHeader = header.toLowerCase();
+        for (const [field, keywords] of Object.entries(fieldMappings)) {
+          if (keywords.some(keyword => lowerHeader.includes(keyword))) {
+            if (!headerMap.has(field)) {
+              headerMap.set(field, []);
+            }
+            headerMap.get(field).push(index);
+          }
+        }
+      }
+    });
+    
+    // Process data rows with enhanced speed and accuracy
+    for (let i = 1; i < sheetData.length; i++) {
+      const row = sheetData[i];
+      if (!Array.isArray(row) || row.length === 0) continue;
+      
+      // Fast receptacle identification
+      const receptacleIndices = headerMap.get('receptacle') || [];
+      let receptacleValue = '';
+      let receptacleIndex = -1;
+      
+      // Check mapped receptacle columns first
+      for (const idx of receptacleIndices) {
+        if (row[idx] && typeof row[idx] === 'string') {
+          const candidate = row[idx].trim().toUpperCase();
+          if (receptaclePatterns.some(pattern => pattern.test(candidate))) {
+            receptacleValue = candidate;
+            receptacleIndex = idx;
+            break;
+          }
+        }
+      }
+      
+      // Fallback scan if needed
+      if (!receptacleValue) {
+        for (let j = 0; j < row.length; j++) {
+          if (row[j] && typeof row[j] === 'string') {
+            const candidate = row[j].trim().toUpperCase();
+            if (receptaclePatterns.some(pattern => pattern.test(candidate))) {
+              receptacleValue = candidate;
+              receptacleIndex = j;
+              break;
+            }
+          }
+        }
+      }
+      
+      if (receptacleValue) {
+        // Build accurate component specifications
+        const specifications: any = {};
+        headers.forEach((header: string, index: number) => {
+          if (row[index] !== null && row[index] !== undefined && row[index] !== '') {
+            specifications[header] = row[index];
+          }
+        });
+        
+        components.push({
+          id: `${sheetName}_${i}`,
+          name: receptacleValue,
+          type: 'receptacle',
+          category: categorizeByReceptacle(receptacleValue),
+          partNumber: receptacleValue,
+          specifications,
+          receptacleType: receptacleValue,
+          sourceSheet: sheetName,
+          sourceRow: i + 1,
+          receptacleIndex,
+          optimizedProcessing: true
+        });
+      }
+    }
+  });
+  
+  const processingTime = Date.now() - startTime;
+  console.log(`Excel Master Bubble Format Transformer: Processed ${components.length} components in ${processingTime}ms`);
+  
+  return components;
+}
+
+// Fast categorization for improved accuracy
+function categorizeByReceptacle(receptacle: string): string {
+  const upper = receptacle.toUpperCase();
+  
+  if (upper.startsWith('CS')) return 'CS Series - IEC Pin & Sleeve';
+  if (upper.startsWith('L') && upper.includes('-')) return 'NEMA Locking';
+  if (upper.match(/^\d+[A-Z]\d+/)) return 'NEMA Standard';
+  if (upper.includes('460') || upper.includes('480')) return 'High Voltage';
+  if (upper.includes('120') || upper.includes('208')) return 'Standard Voltage';
+  
+  return 'Other Receptacle Type';
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Power Whip Configuration routes
   app.get("/api/configurations", async (_req, res) => {
@@ -246,17 +375,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/excel/components", async (_req, res) => {
     try {
-      // Use the latest lookup file with enhanced data
-      const filePath = path.join(__dirname, '../attached_assets/MasterBubbleUpLookup_1753986672989.xlsx');
-      const sheets = parseExcelFile(filePath);
-      const components = extractComponentData(sheets);
+      // Enhanced performance parsing with multiple fallback files
+      const filePaths = [
+        path.join(__dirname, '../attached_assets/MasterBubbleUpLookup_1754002723716.xlsx'),
+        path.join(__dirname, '../attached_assets/MasterBubbleUpLookup_1753998404562.xlsx'),
+        path.join(__dirname, '../attached_assets/MasterBubbleUpLookup_1753993728695.xlsx'),
+        path.join(__dirname, '../attached_assets/MasterBubbleUpLookup_1753986672989.xlsx')
+      ];
       
-      // Enhanced component categorization for drag and drop
+      let sheets: any = null;
+      let usedFilePath = '';
+      
+      // Try each file path until one works
+      for (const filePath of filePaths) {
+        try {
+          if (require('fs').existsSync(filePath)) {
+            sheets = parseExcelFile(filePath);
+            usedFilePath = filePath;
+            break;
+          }
+        } catch (error) {
+          console.log(`Failed to parse ${filePath}, trying next...`);
+          continue;
+        }
+      }
+      
+      if (!sheets) {
+        return res.status(404).json({ message: "No valid MasterBubbleUpLookup file found" });
+      }
+      
+      // Fast component extraction with optimized parsing for accurate data transformation
+      const components = extractComponentDataOptimized(sheets);
+      
+      // Enhanced component categorization with performance optimizations for faster parsing
       const categorizedComponents = components.map(comp => ({
         ...comp,
         dragType: determineDragType(comp),
-        category: categorizeComponent(comp),
-        specifications: enhanceSpecifications(comp)
+        category: comp.category || categorizeComponent(comp), // Use optimized category if available
+        specifications: enhanceSpecifications(comp),
+        sourceFile: usedFilePath.split('/').pop(),
+        processingTimestamp: new Date().toISOString(),
+        optimized: true,
+        processingMethod: 'enhanced_speed_accuracy'
       }));
       
       res.json(categorizedComponents);
@@ -975,6 +1135,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error processing with ConfiguratorDataset:', error);
       res.status(500).json({ error: 'Failed to process with ConfiguratorDataset' });
+    }
+  });
+
+  // Enhanced Fast Processing Endpoint for Excel Master Bubble Format Transformer
+  app.post('/api/excel/fast-transform', async (req, res) => {
+    try {
+      const { patterns, naturalLanguageInput } = req.body;
+      const startTime = Date.now();
+      
+      let processedPatterns: string[] = [];
+      
+      // Handle natural language input with enhanced speed
+      if (naturalLanguageInput && naturalLanguageInput.trim()) {
+        const specification = parseNaturalLanguageSpecification(naturalLanguageInput);
+        const generatedPatterns = generateDistributionPatterns(specification);
+        
+        return res.json({
+          success: true,
+          processingTimeMs: Date.now() - startTime,
+          naturalLanguageProcessed: true,
+          specification: specification,
+          totalGeneratedRows: generatedPatterns.length,
+          patterns: generatedPatterns,
+          distributionSummary: {
+            totalQuantity: specification.totalQuantity,
+            configurationsCount: specification.lengthRange ? 
+              ((specification.lengthRange.max - specification.lengthRange.min) / specification.lengthRange.step + 1) * specification.colors.length : 0,
+            baseQuantityPerConfig: Math.floor(specification.totalQuantity / 
+              (((specification.lengthRange.max - specification.lengthRange.min) / specification.lengthRange.step + 1) * specification.colors.length)),
+            lengths: specification.lengthRange ? 
+              Array.from({length: (specification.lengthRange.max - specification.lengthRange.min) / specification.lengthRange.step + 1}, 
+                (_, i) => specification.lengthRange.min + i * specification.lengthRange.step) : [],
+            colors: specification.colors
+          }
+        });
+      }
+      
+      // Handle comma-delimited patterns with enhanced speed
+      if (patterns && Array.isArray(patterns)) {
+        processedPatterns = patterns.map((pattern: string) => {
+          const parsed = parseReceptaclePattern(pattern);
+          return {
+            original: pattern,
+            parsed: parsed,
+            formatted: `${parsed.receptacle}, ${parsed.cableConduitType || 'LMZC'}, ${parsed.whipLength || '25'}, ${parsed.tailLength || '10'}${parsed.labelColor ? ', ' + parsed.labelColor : ''}`
+          };
+        });
+      }
+      
+      const processingTime = Date.now() - startTime;
+      
+      res.json({
+        success: true,
+        processingTimeMs: processingTime,
+        processedPatterns: processedPatterns,
+        totalPatterns: processedPatterns.length,
+        optimized: true
+      });
+      
+    } catch (error) {
+      console.error('Error in fast transform:', error);
+      res.status(500).json({ error: 'Failed to fast transform patterns' });
     }
   });
 
