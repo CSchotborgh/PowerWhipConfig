@@ -613,17 +613,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     lines.forEach(line => {
       const lowerLine = line.toLowerCase();
       
-      // Extract total quantity
-      const quantityMatch = line.match(/(\d+)\s*power\s*whips?\s*total/i);
+      // Extract total quantity (enhanced patterns) 
+      const quantityMatch = line.match(/(\d+)\s*(?:power\s*)?whips?\s*(?:total|needed|required)/i) || 
+                           line.match(/(\d+)\s*whips?\s*(?:total|needed|required)/i);
       if (quantityMatch) {
         specification.totalQuantity = parseInt(quantityMatch[1]);
       }
       
-      // Extract length range
-      const lengthMatch = line.match(/(\d+)['']?\s*-\s*(\d+)['']?/);
-      if (lengthMatch && lowerLine.includes('length')) {
-        specification.lengthRange.min = parseInt(lengthMatch[1]);
-        specification.lengthRange.max = parseInt(lengthMatch[2]);
+      // Extract length range or discrete lengths
+      const lengthRangeMatch = line.match(/(\d+)['']?\s*-\s*(\d+)['']?/);
+      const discreteLengthsMatch = line.match(/lengths?:\s*([\d,\s]+)/i);
+      
+      if (lengthRangeMatch && lowerLine.includes('length')) {
+        specification.lengthRange.min = parseInt(lengthRangeMatch[1]);
+        specification.lengthRange.max = parseInt(lengthRangeMatch[2]);
+      } else if (discreteLengthsMatch) {
+        // Parse discrete lengths like "10, 20, 30"
+        const lengths = discreteLengthsMatch[1].split(',').map(l => parseInt(l.trim())).filter(l => !isNaN(l));
+        if (lengths.length > 0) {
+          specification.lengthRange = {
+            min: Math.min(...lengths),
+            max: Math.max(...lengths),
+            step: lengths.length > 1 ? lengths[1] - lengths[0] : 20,
+            discreteLengths: lengths
+          };
+        }
       }
       
       // Map conduit types
@@ -672,10 +686,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     if (totalQuantity === 0) return [];
     
-    // Calculate length steps (20', 40', 60', 80')
-    const lengths = [];
-    for (let length = lengthRange.min; length <= lengthRange.max; length += lengthRange.step) {
-      lengths.push(length);
+    // Use discrete lengths if available, otherwise use range-based lengths
+    const lengths = lengthRange.discreteLengths || [];
+    if (lengths.length === 0) {
+      for (let length = lengthRange.min; length <= lengthRange.max; length += lengthRange.step) {
+        lengths.push(length);
+      }
     }
     
     // Calculate equal distribution
