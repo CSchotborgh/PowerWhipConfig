@@ -25,7 +25,8 @@ interface ParsedData {
 
 export default function ExcelTransformer({ onToggleView }: ExcelTransformerProps) {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [textInput, setTextInput] = useState(`460C9W
+  const [textInput, setTextInput] = useState('');
+  const [receptaclePatterns, setReceptaclePatterns] = useState(`460C9W
 460R9W
 560C9W
 L5-20R
@@ -44,7 +45,6 @@ CS8269A
 CS8369A
 9C54U2
 CS8369`);
-  const [receptaclePatterns, setReceptaclePatterns] = useState('');
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
