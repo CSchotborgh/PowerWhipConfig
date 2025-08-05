@@ -228,7 +228,7 @@ CS8369`);
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'MasterBubbleTransformed.xlsx';
+        a.download = 'PreSalOutputFile.xlsx';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -371,7 +371,7 @@ CS8369`);
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
-              Export to Master Bubble Format
+              Export to PreSalOutputFile Format
             </Button>
           )}
         </div>
