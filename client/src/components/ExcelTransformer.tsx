@@ -65,6 +65,7 @@ CS8369`);
 
   const processData = useCallback(async () => {
     setIsProcessing(true);
+    setParsedData(null); // Clear any existing data first
     try {
       let inputPatterns: string[] = [];
 
@@ -200,15 +201,11 @@ CS8369`);
       });
     } catch (error) {
       console.error('Error processing data:', error);
-      setParsedData({
-        receptacles: [],
-        totalMatches: 0,
-        rawData: []
-      });
+      setParsedData(null); // Clear data on error
     } finally {
       setIsProcessing(false);
     }
-  }, [uploadedFile, textInput]);
+  }, [uploadedFile, textInput, receptaclePatterns]);
 
   const exportToMasterBubbleFormat = useCallback(async () => {
     if (!parsedData) return;
@@ -241,8 +238,28 @@ CS8369`);
 
   const clearData = () => {
     setUploadedFile(null);
-    setTextInput("");
+    setTextInput('');
+    setReceptaclePatterns(`460C9W
+460R9W
+560C9W
+L5-20R
+L5-30R
+L6-15R
+L6-20R
+L6-30R
+L15-20R
+L15-30R
+L21-20R
+L21-30R
+L22-20R
+L22-30R
+CS8264C
+CS8269A
+CS8369A
+9C54U2
+CS8369`);
     setParsedData(null);
+    setIsProcessing(false);
   };
 
   return (
@@ -360,7 +377,12 @@ CS8369`);
             <Search className="w-4 h-4" />
             {isProcessing ? "Processing..." : "Parse Data"}
           </Button>
-          <Button onClick={clearData} variant="outline" className="flex items-center gap-2">
+          <Button 
+            onClick={clearData} 
+            variant="outline" 
+            className="flex items-center gap-2"
+            disabled={isProcessing}
+          >
             <RotateCcw className="w-4 h-4" />
             Clear
           </Button>
