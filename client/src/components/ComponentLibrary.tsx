@@ -1,24 +1,47 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Puzzle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ChevronDown, Puzzle, Search, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { ElectricalComponent } from "@shared/schema";
 
 export default function ComponentLibrary() {
   const [openCategories, setOpenCategories] = useState<string[]>(["connector", "protection"]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [highlightedComponent, setHighlightedComponent] = useState<string | null>(null);
   
   const { data: components, isLoading } = useQuery<ElectricalComponent[]>({
     queryKey: ["/api/components"],
   });
 
-  const componentsByType = components?.reduce((acc, component) => {
+  // Filter components based on search query
+  const filteredComponents = useMemo(() => {
+    if (!components) return [];
+    if (!searchQuery.trim()) return components;
+    
+    const query = searchQuery.toLowerCase();
+    return components.filter(component => 
+      component.name.toLowerCase().includes(query) ||
+      component.type.toLowerCase().includes(query) ||
+      component.category.toLowerCase().includes(query) ||
+      (component.specifications && JSON.stringify(component.specifications).toLowerCase().includes(query))
+    );
+  }, [components, searchQuery]);
+
+  const componentsByType = filteredComponents?.reduce((acc, component) => {
     if (!acc[component.type]) {
       acc[component.type] = [];
     }
     acc[component.type].push(component);
     return acc;
   }, {} as Record<string, ElectricalComponent[]>) || {};
+
+  // Auto-expand categories when searching
+  const effectiveOpenCategories = searchQuery.trim() 
+    ? Object.keys(componentsByType) 
+    : openCategories;
 
   const toggleCategory = (category: string) => {
     setOpenCategories(prev => 
@@ -34,6 +57,16 @@ export default function ComponentLibrary() {
     console.log("Serialized component data:", componentData); // Debug log
     e.dataTransfer.setData("application/json", componentData);
     e.dataTransfer.effectAllowed = "copy";
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    setHighlightedComponent(null);
+  };
+
+  const isComponentHighlighted = (componentId: string) => {
+    return highlightedComponent === componentId || 
+           (searchQuery.trim() && !highlightedComponent);
   };
 
   const categoryConfig = {
@@ -62,11 +95,51 @@ export default function ComponentLibrary() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center text-technical-900 dark:text-technical-100">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center text-technical-900 dark:text-technical-100 mb-3">
           <Puzzle className="w-4 h-4 mr-2 text-primary" />
           Component Library
         </CardTitle>
+        
+        {/* Search Bar */}
+        <div className="relative component-search">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-technical-400 h-4 w-4" />
+          <Input
+            placeholder="Search components... (e.g., NEMA, 20A, junction)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-10 bg-technical-50 dark:bg-technical-800 border-technical-200 dark:border-technical-600 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearSearch}
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-technical-100 dark:hover:bg-technical-700"
+              title="Clear search"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+        
+        {searchQuery && (
+          <div className="text-xs text-technical-500 mt-2 flex items-center justify-between">
+            <span>
+              Found {filteredComponents.length} component{filteredComponents.length !== 1 ? 's' : ''}
+              {filteredComponents.length === 0 && (
+                <span className="text-yellow-600 dark:text-yellow-400 ml-1">
+                  - Try searching by name, type, or rating
+                </span>
+              )}
+            </span>
+            {filteredComponents.length > 0 && (
+              <span className="text-green-600 dark:text-green-400 text-xs">
+                Drag to Design Canvas →
+              </span>
+            )}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-3 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-technical-300 dark:scrollbar-thumb-technical-600 scrollbar-track-transparent touch-scroll relative">
         <div className="block md:hidden absolute top-2 right-2 text-xs text-technical-500 bg-technical-100 dark:bg-technical-700 px-2 py-1 rounded animate-pulse">
@@ -79,7 +152,7 @@ export default function ComponentLibrary() {
           return (
             <Collapsible
               key={type}
-              open={openCategories.includes(type)}
+              open={effectiveOpenCategories.includes(type)}
               onOpenChange={() => toggleCategory(type)}
             >
               <CollapsibleTrigger className="w-full">
@@ -89,7 +162,7 @@ export default function ComponentLibrary() {
                       <span className={`mr-2 ${config.color}`}>{config.icon}</span>
                       {config.label}
                     </span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${openCategories.includes(type) ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-4 h-4 transition-transform ${effectiveOpenCategories.includes(type) ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
               </CollapsibleTrigger>
@@ -100,9 +173,15 @@ export default function ComponentLibrary() {
                     {typeComponents.map((component) => (
                       <div
                         key={component.id}
-                        className="component-item p-3 md:p-2 border border-technical-200 dark:border-technical-600 rounded cursor-move hover:bg-primary/10 dark:hover:bg-primary/20 text-center transition-colors touch-manipulation active:scale-95"
+                        className={`component-item p-3 md:p-2 border rounded cursor-move text-center transition-all duration-200 touch-manipulation active:scale-95 ${
+                          isComponentHighlighted(component.id)
+                            ? 'border-primary bg-primary/20 dark:bg-primary/30 shadow-lg ring-2 ring-primary/50 search-highlight'
+                            : 'border-technical-200 dark:border-technical-600 hover:bg-primary/10 dark:hover:bg-primary/20'
+                        }`}
                         draggable
                         onDragStart={(e) => handleDragStart(e, component)}
+                        onMouseEnter={() => searchQuery && setHighlightedComponent(component.id)}
+                        onMouseLeave={() => searchQuery && setHighlightedComponent(null)}
                       >
                         <div className={`text-lg mb-1 ${config.color}`}>
                           {config.icon}
