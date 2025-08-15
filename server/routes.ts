@@ -5,6 +5,7 @@ import { insertPowerWhipConfigurationSchema, insertElectricalComponentSchema } f
 import { ExcelFormulaExtractor } from "./excelFormulaExtractor";
 import { z } from "zod";
 import { parseExcelFile, extractComponentData, analyzeExcelStructure, generateBOM } from "./excelParser";
+import { MultiSheetProcessor } from "./multiSheetProcessor";
 import * as path from "path";
 import { fileURLToPath } from 'url';
 import multer from "multer";
@@ -626,8 +627,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Cache cleared successfully", timestamp: new Date().toISOString() });
   });
 
-  // Comprehensive pattern scanning for uploaded Excel files
+  // NEW: Multi-Sheet Processor for UploadedExcelProcessor component
   app.post("/api/excel/scan-patterns", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      console.log(`Starting multi-sheet processing for: ${req.file.originalname}`);
+      
+      // Use the new MultiSheetProcessor
+      const result = MultiSheetProcessor.processAllSheets(req.file.buffer, req.file.originalname);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Multi-sheet processing error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to process Excel file",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // NEW: Export combined patterns to Excel
+  app.post("/api/excel/export-transformed-patterns", async (req, res) => {
+    try {
+      const { transformedOutput } = req.body;
+      
+      if (!transformedOutput || !Array.isArray(transformedOutput)) {
+        return res.status(400).json({ message: "Invalid transformed output data" });
+      }
+
+      console.log(`Exporting combined patterns: ${transformedOutput.length} rows`);
+      
+      const excelBuffer = MultiSheetProcessor.exportToCombinedExcel(transformedOutput);
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="combined_patterns_output.xlsx"');
+      res.send(excelBuffer);
+      
+    } catch (error) {
+      console.error('Export error:', error);
+      res.status(500).json({ message: "Failed to export combined patterns" });
+    }
+  });
+
+  // LEGACY: Old pattern scanning for backward compatibility
+  app.post("/api/excel/scan-patterns-legacy", upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
