@@ -12,6 +12,7 @@ import ExcelFormulaLibrary from './ExcelFormulaLibrary';
 import UnifiedFileUpload from './UnifiedFileUpload';
 import DragDropPatternBuilder from './DragDropPatternBuilder';
 import { PatternScanner } from './PatternScanner';
+import { UploadedExcelProcessor } from './UploadedExcelProcessor';
 
 interface ConfiguratorAnalysis {
   sheetNames: string[];
@@ -38,7 +39,7 @@ export default function ConfiguratorDatasetAnalyzer({ onToggleView }: Configurat
   const [uploadedFileId, setUploadedFileId] = useState<string | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
-  const [currentView, setCurrentView] = useState<'analysis' | 'excel' | 'formula-library' | 'pattern-builder' | 'pattern-scanner'>('analysis');
+  const [currentView, setCurrentView] = useState<'analysis' | 'excel' | 'formula-library' | 'pattern-builder' | 'pattern-scanner' | 'uploaded-excel'>('analysis');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [inputPatterns, setInputPatterns] = useState(`460C9W,MMC,115,10,red
@@ -289,6 +290,14 @@ L6-30R  FMC     25      10      green`);
               Pattern Scanner
             </Button>
             <Button 
+              onClick={() => setCurrentView('uploaded-excel')} 
+              variant="outline"
+              size="sm"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Excel Multi-Sheet Processor
+            </Button>
+            <Button 
               onClick={() => setCurrentView('formula-library')} 
               variant="outline"
               size="sm"
@@ -317,6 +326,13 @@ L6-30R  FMC     25      10      green`);
         {currentView === 'pattern-scanner' && (
           <div className="h-full">
             <PatternScanner />
+          </div>
+        )}
+
+        {/* Show Uploaded Excel Processor */}
+        {currentView === 'uploaded-excel' && (
+          <div className="h-full">
+            <UploadedExcelProcessor />
           </div>
         )}
 
