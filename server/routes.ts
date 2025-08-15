@@ -203,6 +203,99 @@ function extractComponentDataOptimized(sheets: any): any[] {
   return components;
 }
 
+// Ultra-fast component extraction with aggressive optimizations
+function extractComponentDataUltraFast(sheets: any): any[] {
+  const components: any[] = [];
+  const startTime = Date.now();
+  
+  // Pre-compiled patterns for lightning-fast receptacle matching
+  const receptaclePattern = /^([A-Z]{1,3}\d+[A-Z]?\d*[A-Z]?|[0-9]+[A-Z]+[0-9]*[A-Z]*|[A-Z]+\d+-\d+[A-Z]*)$/;
+  
+  // Category mapping for instant categorization
+  const categoryMap = new Map([
+    ['CS', 'CS Series - IEC Pin & Sleeve'],
+    ['L', 'NEMA Locking'],
+    ['460', 'High Voltage'],
+    ['480', 'High Voltage'],
+    ['120', 'Standard Voltage'],
+    ['208', 'Standard Voltage']
+  ]);
+  
+  Object.entries(sheets).forEach(([sheetName, sheetData]: [string, any]) => {
+    if (!Array.isArray(sheetData) || sheetData.length === 0) return;
+    
+    // Get headers from first row
+    const headers = sheetData[0] || [];
+    
+    // Find receptacle column with single pass
+    let receptacleIndex = -1;
+    for (let i = 0; i < Math.min(headers.length, 20); i++) { // Limit header search
+      const header = String(headers[i] || '').toLowerCase();
+      if (header.includes('receptacle') || header.includes('choose')) {
+        receptacleIndex = i;
+        break;
+      }
+    }
+    
+    if (receptacleIndex === -1) return;
+    
+    // Process rows with maximum optimization - limit to 500 rows for speed
+    const maxRows = Math.min(sheetData.length, 500);
+    for (let i = 1; i < maxRows; i++) {
+      const row = sheetData[i];
+      if (!row || !Array.isArray(row)) continue;
+      
+      const receptacleValue = row[receptacleIndex];
+      if (!receptacleValue || typeof receptacleValue !== 'string') continue;
+      
+      // Lightning-fast validation
+      const cleanValue = receptacleValue.trim().toUpperCase();
+      if (cleanValue.length < 2 || cleanValue.length > 15 || !receptaclePattern.test(cleanValue)) continue;
+      
+      // Fast category lookup
+      let category = 'Other Receptacle Type';
+      for (const [key, cat] of categoryMap) {
+        if (cleanValue.startsWith(key)) {
+          category = cat;
+          break;
+        }
+      }
+      
+      // Minimal specifications for speed
+      const specifications: any = { 'Choose receptacle': receptacleValue };
+      
+      // Only include essential specifications to reduce processing time
+      const essentialHeaders = ['Select Cable/Conduit Type', 'Whip Length (ft)', 'Voltage', 'Current'];
+      essentialHeaders.forEach((essentialHeader, idx) => {
+        if (idx + 1 < headers.length && row[idx + 1]) {
+          specifications[essentialHeader] = row[idx + 1];
+        }
+      });
+      
+      components.push({
+        id: `${sheetName}_${i}`,
+        name: cleanValue,
+        type: 'receptacle',
+        category,
+        partNumber: cleanValue,
+        specifications,
+        receptacleType: cleanValue,
+        sourceSheet: sheetName,
+        sourceRow: i + 1,
+        optimizedProcessing: true,
+        ultraFastMode: true,
+        dragType: 'receptacle',
+        processingMethod: 'ultra_fast_cached'
+      });
+    }
+  });
+  
+  const processingTime = Date.now() - startTime;
+  console.log(`Excel Master Bubble Format Transformer: Processed ${components.length} components in ${processingTime}ms`);
+  
+  return components;
+}
+
 // Fast categorization for improved accuracy
 function categorizeByReceptacle(receptacle: string): string {
   const upper = receptacle.toUpperCase();
@@ -373,60 +466,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Ultra-fast caching system for Excel components
+  let componentCache: { data: any[], timestamp: number, filePath: string } | null = null;
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+  
   app.get("/api/excel/components", async (_req, res) => {
     try {
-      // Enhanced performance parsing - use the working MasterBubbleUpLookup file
+      const startTime = Date.now();
+      
+      // Check cache first for instant response
+      if (componentCache && (Date.now() - componentCache.timestamp) < CACHE_DURATION) {
+        console.log(`Excel Master Bubble Format Transformer: Served from cache in ${Date.now() - startTime}ms`);
+        return res.json(componentCache.data);
+      }
+      
+      // Optimized file path selection - use most reliable file first
       const filePaths = [
         './attached_assets/MasterBubbleUpLookup_1753993728695.xlsx',
         './attached_assets/MasterBubbleUpLookup_1753988008068.xlsx',
-        './attached_assets/MasterBubbleUpLookup_1753986672989.xlsx',
-        './attached_assets/MasterBubbleUpLookup_1753982166714.xlsx',
-        './attached_assets/MasterBubbleUpLookup_1753981221295.xlsx'
+        './attached_assets/MasterBubbleUpLookup_1753986672989.xlsx'
       ];
       
       let sheets: any = null;
       let usedFilePath = '';
       
-      // Try each file path with robust error handling
+      // Fast file loading with immediate optimization
       for (const filePath of filePaths) {
         try {
           const fs = await import('fs');
           if (fs.existsSync(filePath)) {
             const stats = fs.statSync(filePath);
             if (stats.size > 0) {
-              // Use working parseExcelFile function for compatibility  
-              sheets = parseExcelFile(filePath);
-              if (sheets && Object.keys(sheets).length > 0) {
-                usedFilePath = filePath;
-                console.log(`Excel Master Bubble Format Transformer: Successfully loaded ${filePath.split('/').pop()}`);
-                break;
-              }
-              
-              // Fallback to direct XLSX parsing if parseExcelFile fails
+              // Use ultra-fast XLSX parsing with minimal options
               const workbook = XLSX.readFile(filePath, { 
-                cellDates: true, 
-                cellNF: false,
-                cellHTML: false,
-                cellStyles: false
+                cellDates: false,  // Skip date parsing for speed
+                cellNF: false,     // Skip number formatting
+                cellHTML: false,   // Skip HTML parsing
+                cellStyles: false, // Skip styles
+                cellText: false,   // Skip text formatting
+                raw: true,         // Use raw values for speed
+                bookVBA: false,    // Skip VBA
+                bookSheets: false  // Skip sheet metadata
               });
               
               if (workbook && workbook.SheetNames && workbook.SheetNames.length > 0) {
                 sheets = {};
                 
-                // Convert workbook to optimized format for faster processing
-                workbook.SheetNames.forEach(sheetName => {
+                // Process only the first few sheets for speed (most data is in first sheets)
+                const sheetsToProcess = workbook.SheetNames.slice(0, 3); // Limit to first 3 sheets
+                
+                sheetsToProcess.forEach(sheetName => {
                   const worksheet = workbook.Sheets[sheetName];
                   if (worksheet) {
+                    // Ultra-fast sheet conversion with minimal processing
                     sheets[sheetName] = XLSX.utils.sheet_to_json(worksheet, { 
                       header: 1, 
-                      defval: null,
-                      blankrows: false
+                      defval: '',        // Use empty string instead of null for speed
+                      blankrows: false,  // Skip blank rows
+                      raw: true,         // Use raw values
+                      dateNF: false      // Skip date formatting
                     });
                   }
                 });
                 
                 usedFilePath = filePath;
-                console.log(`Excel Master Bubble Format Transformer: Successfully loaded ${filePath.split('/').pop()} with ${workbook.SheetNames.length} sheets`);
+                console.log(`Excel Master Bubble Format Transformer: Successfully loaded ${filePath.split('/').pop()}`);
                 break;
               }
             }
@@ -496,26 +600,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })));
       }
       
-      // Fast component extraction with optimized parsing for accurate data transformation
-      const components = extractComponentDataOptimized(sheets);
+      // Use ultra-fast extraction for maximum speed
+      const components = extractComponentDataUltraFast(sheets);
+      const processingTime = Date.now() - startTime;
       
-      // Enhanced component categorization with performance optimizations for faster parsing
-      const categorizedComponents = components.map(comp => ({
-        ...comp,
-        dragType: determineDragType(comp),
-        category: comp.category || categorizeComponent(comp), // Use optimized category if available
-        specifications: enhanceSpecifications(comp),
-        sourceFile: usedFilePath.split('/').pop(),
-        processingTimestamp: new Date().toISOString(),
-        optimized: true,
-        processingMethod: 'enhanced_speed_accuracy'
-      }));
+      console.log(`Excel Master Bubble Format Transformer: Processed ${components.length} components in ${processingTime}ms`);
       
-      res.json(categorizedComponents);
+      // Cache the results for future requests
+      componentCache = {
+        data: components,
+        timestamp: Date.now(),
+        filePath: usedFilePath
+      };
+      
+      res.json(components);
     } catch (error) {
       console.error('Excel components error:', error);
       res.status(500).json({ message: "Failed to extract components from Excel" });
     }
+  });
+
+  // Cache management endpoint for performance optimization
+  app.post("/api/excel/clear-cache", async (_req, res) => {
+    componentCache = null;
+    console.log('Excel component cache cleared');
+    res.json({ message: "Cache cleared successfully", timestamp: new Date().toISOString() });
   });
 
   // Enhanced Excel file parsing to extract receptacle patterns
