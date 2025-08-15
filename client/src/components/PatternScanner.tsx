@@ -115,6 +115,7 @@ export function PatternScanner() {
     'Cable/Conduit Type IDs': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
     'Whip Length IDs': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
     'Tail Length IDs': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    'General Identifiers': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
   };
 
   return (
@@ -211,8 +212,8 @@ export function PatternScanner() {
                     <span className="font-medium">{scanResults.summary.totalSheets}</span>
                   </div>
                   <div className="col-span-2">
-                    <span className="text-gray-600 dark:text-gray-400">Total Patterns Found:</span>{' '}
-                    <span className="font-medium text-lg">{scanResults.summary.totalPatterns}</span>
+                    <span className="text-gray-600 dark:text-gray-400">Total Patterns Found (including duplicates):</span>{' '}
+                    <span className="font-medium text-lg text-green-600">{scanResults.summary.totalPatterns}</span>
                   </div>
                 </div>
               </div>

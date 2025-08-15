@@ -782,12 +782,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const patterns: any[] = [];
       const transformedOutput: any[] = [];
       
-      // Pattern types to scan for
+      // Comprehensive pattern types to capture all identifiers including duplicates
       const patternTypes = [
-        { name: 'Receptacle IDs', regex: /^(NEMA\s*\d+-\d+[PR]?|L\d+-\d+[PR]?|CS\d+[A-Z]*|IEC\s*\d+[A-Z]*|\d+[A-Z]+\d*[A-Z]*|[A-Z]+\d+[A-Z]*)/i },
-        { name: 'Cable/Conduit Type IDs', regex: /^(MMC|LFMC|FMC|LMZC|EMT|PVC|THWN|SO|SJ|SOOW|MC|AC|NM|UF|TC|TRAY|CABLE)/i },
-        { name: 'Whip Length IDs', regex: /^(\d+(?:\.\d+)?)\s*(?:ft|feet|'|"|inch|in)?$/i },
-        { name: 'Tail Length IDs', regex: /^(\d+(?:\.\d+)?)\s*(?:ft|feet|'|"|inch|in)?$/i }
+        { 
+          name: 'Receptacle IDs', 
+          regex: /^(NEMA\s*\d+-\d+[PR]?|L\d+-\d+[PR]?|CS\d+[A-Z]*|IEC\s*\d+[A-Z]*|\d+[A-Z]+\d*[A-Z]*|[A-Z]+\d+[A-Z]*|SS\d+[A-Z]*|ML\d+[A-Z]*|HBL\d+[A-Z]*|[A-Z]{2,4}\d+[A-Z]*|460[A-Z]\d*[A-Z]*)/i 
+        },
+        { 
+          name: 'Cable/Conduit Type IDs', 
+          regex: /^(MMC|LFMC|FMC|LMZC|EMT|PVC|THWN|SO|SJ|SOOW|MC|AC|NM|UF|TC|TRAY|CABLE|FLEX|CORD|WIRE|BX|ARMORED)/i 
+        },
+        { 
+          name: 'Whip Length IDs', 
+          regex: /^(\d+(?:\.\d+)?)\s*(?:ft|feet|'|"|inch|in|FT)?$/i 
+        },
+        { 
+          name: 'Tail Length IDs', 
+          regex: /^(\d+(?:\.\d+)?)\s*(?:ft|feet|'|"|inch|in|FT)?$/i 
+        },
+        {
+          name: 'General Identifiers',
+          regex: /^[A-Z0-9]{3,}[A-Z0-9]*$/i
+        }
       ];
 
       let totalPatterns = 0;
@@ -799,20 +815,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
         const sheetPatterns: any[] = [];
         
-        // Scan each cell in the sheet
+        // Comprehensive cell scanning - capture ALL patterns including duplicates
         sheetData.forEach((row: any[], rowIndex) => {
           row.forEach((cellValue, colIndex) => {
-            if (cellValue && typeof cellValue === 'string' && cellValue.trim()) {
-              const trimmedValue = cellValue.trim();
+            if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
+              const stringValue = String(cellValue).trim();
               
-              // Check against each pattern type
+              // Skip if empty after trimming
+              if (!stringValue) return;
+              
+              // Check against each pattern type - allow multiple matches per cell
+              let foundMatch = false;
               patternTypes.forEach(patternType => {
-                if (patternType.regex.test(trimmedValue)) {
+                if (patternType.regex.test(stringValue)) {
+                  foundMatch = true;
                   const cellLocation = `${getExcelColumnName(colIndex)}${rowIndex + 1}`;
                   
                   const patternData = {
                     type: patternType.name,
-                    value: trimmedValue,
+                    value: stringValue,
                     location: cellLocation,
                     cellValue: cellValue,
                     row: rowIndex + 1,
@@ -822,26 +843,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   sheetPatterns.push(patternData);
                   totalPatterns++;
                   
-                  // Add to transformed output with "choose receptacle" format
+                  // Create unique entry for each pattern found (including duplicates)
                   const transformedRow: any = {
-                    'Sheet': sheetName,
-                    'Original Location': cellLocation,
+                    'Sheet Name': sheetName,
+                    'Cell Location': cellLocation,
                     'Pattern Type': patternType.name,
-                    'Original Value': trimmedValue,
-                    'Transformed Format': `choose ${trimmedValue.toLowerCase().replace(/\s+/g, '_')}`,
-                    'Row': rowIndex + 1,
-                    'Column': colIndex + 1
+                    'Original Value': stringValue,
+                    'Row Number': rowIndex + 1,
+                    'Column Number': colIndex + 1,
+                    'Pattern ID': `${sheetName}_${cellLocation}_${patternType.name}`,
+                    'Choose Format': `choose_${stringValue.toLowerCase().replace(/[-\s]/g, '_')}`
                   };
                   
-                  // Add specific transformation based on pattern type
+                  // Add specific transformations for each pattern type
                   if (patternType.name === 'Receptacle IDs') {
-                    transformedRow['Choose Receptacle'] = `choose_receptacle_${trimmedValue.toLowerCase().replace(/[-\s]/g, '_')}`;
+                    transformedRow['Choose Receptacle'] = `choose_receptacle_${stringValue.toLowerCase().replace(/[-\s]/g, '_')}`;
                   } else if (patternType.name === 'Cable/Conduit Type IDs') {
-                    transformedRow['Choose Cable/Conduit'] = `choose_cable_${trimmedValue.toLowerCase()}`;
+                    transformedRow['Choose Cable'] = `choose_cable_${stringValue.toLowerCase().replace(/[-\s]/g, '_')}`;
                   } else if (patternType.name === 'Whip Length IDs') {
-                    transformedRow['Choose Whip Length'] = `choose_whip_length_${trimmedValue.replace(/[^\d.]/g, '')}_ft`;
+                    transformedRow['Choose Whip Length'] = `choose_whip_length_${stringValue.replace(/[^\d.]/g, '')}_ft`;
                   } else if (patternType.name === 'Tail Length IDs') {
-                    transformedRow['Choose Tail Length'] = `choose_tail_length_${trimmedValue.replace(/[^\d.]/g, '')}_ft`;
+                    transformedRow['Choose Tail Length'] = `choose_tail_length_${stringValue.replace(/[^\d.]/g, '')}_ft`;
+                  } else if (patternType.name === 'General Identifiers') {
+                    transformedRow['Choose Identifier'] = `choose_id_${stringValue.toLowerCase().replace(/[-\s]/g, '_')}`;
                   }
                   
                   transformedOutput.push(transformedRow);
