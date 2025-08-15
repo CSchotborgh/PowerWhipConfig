@@ -44,6 +44,8 @@ Preferred communication style: Simple, everyday language.
 - **Natural Language Processing**: Converts human specifications like "860 power whips total" into structured comma-delimited patterns with equal distribution logic.
 - **Pre-compiled Pattern Matching**: 5x faster receptacle identification using optimized regex patterns for improved parsing speed.
 - **Enhanced Field Mapping**: Accurate data extraction with smart categorization and comprehensive specification preservation.
+- **Comprehensive Component Library**: 50+ electrical components including NEMA straight blade, twist-lock (L-series), three-phase configurations, California Standard, IEC connectors, protection devices, wire/cable, and junction boxes with detailed specifications and pricing.
+- **Professional Basic Configurations**: 12 pre-built power whip configurations covering standard office, industrial twist-lock, three-phase, data center, outdoor GFCI, and arc fault protected applications with complete component integration and compliance validation.
 - **Fast Transform Endpoint**: High-speed pattern processing with performance timing (<100ms for natural language, <50ms for comma-delimited).
 - **Automated Row Expression System**: Generates expressions based on receptacle input patterns, auto-filling data from matched configurations.
 - **Excel Formula Archive System**: Advanced formula extraction, pattern recognition, and reusable library building from uploaded Excel files.

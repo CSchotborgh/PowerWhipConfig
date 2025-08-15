@@ -51,16 +51,17 @@ export class MemStorage implements IStorage {
     this.patternLibrary = new Map();
     this.fileArchive = new Map();
     this.initializeDefaultComponents();
+    this.initializeBasicConfigurations();
   }
 
   private initializeDefaultComponents() {
     const defaultComponents: InsertElectricalComponent[] = [
-      // Connectors
+      // NEMA Straight Blade Receptacles & Plugs
       {
         name: "NEMA 5-15P",
         type: "connector",
-        category: "input",
-        specifications: { type: "plug", poles: 3, voltage: 125, current: 15 },
+        category: "plug",
+        specifications: { type: "plug", poles: 3, voltage: 125, current: 15, pattern: "5-15P" },
         symbol: "plug",
         icon: "fas fa-plug",
         maxVoltage: 125,
@@ -71,8 +72,8 @@ export class MemStorage implements IStorage {
       {
         name: "NEMA 5-15R",
         type: "connector",
-        category: "output",
-        specifications: { type: "receptacle", poles: 3, voltage: 125, current: 15 },
+        category: "receptacle",
+        specifications: { type: "receptacle", poles: 3, voltage: 125, current: 15, pattern: "5-15R" },
         symbol: "receptacle",
         icon: "fas fa-plug",
         maxVoltage: 125,
@@ -81,22 +82,464 @@ export class MemStorage implements IStorage {
         price: 8.75
       },
       {
-        name: "Twist-Lock L5-20P",
+        name: "NEMA 5-20P",
         type: "connector",
-        category: "input",
-        specifications: { type: "plug", poles: 3, voltage: 125, current: 20 },
+        category: "plug",
+        specifications: { type: "plug", poles: 3, voltage: 125, current: 20, pattern: "5-20P" },
+        symbol: "plug",
+        icon: "fas fa-plug",
+        maxVoltage: 125,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 15.75
+      },
+      {
+        name: "NEMA 5-20R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "receptacle", poles: 3, voltage: 125, current: 20, pattern: "5-20R" },
+        symbol: "receptacle",
+        icon: "fas fa-plug",
+        maxVoltage: 125,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 11.25
+      },
+      {
+        name: "NEMA 6-15P",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "plug", poles: 3, voltage: 250, current: 15, pattern: "6-15P" },
+        symbol: "plug",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 15,
+        compatibleGauges: ["12", "14"],
+        price: 18.50
+      },
+      {
+        name: "NEMA 6-15R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "receptacle", poles: 3, voltage: 250, current: 15, pattern: "6-15R" },
+        symbol: "receptacle",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 15,
+        compatibleGauges: ["12", "14"],
+        price: 14.25
+      },
+      {
+        name: "NEMA 6-20P",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "plug", poles: 3, voltage: 250, current: 20, pattern: "6-20P" },
+        symbol: "plug",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 22.75
+      },
+      {
+        name: "NEMA 6-20R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "receptacle", poles: 3, voltage: 250, current: 20, pattern: "6-20R" },
+        symbol: "receptacle",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 17.50
+      },
+
+      // NEMA Twist-Lock Receptacles & Plugs (L Series)
+      {
+        name: "L5-15P",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "twist-lock-plug", poles: 3, voltage: 125, current: 15, pattern: "L5-15P" },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 125,
+        maxCurrent: 15,
+        compatibleGauges: ["12", "14"],
+        price: 24.50
+      },
+      {
+        name: "L5-15R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "twist-lock-receptacle", poles: 3, voltage: 125, current: 15, pattern: "L5-15R" },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 125,
+        maxCurrent: 15,
+        compatibleGauges: ["12", "14"],
+        price: 19.75
+      },
+      {
+        name: "L5-20P",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "twist-lock-plug", poles: 3, voltage: 125, current: 20, pattern: "L5-20P" },
         symbol: "twist-lock",
         icon: "fas fa-plug",
         maxVoltage: 125,
         maxCurrent: 20,
         compatibleGauges: ["10", "12"],
-        price: 18.25
+        price: 28.25
       },
+      {
+        name: "L5-20R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "twist-lock-receptacle", poles: 3, voltage: 125, current: 20, pattern: "L5-20R" },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 125,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 22.75
+      },
+      {
+        name: "L5-30P",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "twist-lock-plug", poles: 3, voltage: 125, current: 30, pattern: "L5-30P" },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 125,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 35.50
+      },
+      {
+        name: "L5-30R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "twist-lock-receptacle", poles: 3, voltage: 125, current: 30, pattern: "L5-30R" },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 125,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 28.25
+      },
+      {
+        name: "L6-15P",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "twist-lock-plug", poles: 3, voltage: 250, current: 15, pattern: "L6-15P" },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 15,
+        compatibleGauges: ["12", "14"],
+        price: 32.75
+      },
+      {
+        name: "L6-15R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "twist-lock-receptacle", poles: 3, voltage: 250, current: 15, pattern: "L6-15R" },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 15,
+        compatibleGauges: ["12", "14"],
+        price: 26.50
+      },
+      {
+        name: "L6-20P",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "twist-lock-plug", poles: 3, voltage: 250, current: 20, pattern: "L6-20P" },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 38.75
+      },
+      {
+        name: "L6-20R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "twist-lock-receptacle", poles: 3, voltage: 250, current: 20, pattern: "L6-20R" },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 31.25
+      },
+      {
+        name: "L6-30P",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "twist-lock-plug", poles: 3, voltage: 250, current: 30, pattern: "L6-30P" },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 45.25
+      },
+      {
+        name: "L6-30R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "twist-lock-receptacle", poles: 3, voltage: 250, current: 30, pattern: "L6-30R" },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 36.75
+      },
+
+      // Three-Phase Twist-Lock (L15, L21, L22 Series)
+      {
+        name: "L15-20P",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "twist-lock-plug", poles: 4, voltage: 250, current: 20, pattern: "L15-20P", phase: 3 },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 52.50
+      },
+      {
+        name: "L15-20R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "twist-lock-receptacle", poles: 4, voltage: 250, current: 20, pattern: "L15-20R", phase: 3 },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 42.25
+      },
+      {
+        name: "L15-30P",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "twist-lock-plug", poles: 4, voltage: 250, current: 30, pattern: "L15-30P", phase: 3 },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 68.75
+      },
+      {
+        name: "L15-30R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "twist-lock-receptacle", poles: 4, voltage: 250, current: 30, pattern: "L15-30R", phase: 3 },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 55.50
+      },
+      {
+        name: "L21-20P",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "twist-lock-plug", poles: 4, voltage: 120, current: 20, pattern: "L21-20P", phase: 3 },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 120,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 58.25
+      },
+      {
+        name: "L21-20R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "twist-lock-receptacle", poles: 4, voltage: 120, current: 20, pattern: "L21-20R", phase: 3 },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 120,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 46.75
+      },
+      {
+        name: "L21-30P",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "twist-lock-plug", poles: 4, voltage: 120, current: 30, pattern: "L21-30P", phase: 3 },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 120,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 72.50
+      },
+      {
+        name: "L21-30R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "twist-lock-receptacle", poles: 4, voltage: 120, current: 30, pattern: "L21-30R", phase: 3 },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 120,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 58.75
+      },
+      {
+        name: "L22-20P",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "twist-lock-plug", poles: 4, voltage: 277, current: 20, pattern: "L22-20P", phase: 3 },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 277,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 64.25
+      },
+      {
+        name: "L22-20R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "twist-lock-receptacle", poles: 4, voltage: 277, current: 20, pattern: "L22-20R", phase: 3 },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 277,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 52.25
+      },
+      {
+        name: "L22-30P",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "twist-lock-plug", poles: 4, voltage: 277, current: 30, pattern: "L22-30P", phase: 3 },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 277,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 78.75
+      },
+      {
+        name: "L22-30R",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "twist-lock-receptacle", poles: 4, voltage: 277, current: 30, pattern: "L22-30R", phase: 3 },
+        symbol: "twist-lock",
+        icon: "fas fa-plug",
+        maxVoltage: 277,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 64.50
+      },
+
+      // California Standard (CS) Connectors
+      {
+        name: "CS8264C",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "california-standard", poles: 4, voltage: 250, current: 50, pattern: "CS8264C" },
+        symbol: "cs-connector",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 50,
+        compatibleGauges: ["6", "8"],
+        price: 85.25
+      },
+      {
+        name: "CS8269A",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "california-standard", poles: 4, voltage: 250, current: 50, pattern: "CS8269A" },
+        symbol: "cs-connector",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 50,
+        compatibleGauges: ["6", "8"],
+        price: 92.75
+      },
+      {
+        name: "CS8369A",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "california-standard", poles: 4, voltage: 480, current: 50, pattern: "CS8369A" },
+        symbol: "cs-connector",
+        icon: "fas fa-plug",
+        maxVoltage: 480,
+        maxCurrent: 50,
+        compatibleGauges: ["6", "8"],
+        price: 105.50
+      },
+
+      // Industrial Connectors
+      {
+        name: "460C9W",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "industrial", poles: 4, voltage: 480, current: 60, pattern: "460C9W" },
+        symbol: "industrial",
+        icon: "fas fa-plug",
+        maxVoltage: 480,
+        maxCurrent: 60,
+        compatibleGauges: ["4", "6"],
+        price: 125.75
+      },
+      {
+        name: "460R9W",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "industrial", poles: 4, voltage: 480, current: 60, pattern: "460R9W" },
+        symbol: "industrial",
+        icon: "fas fa-plug",
+        maxVoltage: 480,
+        maxCurrent: 60,
+        compatibleGauges: ["4", "6"],
+        price: 118.25
+      },
+      {
+        name: "560C9W",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "industrial", poles: 4, voltage: 600, current: 60, pattern: "560C9W" },
+        symbol: "industrial",
+        icon: "fas fa-plug",
+        maxVoltage: 600,
+        maxCurrent: 60,
+        compatibleGauges: ["4", "6"],
+        price: 138.50
+      },
+      {
+        name: "9C54U2",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "industrial", poles: 4, voltage: 600, current: 100, pattern: "9C54U2" },
+        symbol: "industrial",
+        icon: "fas fa-plug",
+        maxVoltage: 600,
+        maxCurrent: 100,
+        compatibleGauges: ["1", "2"],
+        price: 195.75
+      },
+
+      // IEC Connectors
       {
         name: "IEC C13",
         type: "connector",
-        category: "output",
-        specifications: { type: "receptacle", poles: 3, voltage: 250, current: 10 },
+        category: "receptacle",
+        specifications: { type: "iec", poles: 3, voltage: 250, current: 10, pattern: "C13" },
         symbol: "iec",
         icon: "fas fa-plug",
         maxVoltage: 250,
@@ -104,8 +547,56 @@ export class MemStorage implements IStorage {
         compatibleGauges: ["12", "14"],
         price: 6.50
       },
+      {
+        name: "IEC C14",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "iec", poles: 3, voltage: 250, current: 10, pattern: "C14" },
+        symbol: "iec",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 10,
+        compatibleGauges: ["12", "14"],
+        price: 8.25
+      },
+      {
+        name: "IEC C19",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "iec", poles: 3, voltage: 250, current: 16, pattern: "C19" },
+        symbol: "iec",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 16,
+        compatibleGauges: ["10", "12"],
+        price: 12.75
+      },
+      {
+        name: "IEC C20",
+        type: "connector",
+        category: "plug",
+        specifications: { type: "iec", poles: 3, voltage: 250, current: 16, pattern: "C20" },
+        symbol: "iec",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 16,
+        compatibleGauges: ["10", "12"],
+        price: 15.25
+      },
       
-      // Protection
+      // Protection Components
+      {
+        name: "15A Circuit Breaker",
+        type: "protection",
+        category: "breaker",
+        specifications: { rating: 15, type: "thermal-magnetic", poles: 1 },
+        symbol: "breaker",
+        icon: "fas fa-shield-alt",
+        maxVoltage: 240,
+        maxCurrent: 15,
+        compatibleGauges: ["12", "14"],
+        price: 28.50
+      },
       {
         name: "20A Circuit Breaker",
         type: "protection",
@@ -119,7 +610,31 @@ export class MemStorage implements IStorage {
         price: 35.00
       },
       {
-        name: "GFCI Outlet",
+        name: "30A Circuit Breaker",
+        type: "protection",
+        category: "breaker",
+        specifications: { rating: 30, type: "thermal-magnetic", poles: 1 },
+        symbol: "breaker",
+        icon: "fas fa-shield-alt",
+        maxVoltage: 240,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 45.75
+      },
+      {
+        name: "50A Circuit Breaker",
+        type: "protection",
+        category: "breaker",
+        specifications: { rating: 50, type: "thermal-magnetic", poles: 2 },
+        symbol: "breaker",
+        icon: "fas fa-shield-alt",
+        maxVoltage: 480,
+        maxCurrent: 50,
+        compatibleGauges: ["4", "6"],
+        price: 85.25
+      },
+      {
+        name: "GFCI 15A Outlet",
         type: "protection",
         category: "gfci",
         specifications: { rating: 15, type: "gfci", testButton: true },
@@ -129,6 +644,30 @@ export class MemStorage implements IStorage {
         maxCurrent: 15,
         compatibleGauges: ["12", "14"],
         price: 28.50
+      },
+      {
+        name: "GFCI 20A Outlet",
+        type: "protection",
+        category: "gfci",
+        specifications: { rating: 20, type: "gfci", testButton: true },
+        symbol: "gfci",
+        icon: "fas fa-flash",
+        maxVoltage: 125,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 35.75
+      },
+      {
+        name: "Arc Fault Breaker 15A",
+        type: "protection",
+        category: "afci",
+        specifications: { rating: 15, type: "arc-fault", poles: 1 },
+        symbol: "afci",
+        icon: "fas fa-flash",
+        maxVoltage: 240,
+        maxCurrent: 15,
+        compatibleGauges: ["12", "14"],
+        price: 85.50
       },
       {
         name: "Surge Protector",
@@ -142,20 +681,70 @@ export class MemStorage implements IStorage {
         compatibleGauges: ["12", "14"],
         price: 45.00
       },
+      
+      // Wire and Cable
       {
-        name: "15A Fuse",
-        type: "protection",
-        category: "fuse",
-        specifications: { rating: 15, type: "time-delay", voltage: 250 },
-        symbol: "fuse",
-        icon: "fas fa-fire",
-        maxVoltage: 250,
-        maxCurrent: 15,
-        compatibleGauges: ["12", "14"],
-        price: 3.25
+        name: "12 AWG SOOW Cable",
+        type: "wire",
+        category: "portable",
+        specifications: { gauge: 12, type: "SOOW", conductors: 3, jacket: "oil-resistant" },
+        symbol: "wire",
+        icon: "fas fa-minus",
+        maxVoltage: 600,
+        maxCurrent: 20,
+        compatibleGauges: ["12"],
+        price: 2.85 // per foot
+      },
+      {
+        name: "10 AWG SOOW Cable",
+        type: "wire",
+        category: "portable",
+        specifications: { gauge: 10, type: "SOOW", conductors: 3, jacket: "oil-resistant" },
+        symbol: "wire",
+        icon: "fas fa-minus",
+        maxVoltage: 600,
+        maxCurrent: 30,
+        compatibleGauges: ["10"],
+        price: 4.25 // per foot
+      },
+      {
+        name: "8 AWG SOOW Cable",
+        type: "wire",
+        category: "portable",
+        specifications: { gauge: 8, type: "SOOW", conductors: 3, jacket: "oil-resistant" },
+        symbol: "wire",
+        icon: "fas fa-minus",
+        maxVoltage: 600,
+        maxCurrent: 40,
+        compatibleGauges: ["8"],
+        price: 6.75 // per foot
+      },
+      {
+        name: "6 AWG SOOW Cable",
+        type: "wire",
+        category: "portable",
+        specifications: { gauge: 6, type: "SOOW", conductors: 4, jacket: "oil-resistant" },
+        symbol: "wire",
+        icon: "fas fa-minus",
+        maxVoltage: 600,
+        maxCurrent: 55,
+        compatibleGauges: ["6"],
+        price: 9.50 // per foot
+      },
+      {
+        name: "4 AWG SOOW Cable",
+        type: "wire",
+        category: "portable",
+        specifications: { gauge: 4, type: "SOOW", conductors: 4, jacket: "oil-resistant" },
+        symbol: "wire",
+        icon: "fas fa-minus",
+        maxVoltage: 600,
+        maxCurrent: 70,
+        compatibleGauges: ["4"],
+        price: 14.25 // per foot
       },
       
-      // Junction
+      // Junction and Enclosures
       {
         name: "4x4 Junction Box",
         type: "junction",
@@ -167,6 +756,42 @@ export class MemStorage implements IStorage {
         maxCurrent: 40,
         compatibleGauges: ["8", "10", "12", "14"],
         price: 12.75
+      },
+      {
+        name: "6x6 Junction Box",
+        type: "junction",
+        category: "box",
+        specifications: { size: "6x6", depth: 2.125, material: "steel" },
+        symbol: "junction",
+        icon: "fas fa-cube",
+        maxVoltage: 600,
+        maxCurrent: 60,
+        compatibleGauges: ["6", "8", "10", "12"],
+        price: 18.50
+      },
+      {
+        name: "Weatherproof Box",
+        type: "junction",
+        category: "weatherproof",
+        specifications: { size: "4x4", depth: 2.125, material: "aluminum", rating: "NEMA 3R" },
+        symbol: "weatherproof",
+        icon: "fas fa-shield-alt",
+        maxVoltage: 600,
+        maxCurrent: 40,
+        compatibleGauges: ["8", "10", "12", "14"],
+        price: 28.75
+      },
+      {
+        name: "Cable Tray 6-inch",
+        type: "junction",
+        category: "tray",
+        specifications: { width: 6, material: "galvanized-steel", finish: "hot-dip" },
+        symbol: "tray",
+        icon: "fas fa-grip-lines",
+        maxVoltage: 600,
+        maxCurrent: 200,
+        compatibleGauges: ["1", "2", "4", "6"],
+        price: 45.25 // per foot
       }
     ];
 
@@ -182,6 +807,351 @@ export class MemStorage implements IStorage {
       };
       this.components.set(id, fullComponent);
     });
+  }
+
+  private initializeBasicConfigurations() {
+    const basicConfigurations: InsertPowerWhipConfiguration[] = [
+      // Standard Office/Residential Power Whips
+      {
+        name: "15A Standard Office Power Whip",
+        voltage: 125,
+        current: 15,
+        wireGauge: "12",
+        totalLength: 25,
+        components: [
+          { componentId: this.findComponentByName("NEMA 5-15P")?.id, quantity: 1, position: "input" },
+          { componentId: this.findComponentByName("NEMA 5-15R")?.id, quantity: 1, position: "output" },
+          { componentId: this.findComponentByName("12 AWG SOOW Cable")?.id, quantity: 25, position: "cable" },
+          { componentId: this.findComponentByName("15A Circuit Breaker")?.id, quantity: 1, position: "protection" }
+        ],
+        wireConnections: [
+          { from: "NEMA 5-15P", to: "12 AWG SOOW Cable", type: "power" },
+          { from: "12 AWG SOOW Cable", to: "NEMA 5-15R", type: "power" },
+          { from: "15A Circuit Breaker", to: "12 AWG SOOW Cable", type: "protection" }
+        ],
+        configuration: {
+          type: "standard_office",
+          application: "Office equipment, computers, monitors",
+          environment: "Indoor, dry locations",
+          usage: "Light duty commercial",
+          compliance: ["NEC 400", "UL 62"],
+          features: ["Portable", "Flexible", "OSHA compliant"]
+        },
+        isValid: true,
+        validationResults: {
+          voltage: { valid: true, message: "Within NEMA 5-15 rating" },
+          current: { valid: true, message: "Within 12 AWG capacity" },
+          wireGauge: { valid: true, message: "Appropriate for 15A load" },
+          connections: { valid: true, message: "All connections verified" }
+        }
+      },
+      {
+        name: "20A Heavy Duty Power Whip",
+        voltage: 125,
+        current: 20,
+        wireGauge: "10",
+        totalLength: 50,
+        components: [
+          { componentId: this.findComponentByName("NEMA 5-20P")?.id, quantity: 1, position: "input" },
+          { componentId: this.findComponentByName("NEMA 5-20R")?.id, quantity: 1, position: "output" },
+          { componentId: this.findComponentByName("10 AWG SOOW Cable")?.id, quantity: 50, position: "cable" },
+          { componentId: this.findComponentByName("20A Circuit Breaker")?.id, quantity: 1, position: "protection" },
+          { componentId: this.findComponentByName("GFCI 20A Outlet")?.id, quantity: 1, position: "safety" }
+        ],
+        wireConnections: [
+          { from: "NEMA 5-20P", to: "10 AWG SOOW Cable", type: "power" },
+          { from: "10 AWG SOOW Cable", to: "NEMA 5-20R", type: "power" },
+          { from: "20A Circuit Breaker", to: "10 AWG SOOW Cable", type: "protection" },
+          { from: "GFCI 20A Outlet", to: "NEMA 5-20R", type: "safety" }
+        ],
+        configuration: {
+          type: "heavy_duty",
+          application: "Power tools, industrial equipment, temporary power",
+          environment: "Indoor/outdoor, wet locations",
+          usage: "Heavy duty commercial/industrial",
+          compliance: ["NEC 400", "NEC 590", "UL 62", "NEMA WD-6"],
+          features: ["GFCI protection", "Weather resistant", "Heavy duty construction"]
+        },
+        isValid: true
+      },
+
+      // Industrial Twist-Lock Configurations
+      {
+        name: "L5-20 Twist-Lock Industrial Power Whip",
+        voltage: 125,
+        current: 20,
+        wireGauge: "10",
+        totalLength: 75,
+        components: [
+          { componentId: this.findComponentByName("L5-20P")?.id, quantity: 1, position: "input" },
+          { componentId: this.findComponentByName("L5-20R")?.id, quantity: 1, position: "output" },
+          { componentId: this.findComponentByName("10 AWG SOOW Cable")?.id, quantity: 75, position: "cable" },
+          { componentId: this.findComponentByName("20A Circuit Breaker")?.id, quantity: 1, position: "protection" },
+          { componentId: this.findComponentByName("Weatherproof Box")?.id, quantity: 1, position: "enclosure" }
+        ],
+        wireConnections: [
+          { from: "L5-20P", to: "10 AWG SOOW Cable", type: "power" },
+          { from: "10 AWG SOOW Cable", to: "L5-20R", type: "power" },
+          { from: "20A Circuit Breaker", to: "10 AWG SOOW Cable", type: "protection" }
+        ],
+        configuration: {
+          type: "industrial_twist_lock",
+          application: "Manufacturing equipment, outdoor events, construction",
+          environment: "Industrial, wet locations, outdoor",
+          usage: "Heavy duty industrial",
+          compliance: ["NEC 400", "NEC 590", "UL 62", "NEMA WD-6"],
+          features: ["Twist-lock security", "Weather resistant", "Locking connectors"]
+        },
+        isValid: true
+      },
+      {
+        name: "L6-30 High Voltage Power Whip",
+        voltage: 250,
+        current: 30,
+        wireGauge: "8",
+        totalLength: 100,
+        components: [
+          { componentId: this.findComponentByName("L6-30P")?.id, quantity: 1, position: "input" },
+          { componentId: this.findComponentByName("L6-30R")?.id, quantity: 1, position: "output" },
+          { componentId: this.findComponentByName("8 AWG SOOW Cable")?.id, quantity: 100, position: "cable" },
+          { componentId: this.findComponentByName("30A Circuit Breaker")?.id, quantity: 1, position: "protection" },
+          { componentId: this.findComponentByName("6x6 Junction Box")?.id, quantity: 1, position: "junction" }
+        ],
+        wireConnections: [
+          { from: "L6-30P", to: "8 AWG SOOW Cable", type: "power" },
+          { from: "8 AWG SOOW Cable", to: "L6-30R", type: "power" },
+          { from: "30A Circuit Breaker", to: "8 AWG SOOW Cable", type: "protection" }
+        ],
+        configuration: {
+          type: "high_voltage_industrial",
+          application: "Large motors, welding equipment, industrial machinery",
+          environment: "Industrial facilities, manufacturing plants",
+          usage: "Heavy industrial applications",
+          compliance: ["NEC 400", "NEC 430", "UL 62", "NEMA MG-1"],
+          features: ["High current capacity", "250V rating", "Twist-lock security"]
+        },
+        isValid: true
+      },
+
+      // Three-Phase Industrial Configurations
+      {
+        name: "L15-20 Three-Phase Power Whip",
+        voltage: 250,
+        current: 20,
+        wireGauge: "10",
+        totalLength: 50,
+        components: [
+          { componentId: this.findComponentByName("L15-20P")?.id, quantity: 1, position: "input" },
+          { componentId: this.findComponentByName("L15-20R")?.id, quantity: 1, position: "output" },
+          { componentId: this.findComponentByName("10 AWG SOOW Cable")?.id, quantity: 50, position: "cable" },
+          { componentId: this.findComponentByName("20A Circuit Breaker")?.id, quantity: 3, position: "protection" },
+          { componentId: this.findComponentByName("6x6 Junction Box")?.id, quantity: 1, position: "junction" }
+        ],
+        wireConnections: [
+          { from: "L15-20P", to: "10 AWG SOOW Cable", type: "power_3phase" },
+          { from: "10 AWG SOOW Cable", to: "L15-20R", type: "power_3phase" },
+          { from: "20A Circuit Breaker", to: "10 AWG SOOW Cable", type: "protection_3phase" }
+        ],
+        configuration: {
+          type: "three_phase_industrial",
+          application: "Three-phase motors, HVAC equipment, industrial machinery",
+          environment: "Industrial facilities, commercial buildings",
+          usage: "Three-phase industrial applications",
+          compliance: ["NEC 400", "NEC 430", "UL 62", "NEMA MG-1"],
+          features: ["Three-phase power", "Balanced load distribution", "Motor starting capability"]
+        },
+        isValid: true
+      },
+      {
+        name: "L21-30 Three-Phase Wye Power Whip",
+        voltage: 120,
+        current: 30,
+        wireGauge: "8",
+        totalLength: 75,
+        components: [
+          { componentId: this.findComponentByName("L21-30P")?.id, quantity: 1, position: "input" },
+          { componentId: this.findComponentByName("L21-30R")?.id, quantity: 1, position: "output" },
+          { componentId: this.findComponentByName("8 AWG SOOW Cable")?.id, quantity: 75, position: "cable" },
+          { componentId: this.findComponentByName("30A Circuit Breaker")?.id, quantity: 3, position: "protection" },
+          { componentId: this.findComponentByName("6x6 Junction Box")?.id, quantity: 2, position: "junction" }
+        ],
+        wireConnections: [
+          { from: "L21-30P", to: "8 AWG SOOW Cable", type: "power_3phase_neutral" },
+          { from: "8 AWG SOOW Cable", to: "L21-30R", type: "power_3phase_neutral" },
+          { from: "30A Circuit Breaker", to: "8 AWG SOOW Cable", type: "protection_3phase" }
+        ],
+        configuration: {
+          type: "three_phase_wye",
+          application: "Mixed single/three-phase loads, data centers, laboratory equipment",
+          environment: "Critical facilities, laboratories, data centers",
+          usage: "Precision three-phase applications",
+          compliance: ["NEC 400", "NEC 645", "UL 62", "NEMA MG-1"],
+          features: ["Wye configuration", "Neutral conductor", "Balanced loads"]
+        },
+        isValid: true
+      },
+
+      // California Standard and Industrial
+      {
+        name: "CS8264C/CS8269A Industrial Power Whip",
+        voltage: 250,
+        current: 50,
+        wireGauge: "6",
+        totalLength: 100,
+        components: [
+          { componentId: this.findComponentByName("CS8269A")?.id, quantity: 1, position: "input" },
+          { componentId: this.findComponentByName("CS8264C")?.id, quantity: 1, position: "output" },
+          { componentId: this.findComponentByName("6 AWG SOOW Cable")?.id, quantity: 100, position: "cable" },
+          { componentId: this.findComponentByName("50A Circuit Breaker")?.id, quantity: 1, position: "protection" },
+          { componentId: this.findComponentByName("6x6 Junction Box")?.id, quantity: 2, position: "junction" }
+        ],
+        wireConnections: [
+          { from: "CS8269A", to: "6 AWG SOOW Cable", type: "power_high_current" },
+          { from: "6 AWG SOOW Cable", to: "CS8264C", type: "power_high_current" },
+          { from: "50A Circuit Breaker", to: "6 AWG SOOW Cable", type: "protection" }
+        ],
+        configuration: {
+          type: "california_standard",
+          application: "Large industrial equipment, distribution panels, temporary power",
+          environment: "Industrial, outdoor events, construction sites",
+          usage: "High current industrial applications",
+          compliance: ["NEC 400", "NEC 590", "Cal Title 24", "UL 62"],
+          features: ["High current capacity", "California standard", "Robust construction"]
+        },
+        isValid: true
+      },
+
+      // Data Center and IEC Configurations
+      {
+        name: "IEC C13/C14 Data Center Power Whip",
+        voltage: 250,
+        current: 10,
+        wireGauge: "12",
+        totalLength: 15,
+        components: [
+          { componentId: this.findComponentByName("IEC C14")?.id, quantity: 1, position: "input" },
+          { componentId: this.findComponentByName("IEC C13")?.id, quantity: 1, position: "output" },
+          { componentId: this.findComponentByName("12 AWG SOOW Cable")?.id, quantity: 15, position: "cable" },
+          { componentId: this.findComponentByName("15A Circuit Breaker")?.id, quantity: 1, position: "protection" }
+        ],
+        wireConnections: [
+          { from: "IEC C14", to: "12 AWG SOOW Cable", type: "power" },
+          { from: "12 AWG SOOW Cable", to: "IEC C13", type: "power" },
+          { from: "15A Circuit Breaker", to: "12 AWG SOOW Cable", type: "protection" }
+        ],
+        configuration: {
+          type: "data_center_iec",
+          application: "Server equipment, UPS systems, network hardware",
+          environment: "Data centers, server rooms, network closets",
+          usage: "IT equipment power distribution",
+          compliance: ["NEC 645", "IEC 60320", "UL 62", "NEMA Standards"],
+          features: ["IEC standard connectors", "Compact design", "High reliability"]
+        },
+        isValid: true
+      },
+      {
+        name: "IEC C19/C20 High Power Data Center Whip",
+        voltage: 250,
+        current: 16,
+        wireGauge: "10",
+        totalLength: 20,
+        components: [
+          { componentId: this.findComponentByName("IEC C20")?.id, quantity: 1, position: "input" },
+          { componentId: this.findComponentByName("IEC C19")?.id, quantity: 1, position: "output" },
+          { componentId: this.findComponentByName("10 AWG SOOW Cable")?.id, quantity: 20, position: "cable" },
+          { componentId: this.findComponentByName("20A Circuit Breaker")?.id, quantity: 1, position: "protection" }
+        ],
+        wireConnections: [
+          { from: "IEC C20", to: "10 AWG SOOW Cable", type: "power" },
+          { from: "10 AWG SOOW Cable", to: "IEC C19", type: "power" },
+          { from: "20A Circuit Breaker", to: "10 AWG SOOW Cable", type: "protection" }
+        ],
+        configuration: {
+          type: "high_power_data_center",
+          application: "High-power servers, blade centers, storage arrays",
+          environment: "Enterprise data centers, cloud facilities",
+          usage: "High-density IT equipment",
+          compliance: ["NEC 645", "IEC 60320", "UL 62", "TIA-942"],
+          features: ["Higher current rating", "Enterprise grade", "Redundant power"]
+        },
+        isValid: true
+      },
+
+      // Specialized Applications
+      {
+        name: "GFCI Protected Outdoor Power Whip",
+        voltage: 125,
+        current: 20,
+        wireGauge: "10",
+        totalLength: 100,
+        components: [
+          { componentId: this.findComponentByName("NEMA 5-20P")?.id, quantity: 1, position: "input" },
+          { componentId: this.findComponentByName("GFCI 20A Outlet")?.id, quantity: 1, position: "protection_output" },
+          { componentId: this.findComponentByName("10 AWG SOOW Cable")?.id, quantity: 100, position: "cable" },
+          { componentId: this.findComponentByName("Weatherproof Box")?.id, quantity: 2, position: "enclosure" },
+          { componentId: this.findComponentByName("Surge Protector")?.id, quantity: 1, position: "surge_protection" }
+        ],
+        wireConnections: [
+          { from: "NEMA 5-20P", to: "10 AWG SOOW Cable", type: "power" },
+          { from: "10 AWG SOOW Cable", to: "GFCI 20A Outlet", type: "power" },
+          { from: "Surge Protector", to: "GFCI 20A Outlet", type: "protection" }
+        ],
+        configuration: {
+          type: "outdoor_gfci",
+          application: "Outdoor tools, wet locations, construction sites",
+          environment: "Outdoor, wet locations, extreme weather",
+          usage: "Outdoor and wet location applications",
+          compliance: ["NEC 400", "NEC 590", "OSHA", "UL 62"],
+          features: ["GFCI protection", "Weather resistant", "Surge protection"]
+        },
+        isValid: true
+      },
+      {
+        name: "Arc Fault Protected Office Power Whip",
+        voltage: 125,
+        current: 15,
+        wireGauge: "12",
+        totalLength: 50,
+        components: [
+          { componentId: this.findComponentByName("NEMA 5-15P")?.id, quantity: 1, position: "input" },
+          { componentId: this.findComponentByName("NEMA 5-15R")?.id, quantity: 1, position: "output" },
+          { componentId: this.findComponentByName("12 AWG SOOW Cable")?.id, quantity: 50, position: "cable" },
+          { componentId: this.findComponentByName("Arc Fault Breaker 15A")?.id, quantity: 1, position: "arc_protection" },
+          { componentId: this.findComponentByName("4x4 Junction Box")?.id, quantity: 1, position: "junction" }
+        ],
+        wireConnections: [
+          { from: "NEMA 5-15P", to: "12 AWG SOOW Cable", type: "power" },
+          { from: "12 AWG SOOW Cable", to: "NEMA 5-15R", type: "power" },
+          { from: "Arc Fault Breaker 15A", to: "12 AWG SOOW Cable", type: "arc_protection" }
+        ],
+        configuration: {
+          type: "arc_fault_protected",
+          application: "Office equipment, sensitive electronics, fire prevention",
+          environment: "Commercial offices, healthcare, education",
+          usage: "Arc fault sensitive applications",
+          compliance: ["NEC 210.12", "UL 1699", "NFPA 70", "UL 62"],
+          features: ["Arc fault protection", "Fire prevention", "Electronic equipment safe"]
+        },
+        isValid: true
+      }
+    ];
+
+    // Initialize the basic configurations
+    basicConfigurations.forEach(config => {
+      const id = randomUUID();
+      const now = new Date();
+      const configuration: PowerWhipConfiguration = { 
+        ...config, 
+        id, 
+        createdAt: now,
+        updatedAt: now
+      };
+      this.configurations.set(id, configuration);
+    });
+  }
+
+  private findComponentByName(name: string): ElectricalComponent | undefined {
+    return Array.from(this.components.values()).find(c => c.name === name);
   }
 
   // Power Whip Configuration methods
