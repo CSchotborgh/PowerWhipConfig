@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPowerWhipConfigurationSchema, insertElectricalComponentSchema } from "@shared/schema";
+import { insertPowerWhipConfigurationSchema, insertElectricalComponentSchema, insertComponentDataSourceSchema } from "@shared/schema";
 import { ExcelFormulaExtractor } from "./excelFormulaExtractor";
 import { z } from "zod";
 import { parseExcelFile, extractComponentData, analyzeExcelStructure, generateBOM } from "./excelParser";
@@ -2921,6 +2921,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Export Builder sheet error:', error);
       res.status(500).json({ error: 'Failed to export transformed Builder sheet' });
+    }
+  });
+
+  // ============================================================================
+  // COMPONENT DATA SOURCES API ROUTES
+  // ============================================================================
+  
+  // Get all data sources
+  app.get("/api/data-sources", async (req, res) => {
+    try {
+      const sources = await storage.getAllDataSources();
+      res.json(sources);
+    } catch (error) {
+      console.error('Error fetching data sources:', error);
+      res.status(500).json({ error: "Failed to fetch data sources" });
+    }
+  });
+
+  // Create new data source
+  app.post("/api/data-sources", async (req, res) => {
+    try {
+      const validation = insertComponentDataSourceSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          error: "Invalid data source configuration",
+          details: validation.error.errors 
+        });
+      }
+
+      const source = await storage.createDataSource(validation.data);
+      res.status(201).json(source);
+    } catch (error) {
+      console.error('Error creating data source:', error);
+      res.status(500).json({ error: "Failed to create data source" });
+    }
+  });
+
+  // Sync data source
+  app.post("/api/data-sources/:id/sync", async (req, res) => {
+    try {
+      const result = await storage.syncDataSource(req.params.id);
+      res.json(result);
+    } catch (error) {
+      console.error('Error syncing data source:', error);
+      res.status(500).json({ 
+        success: false, 
+        componentCount: 0, 
+        errors: [error instanceof Error ? error.message : 'Unknown sync error'] 
+      });
+    }
+  });
+
+  // Delete data source
+  app.delete("/api/data-sources/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteDataSource(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Data source not found" });
+      }
+      res.json({ success: true, message: "Data source deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting data source:', error);
+      res.status(500).json({ error: "Failed to delete data source" });
+    }
+  });
+
+  // Test data source configuration
+  app.post("/api/data-sources/test", async (req, res) => {
+    try {
+      const validation = insertComponentDataSourceSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          error: "Invalid data source configuration",
+          details: validation.error.errors 
+        });
+      }
+
+      // Create temporary data source for testing
+      const tempSource = {
+        ...validation.data,
+        id: 'test',
+        lastSync: null,
+        syncStatus: 'pending' as const,
+        syncLog: null,
+        componentCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      // Test the data source connection
+      const { DataSourceManager } = await import('./dataSourceManager');
+      const dataSourceManager = new DataSourceManager();
+      const result = await dataSourceManager.syncDataSource(tempSource);
+
+      res.json({
+        success: result.success,
+        componentCount: result.components.length,
+        sampleComponents: result.components.slice(0, 5), // Show first 5 components
+        errors: result.errors
+      });
+    } catch (error) {
+      console.error('Error testing data source:', error);
+      res.status(500).json({ 
+        success: false,
+        componentCount: 0,
+        sampleComponents: [],
+        errors: [error instanceof Error ? error.message : 'Unknown test error'] 
+      });
     }
   });
 

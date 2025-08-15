@@ -8,9 +8,12 @@ import {
   type ExcelPatternLibrary,
   type InsertExcelPatternLibrary,
   type ExcelFileArchive,
-  type InsertExcelFileArchive
+  type InsertExcelFileArchive,
+  type ComponentDataSource,
+  type InsertComponentDataSource
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { DataSourceManager } from "./dataSourceManager";
 
 export interface IStorage {
   // Power Whip Configuration methods
@@ -35,6 +38,14 @@ export interface IStorage {
   getArchivedFiles(): Promise<ExcelFileArchive[]>;
   searchFormulas(searchTerm: string): Promise<ExcelFormulaLibrary[]>;
   searchPatterns(searchTerm: string): Promise<ExcelPatternLibrary[]>;
+  
+  // Component Data Source methods
+  createDataSource(source: InsertComponentDataSource): Promise<ComponentDataSource>;
+  getAllDataSources(): Promise<ComponentDataSource[]>;
+  getDataSource(id: string): Promise<ComponentDataSource | undefined>;
+  updateDataSource(id: string, source: Partial<InsertComponentDataSource>): Promise<ComponentDataSource | undefined>;
+  deleteDataSource(id: string): Promise<boolean>;
+  syncDataSource(id: string): Promise<{ success: boolean; componentCount: number; errors: string[] }>;
 }
 
 export class MemStorage implements IStorage {
@@ -43,6 +54,8 @@ export class MemStorage implements IStorage {
   private formulaLibrary: Map<string, ExcelFormulaLibrary>;
   private patternLibrary: Map<string, ExcelPatternLibrary>;
   private fileArchive: Map<string, ExcelFileArchive>;
+  private dataSources: Map<string, ComponentDataSource>;
+  private dataSourceManager: DataSourceManager;
 
   constructor() {
     this.configurations = new Map();
@@ -50,8 +63,11 @@ export class MemStorage implements IStorage {
     this.formulaLibrary = new Map();
     this.patternLibrary = new Map();
     this.fileArchive = new Map();
+    this.dataSources = new Map();
+    this.dataSourceManager = new DataSourceManager();
     this.initializeDefaultComponents();
     this.initializeBasicConfigurations();
+    this.initializeDefaultDataSources();
   }
 
   private initializeDefaultComponents() {
@@ -1306,6 +1322,184 @@ export class MemStorage implements IStorage {
         typeof tag === 'string' && tag.toLowerCase().includes(term)
       ))
     );
+  }
+
+  // Component Data Source methods
+  async createDataSource(source: InsertComponentDataSource): Promise<ComponentDataSource> {
+    const id = randomUUID();
+    const now = new Date();
+    const dataSource: ComponentDataSource = {
+      ...source,
+      id,
+      lastSync: null,
+      syncStatus: 'pending',
+      syncLog: null,
+      componentCount: 0,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.dataSources.set(id, dataSource);
+    return dataSource;
+  }
+
+  async getAllDataSources(): Promise<ComponentDataSource[]> {
+    return Array.from(this.dataSources.values());
+  }
+
+  async getDataSource(id: string): Promise<ComponentDataSource | undefined> {
+    return this.dataSources.get(id);
+  }
+
+  async updateDataSource(id: string, source: Partial<InsertComponentDataSource>): Promise<ComponentDataSource | undefined> {
+    const existing = this.dataSources.get(id);
+    if (!existing) return undefined;
+    
+    const updated: ComponentDataSource = {
+      ...existing,
+      ...source,
+      updatedAt: new Date()
+    };
+    this.dataSources.set(id, updated);
+    return updated;
+  }
+
+  async deleteDataSource(id: string): Promise<boolean> {
+    return this.dataSources.delete(id);
+  }
+
+  async syncDataSource(id: string): Promise<{ success: boolean; componentCount: number; errors: string[] }> {
+    const source = this.dataSources.get(id);
+    if (!source) {
+      return { success: false, componentCount: 0, errors: ['Data source not found'] };
+    }
+
+    // Update sync status
+    const updatingSource = { ...source, syncStatus: 'syncing' as const, lastSync: new Date() };
+    this.dataSources.set(id, updatingSource);
+
+    try {
+      const result = await this.dataSourceManager.syncDataSource(source);
+      
+      if (result.success) {
+        // Clear existing components from this source and add new ones
+        const existingComponents = Array.from(this.components.values())
+          .filter(c => c.specifications?.dataSourceId === id);
+        
+        // Remove old components
+        existingComponents.forEach(c => this.components.delete(c.id));
+        
+        // Add new components
+        for (const component of result.components) {
+          const componentWithSource = {
+            ...component,
+            specifications: {
+              ...component.specifications,
+              dataSourceId: id
+            }
+          };
+          await this.createComponent(componentWithSource);
+        }
+
+        // Update source with success status
+        const finalSource = {
+          ...updatingSource,
+          syncStatus: 'success' as const,
+          componentCount: result.components.length,
+          syncLog: { lastSync: new Date(), errors: result.errors }
+        };
+        this.dataSources.set(id, finalSource);
+
+        return { success: true, componentCount: result.components.length, errors: result.errors };
+      } else {
+        // Update source with error status
+        const errorSource = {
+          ...updatingSource,
+          syncStatus: 'error' as const,
+          syncLog: { lastSync: new Date(), errors: result.errors }
+        };
+        this.dataSources.set(id, errorSource);
+
+        return { success: false, componentCount: 0, errors: result.errors };
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown sync error';
+      const errorSource = {
+        ...updatingSource,
+        syncStatus: 'error' as const,
+        syncLog: { lastSync: new Date(), errors: [errorMessage] }
+      };
+      this.dataSources.set(id, errorSource);
+
+      return { success: false, componentCount: 0, errors: [errorMessage] };
+    }
+  }
+
+  private initializeDefaultDataSources() {
+    const defaultSources: InsertComponentDataSource[] = [
+      {
+        name: "Manual Components (Built-in)",
+        type: "manual",
+        config: {
+          description: "Hardcoded electrical components with NEMA standards"
+        },
+        isActive: true
+      },
+      {
+        name: "Sample Excel Source",
+        type: "excel",
+        config: {
+          excel: {
+            columnMapping: {
+              name: "Component Name",
+              type: "Type",
+              category: "Category",
+              maxVoltage: "Max Voltage",
+              maxCurrent: "Max Current",
+              price: "Price",
+              specifications: "Specifications"
+            }
+          }
+        },
+        isActive: false
+      },
+      {
+        name: "Sample API Source",
+        type: "url",
+        config: {
+          url: {
+            endpoint: "https://api.example.com/electrical-components",
+            format: "json" as const,
+            dataPath: "data.components"
+          }
+        },
+        isActive: false
+      },
+      {
+        name: "Sample Odoo Integration",
+        type: "odoo",
+        config: {
+          odoo: {
+            baseUrl: "https://your-odoo.example.com",
+            database: "your_db",
+            username: "api_user",
+            password: "api_password",
+            model: "product.product",
+            fields: ["name", "default_code", "list_price", "categ_id"],
+            fieldMapping: {
+              name: "name",
+              type: "categ_id",
+              category: "categ_id",
+              price: "list_price"
+            }
+          }
+        },
+        isActive: false
+      }
+    ];
+
+    defaultSources.forEach(async (source) => {
+      await this.createDataSource(source);
+    });
   }
 }
 

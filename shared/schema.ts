@@ -120,3 +120,27 @@ export type ExcelPatternLibrary = typeof excelPatternLibrary.$inferSelect;
 export type InsertExcelPatternLibrary = z.infer<typeof insertExcelPatternLibrarySchema>;
 export type ExcelFileArchive = typeof excelFileArchive.$inferSelect;
 export type InsertExcelFileArchive = z.infer<typeof insertExcelFileArchiveSchema>;
+
+// Component Data Sources
+export const componentDataSources = pgTable("component_data_sources", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // 'excel', 'url', 'odoo', 'manual'
+  config: jsonb("config").notNull(), // Source-specific configuration
+  isActive: boolean("is_active").default(true),
+  lastSync: timestamp("last_sync"),
+  syncStatus: text("sync_status").default("pending"), // 'pending', 'syncing', 'success', 'error'
+  syncLog: jsonb("sync_log"), // Sync history and error details
+  componentCount: integer("component_count").default(0),
+  createdAt: timestamp("created_at").notNull().default(sql`now()`),
+  updatedAt: timestamp("updated_at").notNull().default(sql`now()`),
+});
+
+export const insertComponentDataSourceSchema = createInsertSchema(componentDataSources).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ComponentDataSource = typeof componentDataSources.$inferSelect;
+export type InsertComponentDataSource = z.infer<typeof insertComponentDataSourceSchema>;
