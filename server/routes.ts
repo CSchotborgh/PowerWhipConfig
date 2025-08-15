@@ -650,7 +650,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // NEW: Export combined patterns to Excel
+  // NEW: Dedicated UploadedOutputFile processor
+  app.post("/api/excel/process-uploaded-output-file", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ 
+          success: false,
+          message: "No file uploaded for UploadedOutputFile processing" 
+        });
+      }
+
+      console.log(`UploadedOutputFile processing started for: ${req.file.originalname}`);
+      
+      // Validate file type for UploadedOutputFile
+      if (!req.file.originalname.toLowerCase().endsWith('.xlsx')) {
+        return res.status(400).json({
+          success: false,
+          message: "UploadedOutputFile processor requires Excel (.xlsx) files only"
+        });
+      }
+      
+      // Use MultiSheetProcessor with UploadedOutputFile-specific processing
+      const result = MultiSheetProcessor.processAllSheets(req.file.buffer, req.file.originalname);
+      
+      // Add UploadedOutputFile-specific metadata
+      result.summary.processing = "UploadedOutputFile Multi-Sheet Comprehensive Processing";
+      
+      console.log(`UploadedOutputFile processing complete: ${result.summary.totalPatterns} patterns from ${result.summary.totalSheets} sheets`);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('UploadedOutputFile processing error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to process UploadedOutputFile",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // NEW: Export UploadedOutputFile format
+  app.post("/api/excel/export-uploaded-output-file", async (req, res) => {
+    try {
+      const { transformedOutput, fileName } = req.body;
+      
+      if (!transformedOutput || !Array.isArray(transformedOutput)) {
+        return res.status(400).json({ message: "Invalid UploadedOutputFile data" });
+      }
+
+      console.log(`Exporting UploadedOutputFile: ${transformedOutput.length} patterns`);
+      
+      const excelBuffer = MultiSheetProcessor.exportToCombinedExcel(transformedOutput);
+      
+      const outputFileName = `UploadedOutputFile_${fileName || 'export'}_${Date.now()}.xlsx`;
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${outputFileName}"`);
+      res.send(excelBuffer);
+      
+    } catch (error) {
+      console.error('UploadedOutputFile export error:', error);
+      res.status(500).json({ message: "Failed to export UploadedOutputFile" });
+    }
+  });
+
+  // LEGACY: Export combined patterns to Excel (for backward compatibility)
   app.post("/api/excel/export-transformed-patterns", async (req, res) => {
     try {
       const { transformedOutput } = req.body;
