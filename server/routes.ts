@@ -808,14 +808,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let totalPatterns = 0;
       
-      // Process each sheet
+      // Process ALL sheets and combine into single output
+      console.log(`Processing ${workbook.SheetNames.length} sheets: ${workbook.SheetNames.join(', ')}`);
+      
       workbook.SheetNames.forEach((sheetName, sheetIndex) => {
-        console.log(`Scanning sheet: ${sheetName}`);
+        console.log(`Scanning sheet ${sheetIndex + 1}/${workbook.SheetNames.length}: ${sheetName}`);
         const worksheet = workbook.Sheets[sheetName];
         const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
         const sheetPatterns: any[] = [];
         
-        // Comprehensive cell scanning - capture ALL patterns including duplicates
+        // Comprehensive cell scanning - capture ALL patterns including duplicates from every sheet
         sheetData.forEach((row: any[], rowIndex) => {
           row.forEach((cellValue, colIndex) => {
             if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
@@ -824,11 +826,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Skip if empty after trimming
               if (!stringValue) return;
               
-              // Check against each pattern type - allow multiple matches per cell
-              let foundMatch = false;
+              // Check against each pattern type - capture every single match
               patternTypes.forEach(patternType => {
                 if (patternType.regex.test(stringValue)) {
-                  foundMatch = true;
                   const cellLocation = `${getExcelColumnName(colIndex)}${rowIndex + 1}`;
                   
                   const patternData = {
@@ -837,37 +837,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     location: cellLocation,
                     cellValue: cellValue,
                     row: rowIndex + 1,
-                    column: colIndex + 1
+                    column: colIndex + 1,
+                    sheetName: sheetName
                   };
                   
                   sheetPatterns.push(patternData);
                   totalPatterns++;
                   
-                  // Create unique entry for each pattern found (including duplicates)
+                  // Add to COMBINED transformed output - ALL sheets into ONE file
                   const transformedRow: any = {
-                    'Sheet Name': sheetName,
-                    'Cell Location': cellLocation,
+                    'Source Sheet': sheetName,
+                    'Cell Location': `${sheetName}!${cellLocation}`,
                     'Pattern Type': patternType.name,
                     'Original Value': stringValue,
                     'Row Number': rowIndex + 1,
                     'Column Number': colIndex + 1,
-                    'Pattern ID': `${sheetName}_${cellLocation}_${patternType.name}`,
+                    'Pattern ID': `${sheetName}_${cellLocation}_${patternType.name}_${totalPatterns}`,
+                    'Global Pattern Index': totalPatterns,
+                    'Sheet Index': sheetIndex + 1,
                     'Choose Format': `choose_${stringValue.toLowerCase().replace(/[-\s]/g, '_')}`
                   };
                   
                   // Add specific transformations for each pattern type
                   if (patternType.name === 'Receptacle IDs') {
                     transformedRow['Choose Receptacle'] = `choose_receptacle_${stringValue.toLowerCase().replace(/[-\s]/g, '_')}`;
+                    transformedRow['Receptacle Category'] = 'receptacle';
                   } else if (patternType.name === 'Cable/Conduit Type IDs') {
                     transformedRow['Choose Cable'] = `choose_cable_${stringValue.toLowerCase().replace(/[-\s]/g, '_')}`;
+                    transformedRow['Cable Category'] = 'cable_conduit';
                   } else if (patternType.name === 'Whip Length IDs') {
                     transformedRow['Choose Whip Length'] = `choose_whip_length_${stringValue.replace(/[^\d.]/g, '')}_ft`;
+                    transformedRow['Length Category'] = 'whip_length';
                   } else if (patternType.name === 'Tail Length IDs') {
                     transformedRow['Choose Tail Length'] = `choose_tail_length_${stringValue.replace(/[^\d.]/g, '')}_ft`;
+                    transformedRow['Length Category'] = 'tail_length';
                   } else if (patternType.name === 'General Identifiers') {
                     transformedRow['Choose Identifier'] = `choose_id_${stringValue.toLowerCase().replace(/[-\s]/g, '_')}`;
+                    transformedRow['Identifier Category'] = 'general';
                   }
                   
+                  // Add to combined output array
                   transformedOutput.push(transformedRow);
                 }
               });
@@ -881,7 +890,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalRows: sheetData.length,
           totalPatterns: sheetPatterns.length
         });
+        
+        console.log(`Sheet ${sheetName}: Found ${sheetPatterns.length} patterns`);
       });
+      
+      console.log(`TOTAL COMBINED PATTERNS: ${totalPatterns} from all ${workbook.SheetNames.length} sheets`);
 
       const result = {
         success: true,
@@ -890,7 +903,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transformedOutput,
         summary: {
           totalSheets: workbook.SheetNames.length,
-          totalPatterns
+          totalPatterns,
+          sheetNames: workbook.SheetNames,
+          combinedOutputRows: transformedOutput.length,
+          processing: `Combined ALL ${workbook.SheetNames.length} sheets into single output with ${totalPatterns} total patterns`,
+          sheetsProcessed: patterns.map(p => ({ 
+            name: p.sheetName, 
+            patterns: p.totalPatterns 
+          }))
         }
       };
 
