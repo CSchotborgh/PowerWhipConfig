@@ -54,7 +54,8 @@ export default function ConfigurationTab() {
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 h-full flex flex-col">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-technical-300 dark:scrollbar-thumb-technical-600 scrollbar-track-transparent touch-scroll mobile-scroll-indicator relative">
       {/* Basic Configuration */}
       <Collapsible
         open={openSections.includes("basic-config")}
@@ -199,6 +200,7 @@ export default function ConfigurationTab() {
           </CollapsibleContent>
         </Card>
       </Collapsible>
+      </div>
     </div>
   );
 }

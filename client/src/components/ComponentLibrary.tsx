@@ -68,7 +68,10 @@ export default function ComponentLibrary() {
           Component Library
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-technical-300 dark:scrollbar-thumb-technical-600 scrollbar-track-transparent touch-scroll relative">
+        <div className="block md:hidden absolute top-2 right-2 text-xs text-technical-500 bg-technical-100 dark:bg-technical-700 px-2 py-1 rounded animate-pulse">
+          Swipe to scroll ↕
+        </div>
         {Object.entries(componentsByType).map(([type, typeComponents]) => {
           const config = categoryConfig[type as keyof typeof categoryConfig];
           if (!config) return null;
@@ -93,11 +96,11 @@ export default function ComponentLibrary() {
               
               <CollapsibleContent>
                 <div className="mt-2 p-3 border border-technical-200 dark:border-technical-700 rounded-lg bg-technical-50 dark:bg-technical-800">
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {typeComponents.map((component) => (
                       <div
                         key={component.id}
-                        className="component-item p-2 border border-technical-200 dark:border-technical-600 rounded cursor-move hover:bg-primary/10 dark:hover:bg-primary/20 text-center transition-colors"
+                        className="component-item p-3 md:p-2 border border-technical-200 dark:border-technical-600 rounded cursor-move hover:bg-primary/10 dark:hover:bg-primary/20 text-center transition-colors touch-manipulation active:scale-95"
                         draggable
                         onDragStart={(e) => handleDragStart(e, component)}
                       >

@@ -2,6 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom Scrollbar Styles for Better UX */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  
+  .scrollbar-thumb-technical-300::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--technical-300));
+    border-radius: 6px;
+  }
+  
+  .scrollbar-thumb-technical-600::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--technical-600));
+    border-radius: 6px;
+  }
+  
+  .scrollbar-track-transparent::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  
+  /* Mobile-friendly touch scrolling */
+  .touch-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Enhanced mobile scroll indicators */
+  @media (max-width: 768px) {
+    .mobile-scroll-indicator::after {
+      content: '↕ Swipe to scroll';
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: hsl(var(--technical-700) / 0.8);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      pointer-events: none;
+      animation: fadeInOut 3s infinite;
+    }
+    
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
+    }
+  }
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);

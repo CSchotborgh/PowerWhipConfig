@@ -36,14 +36,21 @@ export default function Configurator() {
         {/* Header Navbar with Navigation */}
         <Header activeTab={activeTab} onTabChange={setActiveTab} />
         
-        {/* Main Body Container */}
-        <div className="flex flex-1 overflow-hidden bg-gradient-to-br from-technical-50 to-technical-100 dark:from-technical-900 dark:to-technical-800">
+        {/* Main Body Container - Enhanced Mobile Layout */}
+        <div className="flex flex-1 overflow-hidden bg-gradient-to-br from-technical-50 to-technical-100 dark:from-technical-900 dark:to-technical-800 relative">
+          
+          {/* Mobile Scroll Hint */}
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 md:hidden">
+            <div className="bg-technical-700/90 text-white text-xs px-3 py-1 rounded-full animate-bounce">
+              ↕ Scroll panels to see more
+            </div>
+          </div>
           {/* Left Panel - Tab Content */}
           <div className="relative flex">
-            <aside className={`bg-white dark:bg-technical-800 border-r-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg ${leftPanelExpanded ? "w-80" : "w-12"}`}>
+            <aside className={`bg-white dark:bg-technical-800 border-r-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg ${leftPanelExpanded ? "w-80 md:w-80" : "w-12"} max-h-screen`}>
               {leftPanelExpanded && (
-                <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30">
-                  <div className="h-full border-r border-technical-100 dark:border-technical-600/30">
+                <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
+                  <div className="h-full border-r border-technical-100 dark:border-technical-600/30 flex flex-col">
                     {renderTabContent()}
                   </div>
                 </div>

@@ -42,8 +42,8 @@ export default function SpecificationPanel({ isExpanded }: SpecificationPanelPro
 
   return (
     <div className={cn(
-      "bg-white dark:bg-technical-800 border-l border-technical-200 dark:border-technical-700 flex flex-col transition-all duration-300 ease-in-out",
-      isExpanded ? "w-80" : "w-12"
+      "bg-white dark:bg-technical-800 border-l border-technical-200 dark:border-technical-700 flex flex-col transition-all duration-300 ease-in-out max-h-screen",
+      isExpanded ? "w-80 md:w-80" : "w-12"
     )}>
       <div className="p-4 border-b border-technical-200 dark:border-technical-700">
         <h3 className="font-semibold text-technical-900 dark:text-technical-100 flex items-center">
@@ -53,7 +53,10 @@ export default function SpecificationPanel({ isExpanded }: SpecificationPanelPro
       </div>
 
       {isExpanded && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin scrollbar-thumb-technical-300 dark:scrollbar-thumb-technical-600 scrollbar-track-transparent touch-scroll relative">
+        <div className="block md:hidden absolute top-2 right-2 text-xs text-technical-500 bg-technical-100 dark:bg-technical-700 px-2 py-1 rounded animate-pulse">
+          Swipe to scroll ↕
+        </div>
         {/* Current Configuration */}
         <Collapsible
           open={openSections.includes("current-config")}
