@@ -523,8 +523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       header: 1, 
                       defval: '',        // Use empty string instead of null for speed
                       blankrows: false,  // Skip blank rows
-                      raw: true,         // Use raw values
-                      dateNF: false      // Skip date formatting
+                      raw: true         // Use raw values
                     });
                   }
                 });
@@ -626,6 +625,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Excel component cache cleared');
     res.json({ message: "Cache cleared successfully", timestamp: new Date().toISOString() });
   });
+
+  // Comprehensive pattern scanning for uploaded Excel files
+  app.post("/api/excel/scan-patterns", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const allPatterns = scanAllPatternsFromExcel(workbook);
+      
+      // Generate transformed output pattern file
+      const outputData = generateTransformedOutputPattern(allPatterns);
+      
+      res.json({
+        success: true,
+        fileName: req.file.originalname,
+        patterns: allPatterns,
+        transformedOutput: outputData,
+        summary: {
+          totalSheets: allPatterns.length,
+          totalPatterns: allPatterns.reduce((sum, sheet) => sum + sheet.patterns.length, 0)
+        }
+      });
+    } catch (error) {
+      console.error('Pattern scanning error:', error);
+      res.status(500).json({ message: "Failed to scan patterns from Excel file" });
+    }
+  });
+
+  // Comprehensive pattern scanning function for all pattern types
+  function scanAllPatternsFromExcel(workbook: any) {
+    const sheetResults: any[] = [];
+    
+    // Pattern definitions in order of operation
+    const patternTypes = [
+      {
+        name: 'Receptacle IDs',
+        patterns: [
+          /\b(CS\d{4}[A-Z]?)\b/gi,               // IEC pin & sleeve (CS8269A)
+          /\b(460[A-Z]\d+[A-Z]*)\b/gi,           // NEMA standard (460C9W, 460R9W)
+          /\b(L\d+-\d+[A-Z])\b/gi,               // NEMA locking (L6-30R, L14-30R)
+          /\b(\d+-\d+[A-Z])\b/gi,                // NEMA standard short (5-20R)
+          /\b([A-Z]{1,3}\d+[A-Z]?\d*[A-Z]*)\b/gi // Generic receptacle patterns
+        ]
+      },
+      {
+        name: 'Cable/Conduit Type IDs',
+        patterns: [
+          /\b(MMC|LFMC|FMC|LMZC|SO|MC|EMT|RMC|IMC|PVC|THWN|THHN|AWG)\b/gi,
+          /\b(\d+\/\d+)\b/gi,                    // Conduit sizes like 3/4
+          /\b(\d+\s*AWG)\b/gi                    // Wire gauges
+        ]
+      },
+      {
+        name: 'Whip Length IDs',
+        patterns: [
+          /\b(\d+)\s*['"]?\s*(?:ft|feet|foot)\b/gi,
+          /\b(\d+)\s*(?:inch|inches|in)\b/gi,
+          /\b(\d{2,3})\b/gi                      // Numbers likely to be lengths (20-999)
+        ]
+      },
+      {
+        name: 'Tail Length IDs',
+        patterns: [
+          /\b(\d+)\s*['"]?\s*(?:tail|pigtail)\b/gi,
+          /\b(tail\s*\d+)\b/gi,
+          /\b(\d+)\s*(?:inch|in)\s*(?:tail|pigtail)\b/gi
+        ]
+      }
+    ];
+
+    workbook.SheetNames.forEach((sheetName: string) => {
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      const sheetPatterns: any[] = [];
+      
+      // Scan all cells in the sheet
+      jsonData.forEach((row: any, rowIndex: number) => {
+        if (Array.isArray(row)) {
+          row.forEach((cell: any, colIndex: number) => {
+            if (cell && typeof cell === 'string') {
+              const cellValue = cell.toString().trim();
+              if (cellValue.length > 0) {
+                
+                // Check each pattern type in order
+                patternTypes.forEach(patternType => {
+                  patternType.patterns.forEach(pattern => {
+                    const matches = cellValue.match(pattern);
+                    if (matches) {
+                      matches.forEach(match => {
+                        sheetPatterns.push({
+                          type: patternType.name,
+                          value: match.trim(),
+                          location: `${sheetName}!${getExcelColumnName(colIndex)}${rowIndex + 1}`,
+                          cellValue: cellValue,
+                          row: rowIndex + 1,
+                          column: colIndex + 1
+                        });
+                      });
+                    }
+                  });
+                });
+              }
+            }
+          });
+        }
+      });
+      
+      sheetResults.push({
+        sheetName,
+        patterns: sheetPatterns,
+        totalRows: jsonData.length,
+        totalPatterns: sheetPatterns.length
+      });
+    });
+    
+    return sheetResults;
+  }
+
+  // Generate transformed output pattern file with each pattern on separate row
+  function generateTransformedOutputPattern(sheetResults: any[]) {
+    const transformedData: any[] = [];
+    
+    sheetResults.forEach(sheet => {
+      sheet.patterns.forEach((pattern: any, index: number) => {
+        transformedData.push({
+          'Pattern Type': pattern.type,
+          'Pattern Value': pattern.value,
+          'Source Sheet': sheet.sheetName,
+          'Cell Location': pattern.location,
+          'Original Cell Value': pattern.cellValue,
+          'Row Number': pattern.row,
+          'Column Number': pattern.column,
+          'Pattern Index': index + 1
+        });
+      });
+    });
+    
+    return transformedData;
+  }
+
+  // Export transformed output pattern file
+  app.post("/api/excel/export-transformed-patterns", async (req, res) => {
+    try {
+      const { transformedOutput } = req.body;
+      
+      if (!transformedOutput || !Array.isArray(transformedOutput)) {
+        return res.status(400).json({ message: "No transformed output data provided" });
+      }
+
+      // Create workbook with transformed patterns
+      const worksheet = XLSX.utils.json_to_sheet(transformedOutput);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Transformed Output Pattern");
+
+      // Generate Excel file buffer
+      const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="transformed_output_pattern.xlsx"');
+      res.send(excelBuffer);
+
+    } catch (error) {
+      console.error('Export transformed patterns error:', error);
+      res.status(500).json({ message: "Failed to export transformed output pattern file" });
+    }
+  });
+
+  // Helper function to convert column number to Excel column name
+  function getExcelColumnName(columnNumber: number): string {
+    let columnName = '';
+    while (columnNumber >= 0) {
+      columnName = String.fromCharCode(65 + (columnNumber % 26)) + columnName;
+      columnNumber = Math.floor(columnNumber / 26) - 1;
+    }
+    return columnName;
+  }
 
   // Enhanced Excel file parsing to extract receptacle patterns
   const extractReceptaclePatternsFromExcel = (workbook: any) => {

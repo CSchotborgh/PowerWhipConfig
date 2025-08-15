@@ -11,6 +11,7 @@ import ExcelLikeInterface from './ExcelLikeInterface';
 import ExcelFormulaLibrary from './ExcelFormulaLibrary';
 import UnifiedFileUpload from './UnifiedFileUpload';
 import DragDropPatternBuilder from './DragDropPatternBuilder';
+import { PatternScanner } from './PatternScanner';
 
 interface ConfiguratorAnalysis {
   sheetNames: string[];
@@ -37,7 +38,7 @@ export default function ConfiguratorDatasetAnalyzer({ onToggleView }: Configurat
   const [uploadedFileId, setUploadedFileId] = useState<string | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
-  const [currentView, setCurrentView] = useState<'analysis' | 'excel' | 'formula-library' | 'pattern-builder'>('analysis');
+  const [currentView, setCurrentView] = useState<'analysis' | 'excel' | 'formula-library' | 'pattern-builder' | 'pattern-scanner'>('analysis');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [inputPatterns, setInputPatterns] = useState(`460C9W,MMC,115,10,red
@@ -280,6 +281,14 @@ L6-30R  FMC     25      10      green`);
               Pattern Builder
             </Button>
             <Button 
+              onClick={() => setCurrentView('pattern-scanner')} 
+              variant="outline"
+              size="sm"
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Pattern Scanner
+            </Button>
+            <Button 
               onClick={() => setCurrentView('formula-library')} 
               variant="outline"
               size="sm"
@@ -301,6 +310,13 @@ L6-30R  FMC     25      10      green`);
         {currentView === 'pattern-builder' && (
           <div className="h-full">
             <DragDropPatternBuilder />
+          </div>
+        )}
+
+        {/* Show Pattern Scanner */}
+        {currentView === 'pattern-scanner' && (
+          <div className="h-full">
+            <PatternScanner />
           </div>
         )}
 

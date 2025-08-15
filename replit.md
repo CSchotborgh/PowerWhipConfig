@@ -49,6 +49,7 @@ Preferred communication style: Simple, everyday language.
 - **Professional Basic Configurations**: 12 pre-built power whip configurations covering standard office, industrial twist-lock, three-phase, data center, outdoor GFCI, and arc fault protected applications with complete component integration and compliance validation.
 - **Fast Transform Endpoint**: High-speed pattern processing with performance timing (<100ms for natural language, <50ms for comma-delimited).
 - **Automated Row Expression System**: Generates expressions based on receptacle input patterns, auto-filling data from matched configurations.
+- **Comprehensive Pattern Scanner**: Advanced Excel file analysis that scans all sheets for Receptacle IDs, Cable/Conduit Type IDs, Whip Length IDs, and Tail Length IDs with duplicate pattern capture and transformed output generation.
 - **Excel Formula Archive System**: Advanced formula extraction, pattern recognition, and reusable library building from uploaded Excel files.
 - **Formula Library**: Categorized storage of Excel formulas with complexity analysis, dependency tracking, and searchable archive.
 - **Pattern Recognition**: Automatic detection of formula sequences, calculation chains, and business logic patterns.
