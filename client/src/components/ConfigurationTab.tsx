@@ -11,7 +11,7 @@ import { CheckCircle, AlertTriangle, Sliders, ChevronDown } from "lucide-react";
 import { useConfiguration } from "@/contexts/ConfigurationContext";
 import { cn } from "@/lib/utils";
 import ComponentLibrary from "./ComponentLibrary";
-import DataSourceManager from "./DataSourceManager";
+import ConfigurationDetailsPanel from "./ConfigurationDetailsPanel";
 
 const configurationSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -24,7 +24,7 @@ type ConfigurationFormData = z.infer<typeof configurationSchema>;
 
 export default function ConfigurationTab() {
   const { configuration, updateConfiguration } = useConfiguration();
-  const [openSections, setOpenSections] = useState<string[]>(["basic-config", "component-library", "data-sources"]);
+  const [openSections, setOpenSections] = useState<string[]>(["basic-config", "component-library"]);
   
   const form = useForm<ConfigurationFormData>({
     resolver: zodResolver(configurationSchema),
@@ -161,34 +161,10 @@ export default function ConfigurationTab() {
         <ComponentLibrary />
       </Collapsible>
 
-      {/* Data Source Management */}
-      <Collapsible
-        open={openSections.includes("data-sources")}
-        onOpenChange={() => toggleSection("data-sources")}
-      >
-        <Card>
-          <CollapsibleTrigger className="w-full">
-            <CardHeader className="hover:bg-technical-50 dark:hover:bg-technical-800 transition-colors">
-              <CardTitle className="flex items-center justify-between text-technical-900 dark:text-technical-100">
-                <div className="flex items-center">
-                  <Sliders className="w-4 h-4 mr-2 text-green-500" />
-                  Multi-Source Data Integration
-                  <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Excel • API • Odoo</span>
-                </div>
-                <ChevronDown className={cn(
-                  "w-4 h-4 transition-transform duration-200",
-                  openSections.includes("data-sources") ? "rotate-180" : ""
-                )} />
-              </CardTitle>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent>
-              <DataSourceManager />
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
+      {/* Configuration Details Panel */}
+      <div className="mt-6">
+        <ConfigurationDetailsPanel />
+      </div>
 
       {/* Validation Status */}
       <Collapsible
