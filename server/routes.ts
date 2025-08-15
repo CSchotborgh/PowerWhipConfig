@@ -768,6 +768,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return transformedData;
   }
 
+  // Comprehensive pattern scanning endpoint for multi-sheet Excel files
+  app.post("/api/excel/scan-patterns", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      console.log(`Processing multi-sheet Excel file: ${req.file.originalname}`);
+      
+      // Read the Excel file
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const patterns: any[] = [];
+      const transformedOutput: any[] = [];
+      
+      // Pattern types to scan for
+      const patternTypes = [
+        { name: 'Receptacle IDs', regex: /^(NEMA\s*\d+-\d+[PR]?|L\d+-\d+[PR]?|CS\d+[A-Z]*|IEC\s*\d+[A-Z]*|\d+[A-Z]+\d*[A-Z]*|[A-Z]+\d+[A-Z]*)/i },
+        { name: 'Cable/Conduit Type IDs', regex: /^(MMC|LFMC|FMC|LMZC|EMT|PVC|THWN|SO|SJ|SOOW|MC|AC|NM|UF|TC|TRAY|CABLE)/i },
+        { name: 'Whip Length IDs', regex: /^(\d+(?:\.\d+)?)\s*(?:ft|feet|'|"|inch|in)?$/i },
+        { name: 'Tail Length IDs', regex: /^(\d+(?:\.\d+)?)\s*(?:ft|feet|'|"|inch|in)?$/i }
+      ];
+
+      let totalPatterns = 0;
+      
+      // Process each sheet
+      workbook.SheetNames.forEach((sheetName, sheetIndex) => {
+        console.log(`Scanning sheet: ${sheetName}`);
+        const worksheet = workbook.Sheets[sheetName];
+        const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+        const sheetPatterns: any[] = [];
+        
+        // Scan each cell in the sheet
+        sheetData.forEach((row: any[], rowIndex) => {
+          row.forEach((cellValue, colIndex) => {
+            if (cellValue && typeof cellValue === 'string' && cellValue.trim()) {
+              const trimmedValue = cellValue.trim();
+              
+              // Check against each pattern type
+              patternTypes.forEach(patternType => {
+                if (patternType.regex.test(trimmedValue)) {
+                  const cellLocation = `${getExcelColumnName(colIndex)}${rowIndex + 1}`;
+                  
+                  const patternData = {
+                    type: patternType.name,
+                    value: trimmedValue,
+                    location: cellLocation,
+                    cellValue: cellValue,
+                    row: rowIndex + 1,
+                    column: colIndex + 1
+                  };
+                  
+                  sheetPatterns.push(patternData);
+                  totalPatterns++;
+                  
+                  // Add to transformed output with "choose receptacle" format
+                  const transformedRow: any = {
+                    'Sheet': sheetName,
+                    'Original Location': cellLocation,
+                    'Pattern Type': patternType.name,
+                    'Original Value': trimmedValue,
+                    'Transformed Format': `choose ${trimmedValue.toLowerCase().replace(/\s+/g, '_')}`,
+                    'Row': rowIndex + 1,
+                    'Column': colIndex + 1
+                  };
+                  
+                  // Add specific transformation based on pattern type
+                  if (patternType.name === 'Receptacle IDs') {
+                    transformedRow['Choose Receptacle'] = `choose_receptacle_${trimmedValue.toLowerCase().replace(/[-\s]/g, '_')}`;
+                  } else if (patternType.name === 'Cable/Conduit Type IDs') {
+                    transformedRow['Choose Cable/Conduit'] = `choose_cable_${trimmedValue.toLowerCase()}`;
+                  } else if (patternType.name === 'Whip Length IDs') {
+                    transformedRow['Choose Whip Length'] = `choose_whip_length_${trimmedValue.replace(/[^\d.]/g, '')}_ft`;
+                  } else if (patternType.name === 'Tail Length IDs') {
+                    transformedRow['Choose Tail Length'] = `choose_tail_length_${trimmedValue.replace(/[^\d.]/g, '')}_ft`;
+                  }
+                  
+                  transformedOutput.push(transformedRow);
+                }
+              });
+            }
+          });
+        });
+        
+        patterns.push({
+          sheetName,
+          patterns: sheetPatterns,
+          totalRows: sheetData.length,
+          totalPatterns: sheetPatterns.length
+        });
+      });
+
+      const result = {
+        success: true,
+        fileName: req.file.originalname,
+        patterns,
+        transformedOutput,
+        summary: {
+          totalSheets: workbook.SheetNames.length,
+          totalPatterns
+        }
+      };
+
+      console.log(`Pattern scanning complete: ${totalPatterns} patterns found across ${workbook.SheetNames.length} sheets`);
+      res.json(result);
+
+    } catch (error) {
+      console.error('Pattern scanning error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to scan patterns",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Export transformed output pattern file
   app.post("/api/excel/export-transformed-patterns", async (req, res) => {
     try {

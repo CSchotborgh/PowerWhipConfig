@@ -126,8 +126,8 @@ export function PatternScanner() {
             Comprehensive Pattern Scanner
           </CardTitle>
           <CardDescription>
-            Upload Excel files to scan and extract all patterns (Receptacle IDs, Cable/Conduit Type IDs, Whip Length IDs, Tail Length IDs) 
-            across all sheets. Each pattern found will be included in the transformed output, including duplicates.
+            Upload multi-sheet Excel files (like files with "row 1", "row 2" tabs) to scan and extract all patterns across every sheet. 
+            Each receptacle type is transformed into "choose receptacle" format with complete pattern traceability.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -138,9 +138,12 @@ export function PatternScanner() {
               <div className="mt-4">
                 <label htmlFor="pattern-file-upload" className="cursor-pointer">
                   <span className="mt-2 block text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {selectedFile ? selectedFile.name : 'Choose Excel file to scan'}
+                    {selectedFile ? selectedFile.name : 'Choose multi-sheet Excel file to scan'}
                   </span>
                 </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Files with multiple tabs (row 1, row 2, etc.) are fully supported
+                </p>
                 <input
                   id="pattern-file-upload"
                   type="file"
@@ -155,7 +158,7 @@ export function PatternScanner() {
                 className="mt-2"
               >
                 <Upload className="w-4 h-4 mr-2" />
-                Select File
+                Select Excel File
               </Button>
             </div>
           </div>
