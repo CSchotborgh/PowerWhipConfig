@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, FileText, Settings, Eye, ShoppingCart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { PanelControls } from "./PanelControls";
 
 interface HeaderProps {
   activeTab: "configuration" | "visual" | "documentation" | "order";
@@ -78,8 +79,10 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
             </p>
           </div>
           
-          {/* Export Actions */}
+          {/* Panel Controls and Export Actions */}
           <div className="flex items-center space-x-3">
+            <PanelControls />
+            <div className="w-px h-6 bg-technical-200 dark:bg-technical-600"></div>
             <Button 
               onClick={handleExportXLSX}
               className="bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all duration-200"
