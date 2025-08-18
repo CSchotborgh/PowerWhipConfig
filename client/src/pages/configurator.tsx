@@ -36,11 +36,18 @@ export default function Configurator() {
 
   const handleLeftPanelDrag = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDraggingLeft(true);
+    
     const startX = e.clientX;
     const startWidth = leftPanelWidth;
+    
+    // Add global cursor style
+    document.body.style.cursor = 'ew-resize';
+    document.body.style.userSelect = 'none';
 
     const handleMouseMove = (e: MouseEvent) => {
+      e.preventDefault();
       const deltaX = e.clientX - startX;
       const newWidth = Math.max(200, Math.min(window.innerWidth * 0.8, startWidth + deltaX));
       setLeftPanelWidth(newWidth);
@@ -48,6 +55,8 @@ export default function Configurator() {
 
     const handleMouseUp = () => {
       setIsDraggingLeft(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -58,11 +67,18 @@ export default function Configurator() {
 
   const handleRightPanelDrag = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDraggingRight(true);
+    
     const startX = e.clientX;
     const startWidth = rightPanelWidth;
+    
+    // Add global cursor style
+    document.body.style.cursor = 'ew-resize';
+    document.body.style.userSelect = 'none';
 
     const handleMouseMove = (e: MouseEvent) => {
+      e.preventDefault();
       const deltaX = startX - e.clientX;
       const newWidth = Math.max(200, Math.min(window.innerWidth * 0.8, startWidth + deltaX));
       setRightPanelWidth(newWidth);
@@ -70,6 +86,8 @@ export default function Configurator() {
 
     const handleMouseUp = () => {
       setIsDraggingRight(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -138,9 +156,10 @@ export default function Configurator() {
             {/* Left Panel Resize Handle */}
             {leftPanelExpanded && (
               <div
-                className="absolute -right-1 top-0 bottom-0 w-2 cursor-ew-resize bg-transparent hover:bg-primary/20 transition-colors z-10"
+                className="absolute right-0 top-0 bottom-0 w-1 cursor-ew-resize bg-primary/30 hover:bg-primary/50 transition-colors z-20 border-r border-primary/40"
                 onMouseDown={handleLeftPanelDrag}
                 title="Drag to resize panel horizontally"
+                style={{ right: '-2px' }}
               />
             )}
             
@@ -149,7 +168,7 @@ export default function Configurator() {
               variant="ghost"
               size="sm"
               onClick={() => setLeftPanelExpanded(!leftPanelExpanded)}
-              className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-6 rounded-r-xl border border-l-0 border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 hover:bg-technical-50 dark:hover:bg-technical-700 shadow-lg hover:shadow-xl transition-all"
+              className="absolute -right-3 top-1/2 -translate-y-1/2 z-30 h-10 w-6 rounded-r-xl border border-l-0 border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 hover:bg-technical-50 dark:hover:bg-technical-700 shadow-lg hover:shadow-xl transition-all"
               title={leftPanelExpanded ? "Collapse panel" : "Expand panel"}
             >
               {leftPanelExpanded ? (
@@ -174,9 +193,10 @@ export default function Configurator() {
               {/* Right Panel Resize Handle */}
               {rightPanelExpanded && (
                 <div
-                  className="absolute -left-1 top-0 bottom-0 w-2 cursor-ew-resize bg-transparent hover:bg-primary/20 transition-colors z-10"
+                  className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize bg-primary/30 hover:bg-primary/50 transition-colors z-20 border-l border-primary/40"
                   onMouseDown={handleRightPanelDrag}
                   title="Drag to resize panel horizontally"
+                  style={{ left: '-2px' }}
                 />
               )}
               
@@ -185,7 +205,7 @@ export default function Configurator() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setRightPanelExpanded(!rightPanelExpanded)}
-                className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 h-10 w-6 rounded-l-xl border border-r-0 border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 hover:bg-technical-50 dark:hover:bg-technical-700 shadow-lg hover:shadow-xl transition-all"
+                className="absolute -left-3 top-1/2 -translate-y-1/2 z-30 h-10 w-6 rounded-l-xl border border-r-0 border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 hover:bg-technical-50 dark:hover:bg-technical-700 shadow-lg hover:shadow-xl transition-all"
                 title={rightPanelExpanded ? "Collapse specifications" : "Expand specifications"}
               >
                 {rightPanelExpanded ? (
