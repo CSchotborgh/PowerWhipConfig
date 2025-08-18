@@ -156,10 +156,10 @@ export default function Configurator() {
             {/* Left Panel Resize Handle */}
             {leftPanelExpanded && (
               <div
-                className="absolute right-0 top-0 bottom-0 w-1 cursor-ew-resize bg-primary/30 hover:bg-primary/50 transition-colors z-20 border-r border-primary/40"
+                className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize bg-primary/40 hover:bg-primary/60 transition-colors z-20 border-r-2 border-primary/50"
                 onMouseDown={handleLeftPanelDrag}
                 title="Drag to resize panel horizontally"
-                style={{ right: '-2px' }}
+                style={{ right: '-3px' }}
               />
             )}
             
@@ -193,10 +193,10 @@ export default function Configurator() {
               {/* Right Panel Resize Handle */}
               {rightPanelExpanded && (
                 <div
-                  className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize bg-primary/30 hover:bg-primary/50 transition-colors z-20 border-l border-primary/40"
+                  className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize bg-primary/40 hover:bg-primary/60 transition-colors z-20 border-l-2 border-primary/50"
                   onMouseDown={handleRightPanelDrag}
                   title="Drag to resize panel horizontally"
-                  style={{ left: '-2px' }}
+                  style={{ left: '-3px' }}
                 />
               )}
               
