@@ -8,8 +8,11 @@ interface DraggablePanelProps {
   children: ReactNode;
   defaultPosition?: { x: number; y: number };
   defaultSize?: { width: number; height: number };
+  minSize?: { width: number; height: number };
+  maxSize?: { width: number; height: number };
   onClose?: () => void;
   className?: string;
+  scalable?: boolean;
 }
 
 export function DraggablePanel({
@@ -17,14 +20,19 @@ export function DraggablePanel({
   children,
   defaultPosition = { x: 100, y: 100 },
   defaultSize = { width: 400, height: 500 },
+  minSize = { width: 200, height: 150 },
+  maxSize = { width: 1200, height: 800 },
   onClose,
-  className = ''
+  className = '',
+  scalable = true
 }: DraggablePanelProps) {
   const [position, setPosition] = useState(defaultPosition);
   const [size, setSize] = useState(defaultSize);
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [scale, setScale] = useState(1);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -78,25 +86,46 @@ export function DraggablePanel({
     setIsMinimized(!isMinimized);
   };
 
+  const resetSize = () => {
+    setSize(defaultSize);
+    setScale(1);
+  };
+
   const handleResize = (direction: 'width' | 'height', delta: number) => {
     setSize(prev => ({
       ...prev,
-      [direction]: Math.max(200, prev[direction] + delta)
+      [direction]: Math.max(minSize[direction], Math.min(maxSize[direction], prev[direction] + delta))
     }));
+  };
+
+  const handleScale = (newScale: number) => {
+    const clampedScale = Math.max(0.5, Math.min(2, newScale));
+    setScale(clampedScale);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      handleScale(scale + delta);
+    }
   };
 
   return (
     <Card
       ref={panelRef}
-      className={`fixed shadow-2xl border-2 z-50 ${isDragging ? 'cursor-grabbing' : ''} ${className}`}
+      className={`fixed shadow-2xl border-2 z-50 ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''} ${className}`}
       style={{
         left: position.x,
         top: position.y,
-        width: size.width,
-        height: isMinimized ? 'auto' : size.height,
-        minWidth: 200,
-        minHeight: isMinimized ? 'auto' : 200
+        width: size.width * scale,
+        height: isMinimized ? 'auto' : size.height * scale,
+        minWidth: minSize.width,
+        minHeight: isMinimized ? 'auto' : minSize.height,
+        transform: scalable ? `scale(${scale})` : 'none',
+        transformOrigin: 'top left'
       }}
+      onWheel={scalable ? handleWheel : undefined}
     >
       <CardHeader 
         className="flex flex-row items-center justify-between p-3 bg-muted/50 cursor-grab active:cursor-grabbing"
@@ -108,6 +137,41 @@ export function DraggablePanel({
         </div>
         
         <div className="flex items-center gap-1">
+          {scalable && (
+            <div className="flex items-center gap-1 mr-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleScale(scale - 0.1)}
+                className="h-6 w-6 p-0 text-xs"
+                disabled={scale <= 0.5}
+              >
+                -
+              </Button>
+              <span className="text-xs text-muted-foreground min-w-[3rem] text-center">
+                {Math.round(scale * 100)}%
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleScale(scale + 0.1)}
+                className="h-6 w-6 p-0 text-xs"
+                disabled={scale >= 2}
+              >
+                +
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetSize}
+                className="h-6 w-6 p-0"
+                title="Reset size and scale"
+              >
+                ⟲
+              </Button>
+            </div>
+          )}
+          
           <Button
             variant="ghost"
             size="sm"
@@ -131,37 +195,100 @@ export function DraggablePanel({
       </CardHeader>
 
       {!isMinimized && (
-        <CardContent className="p-4 overflow-auto" style={{ height: size.height - 60 }}>
+        <CardContent className="p-4 overflow-auto relative" style={{ height: (size.height - 60) * scale }}>
           {children}
           
           {/* Resize handles */}
-          <div
-            className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize bg-muted-foreground/20 hover:bg-muted-foreground/40"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              const startX = e.clientX;
-              const startY = e.clientY;
-              const startWidth = size.width;
-              const startHeight = size.height;
+          {scalable && (
+            <>
+              {/* Corner resize handle */}
+              <div
+                className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize bg-muted-foreground/20 hover:bg-muted-foreground/40 z-10"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setIsResizing(true);
+                  const startX = e.clientX;
+                  const startY = e.clientY;
+                  const startWidth = size.width;
+                  const startHeight = size.height;
 
-              const handleResize = (e: MouseEvent) => {
-                const deltaX = e.clientX - startX;
-                const deltaY = e.clientY - startY;
-                setSize({
-                  width: Math.max(200, startWidth + deltaX),
-                  height: Math.max(200, startHeight + deltaY)
-                });
-              };
+                  const handleResize = (e: MouseEvent) => {
+                    const deltaX = (e.clientX - startX) / scale;
+                    const deltaY = (e.clientY - startY) / scale;
+                    setSize({
+                      width: Math.max(minSize.width, Math.min(maxSize.width, startWidth + deltaX)),
+                      height: Math.max(minSize.height, Math.min(maxSize.height, startHeight + deltaY))
+                    });
+                  };
 
-              const handleMouseUp = () => {
-                document.removeEventListener('mousemove', handleResize);
-                document.removeEventListener('mouseup', handleMouseUp);
-              };
+                  const handleMouseUp = () => {
+                    setIsResizing(false);
+                    document.removeEventListener('mousemove', handleResize);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                  };
 
-              document.addEventListener('mousemove', handleResize);
-              document.addEventListener('mouseup', handleMouseUp);
-            }}
-          />
+                  document.addEventListener('mousemove', handleResize);
+                  document.addEventListener('mouseup', handleMouseUp);
+                }}
+              />
+              
+              {/* Right edge resize handle */}
+              <div
+                className="absolute top-0 right-0 w-2 h-full cursor-e-resize hover:bg-muted-foreground/10 z-10"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setIsResizing(true);
+                  const startX = e.clientX;
+                  const startWidth = size.width;
+
+                  const handleResize = (e: MouseEvent) => {
+                    const deltaX = (e.clientX - startX) / scale;
+                    setSize(prev => ({
+                      ...prev,
+                      width: Math.max(minSize.width, Math.min(maxSize.width, startWidth + deltaX))
+                    }));
+                  };
+
+                  const handleMouseUp = () => {
+                    setIsResizing(false);
+                    document.removeEventListener('mousemove', handleResize);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                  };
+
+                  document.addEventListener('mousemove', handleResize);
+                  document.addEventListener('mouseup', handleMouseUp);
+                }}
+              />
+              
+              {/* Bottom edge resize handle */}
+              <div
+                className="absolute bottom-0 left-0 w-full h-2 cursor-s-resize hover:bg-muted-foreground/10 z-10"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setIsResizing(true);
+                  const startY = e.clientY;
+                  const startHeight = size.height;
+
+                  const handleResize = (e: MouseEvent) => {
+                    const deltaY = (e.clientY - startY) / scale;
+                    setSize(prev => ({
+                      ...prev,
+                      height: Math.max(minSize.height, Math.min(maxSize.height, startHeight + deltaY))
+                    }));
+                  };
+
+                  const handleMouseUp = () => {
+                    setIsResizing(false);
+                    document.removeEventListener('mousemove', handleResize);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                  };
+
+                  document.addEventListener('mousemove', handleResize);
+                  document.addEventListener('mouseup', handleMouseUp);
+                }}
+              />
+            </>
+          )}
         </CardContent>
       )}
     </Card>

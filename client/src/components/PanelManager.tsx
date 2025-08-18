@@ -7,6 +7,9 @@ interface Panel {
   component: ReactNode;
   position?: { x: number; y: number };
   size?: { width: number; height: number };
+  minSize?: { width: number; height: number };
+  maxSize?: { width: number; height: number };
+  scalable?: boolean;
 }
 
 interface PanelManagerContextType {
@@ -56,6 +59,9 @@ export function PanelManagerProvider({ children }: { children: ReactNode }) {
           title={panel.title}
           defaultPosition={panel.position}
           defaultSize={panel.size}
+          minSize={panel.minSize}
+          maxSize={panel.maxSize}
+          scalable={panel.scalable !== false}
           onClose={() => closePanel(panel.id)}
         >
           {panel.component}

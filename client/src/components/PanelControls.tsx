@@ -31,14 +31,20 @@ export function PanelControls() {
       title: 'Component Library',
       icon: <Package className="h-4 w-4" />,
       component: <FloatingComponentLibrary />,
-      position: { x: 50, y: 100 }
+      position: { x: 50, y: 100 },
+      size: { width: 450, height: 600 },
+      minSize: { width: 300, height: 400 },
+      maxSize: { width: 800, height: 900 }
     },
     {
       id: 'configuration-details',
       title: 'Configuration Details',
       icon: <Settings className="h-4 w-4" />,
       component: <ConfigurationDetailsPanel />,
-      position: { x: 500, y: 100 }
+      position: { x: 500, y: 100 },
+      size: { width: 500, height: 650 },
+      minSize: { width: 350, height: 450 },
+      maxSize: { width: 900, height: 1000 }
     },
     {
       id: 'validation-panel',
@@ -69,7 +75,10 @@ export function PanelControls() {
           </div>
         </div>
       ),
-      position: { x: 950, y: 100 }
+      position: { x: 950, y: 100 },
+      size: { width: 380, height: 450 },
+      minSize: { width: 280, height: 350 },
+      maxSize: { width: 600, height: 700 }
     },
     {
       id: 'export-panel',
@@ -100,7 +109,10 @@ export function PanelControls() {
           </div>
         </div>
       ),
-      position: { x: 750, y: 300 }
+      position: { x: 750, y: 300 },
+      size: { width: 350, height: 400 },
+      minSize: { width: 250, height: 300 },
+      maxSize: { width: 500, height: 600 }
     }
   ];
 
@@ -111,7 +123,11 @@ export function PanelControls() {
       openPanel({
         title: panel.title,
         component: panel.component,
-        position: panel.position
+        position: panel.position,
+        size: panel.size,
+        minSize: panel.minSize,
+        maxSize: panel.maxSize,
+        scalable: panel.scalable
       });
     }
   };
