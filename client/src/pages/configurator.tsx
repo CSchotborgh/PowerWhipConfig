@@ -14,8 +14,8 @@ export default function Configurator() {
   const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation" | "order">("configuration");
   const [leftPanelExpanded, setLeftPanelExpanded] = useState(true);
   const [rightPanelExpanded, setRightPanelExpanded] = useState(true);
-  const [leftPanelWidth, setLeftPanelWidth] = useState(25); // Default width as percentage
-  const [rightPanelWidth, setRightPanelWidth] = useState(25);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(320); // Default width in pixels
+  const [rightPanelWidth, setRightPanelWidth] = useState(320);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
 
@@ -48,10 +48,8 @@ export default function Configurator() {
 
     const handleMouseMove = (e: MouseEvent) => {
       e.preventDefault();
-      const deltaX = startX - e.clientX;
-      const containerWidth = window.innerWidth;
-      const deltaPercent = (deltaX / containerWidth) * 100;
-      const newWidth = Math.max(15, Math.min(45, startWidth - deltaPercent));
+      const deltaX = e.clientX - startX;
+      const newWidth = Math.max(200, Math.min(window.innerWidth * 0.8, startWidth + deltaX));
       setLeftPanelWidth(newWidth);
     };
 
@@ -81,10 +79,8 @@ export default function Configurator() {
 
     const handleMouseMove = (e: MouseEvent) => {
       e.preventDefault();
-      const deltaX = e.clientX - startX;
-      const containerWidth = window.innerWidth;
-      const deltaPercent = (deltaX / containerWidth) * 100;
-      const newWidth = Math.max(15, Math.min(45, startWidth - deltaPercent));
+      const deltaX = startX - e.clientX;
+      const newWidth = Math.max(200, Math.min(window.innerWidth * 0.8, startWidth + deltaX));
       setRightPanelWidth(newWidth);
     };
 
@@ -123,7 +119,7 @@ export default function Configurator() {
                 leftPanelExpanded ? "" : "w-12"
               } ${isDraggingLeft ? 'select-none' : ''}`}
               style={{
-                width: leftPanelExpanded ? `${leftPanelWidth}%` : '48px'
+                width: leftPanelExpanded ? `${leftPanelWidth}px` : '48px'
               }}
             >
               {leftPanelExpanded && (
@@ -135,7 +131,7 @@ export default function Configurator() {
                         {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                       </h2>
                       <div className="text-xs text-muted-foreground">
-                        {Math.round(leftPanelWidth)}% wide
+                        {leftPanelWidth}px wide
                       </div>
                     </div>
                     <div className="flex-1 overflow-hidden">
@@ -224,7 +220,7 @@ export default function Configurator() {
                   rightPanelExpanded ? "" : "w-12"
                 } ${isDraggingRight ? 'select-none' : ''}`}
                 style={{
-                  width: rightPanelExpanded ? `${rightPanelWidth}%` : '48px'
+                  width: rightPanelExpanded ? `${rightPanelWidth}px` : '48px'
                 }}
               >
                 {rightPanelExpanded && (
@@ -236,7 +232,7 @@ export default function Configurator() {
                           Specifications
                         </h2>
                         <div className="text-xs text-muted-foreground">
-                          {Math.round(rightPanelWidth)}% wide
+                          {rightPanelWidth}px wide
                         </div>
                       </div>
                       <div className="flex-1 overflow-hidden w-full">
