@@ -181,79 +181,13 @@ export default function Configurator() {
           
           {/* Main Content Area */}
           <main className="flex-1 flex bg-white dark:bg-technical-800 rounded-tl-xl shadow-inner">
-            {/* Design Canvas Area - Responsive */}
-            <div className="flex-1 min-w-0 p-6 bg-gradient-to-br from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30">
+            {/* Design Canvas Area - Fully Responsive */}
+            <div className="w-full p-6 bg-gradient-to-br from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30">
               <div className="h-full w-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-sm overflow-hidden">
                 <DesignCanvas />
               </div>
             </div>
-            
-            {/* Right Panel - Specifications */}
-            <div className="relative flex">
-              {/* Right Panel Resize Handle */}
-              {rightPanelExpanded && (
-                <div
-                  className="absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize bg-primary/50 hover:bg-primary/70 transition-all duration-200 z-20 border-l-2 border-primary/60 shadow-sm hover:shadow-md"
-                  onMouseDown={handleRightPanelDrag}
-                  title="Drag to resize specifications panel horizontally"
-                  style={{ left: '-4px' }}
-                />
-              )}
-              
-              {/* Right Panel Toggle Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setRightPanelExpanded(!rightPanelExpanded)}
-                className="absolute -left-3 top-1/2 -translate-y-1/2 z-30 h-10 w-6 rounded-l-xl border border-r-0 border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 hover:bg-technical-50 dark:hover:bg-technical-700 shadow-lg hover:shadow-xl transition-all"
-                title={rightPanelExpanded ? "Collapse specifications" : "Expand specifications"}
-              >
-                {rightPanelExpanded ? (
-                  <ChevronRight className="h-4 w-4 text-technical-500" />
-                ) : (
-                  <ChevronLeft className="h-4 w-4 text-technical-500" />
-                )}
-              </Button>
-              
-              <aside 
-                className={`bg-white dark:bg-technical-800 border-l-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg max-h-screen ${
-                  rightPanelExpanded ? "" : "w-12"
-                } ${isDraggingRight ? 'select-none' : ''}`}
-                style={{
-                  width: rightPanelExpanded ? `${rightPanelWidth}px` : '48px'
-                }}
-              >
-                {rightPanelExpanded && (
-                  <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
-                    <div className="h-full border-l border-technical-100 dark:border-technical-600/30 flex flex-col">
-                      {/* Panel Header with Width Display */}
-                      <div className="flex items-center justify-between p-3 border-b border-technical-200/50 dark:border-technical-600/50">
-                        <h2 className="text-sm font-semibold text-technical-700 dark:text-technical-300">
-                          Specifications
-                        </h2>
-                        <div className="text-xs text-muted-foreground">
-                          {rightPanelWidth}px wide
-                        </div>
-                      </div>
-                      <div className="flex-1 overflow-hidden w-full">
-                        <SpecificationPanel isExpanded={true} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Collapsed State */}
-                {!rightPanelExpanded && (
-                  <div className="flex-1 flex flex-col items-center justify-center p-2 space-y-4 bg-gradient-to-b from-technical-50/50 to-white dark:from-technical-700/50 dark:to-technical-800">
-                    <div className="text-technical-400 dark:text-technical-500 text-xs text-center p-3 rounded-xl bg-white dark:bg-technical-700 shadow-md">
-                      <div className="text-[10px] leading-tight font-medium">
-                        Specs
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </aside>
-            </div>
+
           </main>
         </div>
       </div>

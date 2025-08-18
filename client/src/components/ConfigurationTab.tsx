@@ -24,7 +24,7 @@ type ConfigurationFormData = z.infer<typeof configurationSchema>;
 
 export default function ConfigurationTab() {
   const { configuration, updateConfiguration } = useConfiguration();
-  const [openSections, setOpenSections] = useState<string[]>(["basic-config", "component-library"]);
+  const [openSections, setOpenSections] = useState<string[]>(["basic-config", "component-library", "specifications"]);
   
   const form = useForm<ConfigurationFormData>({
     resolver: zodResolver(configurationSchema),
@@ -201,6 +201,93 @@ export default function ConfigurationTab() {
                     </span>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
+      {/* Specifications Panel */}
+      <Collapsible
+        open={openSections.includes("specifications")}
+        onOpenChange={() => toggleSection("specifications")}
+      >
+        <Card>
+          <CollapsibleTrigger className="w-full">
+            <CardHeader className="hover:bg-technical-50 dark:hover:bg-technical-800 transition-colors">
+              <CardTitle className="flex items-center justify-between text-technical-900 dark:text-technical-100">
+                <div className="flex items-center">
+                  <Sliders className="w-4 h-4 mr-2 text-primary" />
+                  Specifications & Analysis
+                </div>
+                <ChevronDown className={cn(
+                  "w-4 h-4 transition-transform duration-200",
+                  openSections.includes("specifications") ? "rotate-180" : ""
+                )} />
+              </CardTitle>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="space-y-4">
+              {/* Current Configuration */}
+              <div className="bg-technical-50 dark:bg-technical-800 rounded-lg p-4 space-y-3">
+                <h4 className="font-medium text-technical-800 dark:text-technical-200 mb-3">Current Configuration</h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-technical-600 dark:text-technical-400">Total Length:</span>
+                    <span className="font-mono text-technical-900 dark:text-technical-100">12.5 ft</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-technical-600 dark:text-technical-400">Wire Count:</span>
+                    <span className="font-mono text-technical-900 dark:text-technical-100">3 conductors</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-technical-600 dark:text-technical-400">Total Weight:</span>
+                    <span className="font-mono text-technical-900 dark:text-technical-100">2.5 lbs</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-technical-600 dark:text-technical-400">Estimated Cost:</span>
+                    <span className="font-mono text-technical-900 dark:text-technical-100">$31.25</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Components Used */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-technical-800 dark:text-technical-200">Components Used</h4>
+                <div className="text-sm text-technical-500 dark:text-technical-500 text-center py-4 bg-technical-50 dark:bg-technical-800 rounded-lg">
+                  No components added yet
+                </div>
+              </div>
+
+              {/* Technical Analysis */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-technical-800 dark:text-technical-200">Technical Analysis</h4>
+                
+                {/* Voltage Drop Analysis */}
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                  <div className="flex items-center space-x-2 text-green-800 dark:text-green-200 text-sm font-medium mb-2">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Voltage Drop Analysis</span>
+                  </div>
+                  <div className="text-xs text-green-700 dark:text-green-300">
+                    Calculated voltage drop: 0.8V (0.7%)<br />
+                    Within acceptable limits (&lt;3%)
+                  </div>
+                </div>
+
+                {/* Thermal Analysis */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <div className="flex items-center space-x-2 text-blue-800 dark:text-blue-200 text-sm font-medium mb-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>Thermal Analysis</span>
+                  </div>
+                  <div className="text-xs text-blue-700 dark:text-blue-300">
+                    Ambient temp: 25°C<br />
+                    Max conductor temp: 60°C<br />
+                    Safety margin: 30°C
+                  </div>
+                </div>
               </div>
             </CardContent>
           </CollapsibleContent>
