@@ -1,11 +1,11 @@
 import { useState } from "react";
 import Header from "@/components/Header";
-import ConfigurationTab from "@/components/ConfigurationTab";
-import VisualDesignTab from "@/components/VisualDesignTab";
-import DocumentationTab from "@/components/DocumentationTab";
-import OrderEntryTab from "@/components/OrderEntryTab";
 import DesignCanvas from "@/components/DesignCanvas";
 import SpecificationPanel from "@/components/SpecificationPanel";
+import ConfigurationTab from "@/components/ConfigurationTab";
+import VisualDesignTab from "@/components/VisualDesignTab";
+import OrderEntryTab from "@/components/OrderEntryTab";
+import DocumentationTab from "@/components/DocumentationTab";
 import { ConfigurationProvider } from "@/contexts/ConfigurationContext";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -14,8 +14,10 @@ export default function Configurator() {
   const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation" | "order">("configuration");
   const [leftPanelExpanded, setLeftPanelExpanded] = useState(true);
   const [rightPanelExpanded, setRightPanelExpanded] = useState(true);
-  const [leftPanelFullWidth, setLeftPanelFullWidth] = useState(false);
-  const [rightPanelFullWidth, setRightPanelFullWidth] = useState(false);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(320); // Default width in pixels
+  const [rightPanelWidth, setRightPanelWidth] = useState(320);
+  const [isDraggingLeft, setIsDraggingLeft] = useState(false);
+  const [isDraggingRight, setIsDraggingRight] = useState(false);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -32,6 +34,50 @@ export default function Configurator() {
     }
   };
 
+  const handleLeftPanelDrag = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingLeft(true);
+    const startX = e.clientX;
+    const startWidth = leftPanelWidth;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - startX;
+      const newWidth = Math.max(200, Math.min(window.innerWidth * 0.8, startWidth + deltaX));
+      setLeftPanelWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingLeft(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleRightPanelDrag = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingRight(true);
+    const startX = e.clientX;
+    const startWidth = rightPanelWidth;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = startX - e.clientX;
+      const newWidth = Math.max(200, Math.min(window.innerWidth * 0.8, startWidth + deltaX));
+      setRightPanelWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingRight(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
   return (
     <ConfigurationProvider>
       <div className="h-screen flex flex-col bg-technical-50 dark:bg-technical-900 text-technical-900 dark:text-technical-50">
@@ -39,7 +85,7 @@ export default function Configurator() {
         <Header activeTab={activeTab} onTabChange={setActiveTab} />
         
         {/* Main Body Container - Enhanced Mobile Layout */}
-        <div className={`flex flex-1 overflow-hidden bg-gradient-to-br from-technical-50 to-technical-100 dark:from-technical-900 dark:to-technical-800 relative ${leftPanelFullWidth || rightPanelFullWidth ? 'flex-col' : ''}`}>
+        <div className="flex flex-1 overflow-hidden bg-gradient-to-br from-technical-50 to-technical-100 dark:from-technical-900 dark:to-technical-800 relative">
           
           {/* Mobile Scroll Hint */}
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 md:hidden">
@@ -47,32 +93,28 @@ export default function Configurator() {
               ↕ Scroll panels to see more
             </div>
           </div>
+          
           {/* Left Panel - Tab Content */}
-          <div className={`relative ${leftPanelFullWidth ? 'w-full h-full' : 'flex'}`}>
-            <aside className={`bg-white dark:bg-technical-800 border-r-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg ${
-              leftPanelExpanded 
-                ? leftPanelFullWidth 
-                  ? "w-full h-full" 
-                  : "w-80 md:w-80 lg:w-96 xl:w-1/3" 
-                : "w-12"
-            } ${leftPanelFullWidth ? 'max-h-full' : 'max-h-screen'}`}>
+          <div className="relative flex">
+            <aside 
+              className={`bg-white dark:bg-technical-800 border-r-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg max-h-screen ${
+                leftPanelExpanded ? "" : "w-12"
+              } ${isDraggingLeft ? 'select-none' : ''}`}
+              style={{
+                width: leftPanelExpanded ? `${leftPanelWidth}px` : '48px'
+              }}
+            >
               {leftPanelExpanded && (
                 <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
                   <div className="h-full border-r border-technical-100 dark:border-technical-600/30 flex flex-col">
-                    {/* Panel Header with Full Width Toggle */}
+                    {/* Panel Header with Width Display */}
                     <div className="flex items-center justify-between p-3 border-b border-technical-200/50 dark:border-technical-600/50">
                       <h2 className="text-sm font-semibold text-technical-700 dark:text-technical-300">
                         {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                       </h2>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setLeftPanelFullWidth(!leftPanelFullWidth)}
-                        className="h-7 w-7 p-0"
-                        title={leftPanelFullWidth ? "Restore panel width" : "Expand to full width"}
-                      >
-                        {leftPanelFullWidth ? "⟲" : "⤢"}
-                      </Button>
+                      <div className="text-xs text-muted-foreground">
+                        {leftPanelWidth}px wide
+                      </div>
                     </div>
                     <div className="flex-1 overflow-hidden">
                       {renderTabContent()}
@@ -93,27 +135,33 @@ export default function Configurator() {
               )}
             </aside>
             
-            {/* Left Panel Toggle Button */}
-            {!leftPanelFullWidth && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLeftPanelExpanded(!leftPanelExpanded)}
-                className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-6 rounded-r-xl border border-l-0 border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 hover:bg-technical-50 dark:hover:bg-technical-700 shadow-lg hover:shadow-xl transition-all"
-                title={leftPanelExpanded ? "Collapse panel" : "Expand panel"}
-              >
-                {leftPanelExpanded ? (
-                  <ChevronLeft className="h-4 w-4 text-technical-500" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-technical-500" />
-                )}
-              </Button>
+            {/* Left Panel Resize Handle */}
+            {leftPanelExpanded && (
+              <div
+                className="absolute -right-1 top-0 bottom-0 w-2 cursor-ew-resize bg-transparent hover:bg-primary/20 transition-colors z-10"
+                onMouseDown={handleLeftPanelDrag}
+                title="Drag to resize panel horizontally"
+              />
             )}
+            
+            {/* Left Panel Toggle Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLeftPanelExpanded(!leftPanelExpanded)}
+              className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-6 rounded-r-xl border border-l-0 border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 hover:bg-technical-50 dark:hover:bg-technical-700 shadow-lg hover:shadow-xl transition-all"
+              title={leftPanelExpanded ? "Collapse panel" : "Expand panel"}
+            >
+              {leftPanelExpanded ? (
+                <ChevronLeft className="h-4 w-4 text-technical-500" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-technical-500" />
+              )}
+            </Button>
           </div>
           
           {/* Main Content Area */}
-          {!leftPanelFullWidth && !rightPanelFullWidth && (
-            <main className="flex-1 flex bg-white dark:bg-technical-800 rounded-tl-xl shadow-inner">
+          <main className="flex-1 flex bg-white dark:bg-technical-800 rounded-tl-xl shadow-inner">
             {/* Design Canvas Area */}
             <div className="flex-1 p-6 bg-gradient-to-br from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30">
               <div className="h-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-sm overflow-hidden">
@@ -123,6 +171,15 @@ export default function Configurator() {
             
             {/* Right Panel - Specifications */}
             <div className="relative flex">
+              {/* Right Panel Resize Handle */}
+              {rightPanelExpanded && (
+                <div
+                  className="absolute -left-1 top-0 bottom-0 w-2 cursor-ew-resize bg-transparent hover:bg-primary/20 transition-colors z-10"
+                  onMouseDown={handleRightPanelDrag}
+                  title="Drag to resize panel horizontally"
+                />
+              )}
+              
               {/* Right Panel Toggle Button */}
               <Button
                 variant="ghost"
@@ -138,30 +195,25 @@ export default function Configurator() {
                 )}
               </Button>
               
-              <div className={`bg-white dark:bg-technical-800 border-l-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg ${
-                rightPanelExpanded 
-                  ? rightPanelFullWidth 
-                    ? "w-full h-full" 
-                    : "w-80 md:w-80 lg:w-96 xl:w-1/3" 
-                  : "w-12"
-              } ${rightPanelFullWidth ? 'max-h-full' : 'max-h-screen'}`}>
+              <aside 
+                className={`bg-white dark:bg-technical-800 border-l-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg max-h-screen ${
+                  rightPanelExpanded ? "" : "w-12"
+                } ${isDraggingRight ? 'select-none' : ''}`}
+                style={{
+                  width: rightPanelExpanded ? `${rightPanelWidth}px` : '48px'
+                }}
+              >
                 {rightPanelExpanded && (
                   <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
                     <div className="h-full border-l border-technical-100 dark:border-technical-600/30 flex flex-col">
-                      {/* Panel Header with Full Width Toggle */}
+                      {/* Panel Header with Width Display */}
                       <div className="flex items-center justify-between p-3 border-b border-technical-200/50 dark:border-technical-600/50">
                         <h2 className="text-sm font-semibold text-technical-700 dark:text-technical-300">
                           Specifications
                         </h2>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setRightPanelFullWidth(!rightPanelFullWidth)}
-                          className="h-7 w-7 p-0"
-                          title={rightPanelFullWidth ? "Restore panel width" : "Expand to full width"}
-                        >
-                          {rightPanelFullWidth ? "⟲" : "⤢"}
-                        </Button>
+                        <div className="text-xs text-muted-foreground">
+                          {rightPanelWidth}px wide
+                        </div>
                       </div>
                       <div className="flex-1 overflow-hidden">
                         <SpecificationPanel isExpanded={true} />
@@ -180,38 +232,9 @@ export default function Configurator() {
                     </div>
                   </div>
                 )}
-              </div>
+              </aside>
             </div>
           </main>
-          )}
-          
-          {/* Right Panel Full Width Mode */}
-          {rightPanelFullWidth && rightPanelExpanded && (
-            <div className="w-full h-full bg-white dark:bg-technical-800 border-t-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col shadow-lg">
-              <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
-                <div className="h-full flex flex-col">
-                  {/* Panel Header with Full Width Toggle */}
-                  <div className="flex items-center justify-between p-3 border-b border-technical-200/50 dark:border-technical-600/50">
-                    <h2 className="text-sm font-semibold text-technical-700 dark:text-technical-300">
-                      Specifications - Full Width
-                    </h2>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setRightPanelFullWidth(false)}
-                      className="h-7 w-7 p-0"
-                      title="Restore panel width"
-                    >
-                      ⟲
-                    </Button>
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <SpecificationPanel isExpanded={true} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </ConfigurationProvider>
