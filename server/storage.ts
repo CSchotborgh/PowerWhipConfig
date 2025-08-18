@@ -890,6 +890,62 @@ export class MemStorage implements IStorage {
         price: 13.75 // per foot
       },
 
+      // Advanced Wire Configurations from EXAMPLE03
+      {
+        name: "3/4\" LT (5)#8 Assembly",
+        type: "wire",
+        category: "liquid-tight",
+        specifications: { 
+          conductors: 5, 
+          gauge: "#8", 
+          conduit: "3/4\" Liquid Tight",
+          type: "LT",
+          configuration: "(5)#8"
+        },
+        symbol: "wire-assembly",
+        icon: "fas fa-grip-lines",
+        maxVoltage: 480,
+        maxCurrent: 40,
+        compatibleGauges: ["8"],
+        price: 12.50 // per foot
+      },
+      {
+        name: "1/2\" LT (4)#10 Assembly",
+        type: "wire",
+        category: "liquid-tight",
+        specifications: { 
+          conductors: 4, 
+          gauge: "#10", 
+          conduit: "1/2\" Liquid Tight",
+          type: "LT",
+          configuration: "(4)#10"
+        },
+        symbol: "wire-assembly",
+        icon: "fas fa-grip-lines",
+        maxVoltage: 250,
+        maxCurrent: 30,
+        compatibleGauges: ["10"],
+        price: 8.25 // per foot
+      },
+      {
+        name: "TCER 8/5 Cable",
+        type: "wire",
+        category: "tray-cable",
+        specifications: { 
+          conductors: 5, 
+          gauge: "#8", 
+          type: "TCER",
+          application: "Tray Cable",
+          configuration: "8/5"
+        },
+        symbol: "wire",
+        icon: "fas fa-minus",
+        maxVoltage: 480,
+        maxCurrent: 40,
+        compatibleGauges: ["8"],
+        price: 7.85 // per foot
+      },
+
       // Conduit Components (from Excel data)
       {
         name: "3/4\" Grey Flexible Conduit",
@@ -908,6 +964,113 @@ export class MemStorage implements IStorage {
         maxCurrent: 40,
         compatibleGauges: ["6", "8", "10", "12"],
         price: 3.25 // per foot
+      },
+      {
+        name: "1/2\" Liquid Tight Conduit",
+        type: "conduit",
+        category: "liquid-tight",
+        specifications: { 
+          size: "1/2\"", 
+          material: "PVC", 
+          type: "liquid-tight",
+          innerDiameter: 0.5
+        },
+        symbol: "conduit",
+        icon: "fas fa-tube",
+        maxVoltage: 600,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12", "14"],
+        price: 2.85 // per foot
+      },
+
+      // Industrial Receptacles from EXAMPLE03
+      {
+        name: "532C6W",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "industrial", poles: 3, voltage: 415, current: 30, pattern: "532C6W" },
+        symbol: "industrial",
+        icon: "fas fa-plug",
+        maxVoltage: 415,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 145.75
+      },
+      {
+        name: "563C6W",
+        type: "connector", 
+        category: "receptacle",
+        specifications: { type: "industrial", poles: 3, voltage: 415, current: 40, pattern: "563C6W" },
+        symbol: "industrial",
+        icon: "fas fa-plug",
+        maxVoltage: 415,
+        maxCurrent: 40,
+        compatibleGauges: ["6", "8"],
+        price: 158.25
+      },
+
+      // R-Series Receptacles (Single Phase)
+      {
+        name: "515R1",
+        type: "connector",
+        category: "receptacle", 
+        specifications: { type: "r-series", poles: 1, voltage: 120, current: 15, pattern: "515R1", phase: 1 },
+        symbol: "receptacle",
+        icon: "fas fa-plug",
+        maxVoltage: 120,
+        maxCurrent: 15,
+        compatibleGauges: ["10", "12"],
+        price: 45.50
+      },
+      {
+        name: "520R1",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "r-series", poles: 1, voltage: 120, current: 20, pattern: "520R1", phase: 1 },
+        symbol: "receptacle", 
+        icon: "fas fa-plug",
+        maxVoltage: 120,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 52.25
+      },
+      {
+        name: "530R1",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "r-series", poles: 1, voltage: 120, current: 30, pattern: "530R1", phase: 1 },
+        symbol: "receptacle",
+        icon: "fas fa-plug",
+        maxVoltage: 120,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 68.75
+      },
+
+      // 9C Series Industrial Connectors
+      {
+        name: "9C23U0",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "9c-series", poles: 2, voltage: 250, current: 20, pattern: "9C23U0", phase: 2 },
+        symbol: "industrial",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 78.50
+      },
+      {
+        name: "9C24U1",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "9c-series", poles: 3, voltage: 250, current: 20, pattern: "9C24U1", phase: 3 },
+        symbol: "industrial",
+        icon: "fas fa-plug",
+        maxVoltage: 250,
+        maxCurrent: 20,
+        compatibleGauges: ["10", "12"],
+        price: 85.25
       }
     ];
 
