@@ -674,6 +674,42 @@ export class MemStorage implements IStorage {
         price: 85.25
       },
       {
+        name: "60A Circuit Breaker",
+        type: "protection",
+        category: "breaker",
+        specifications: { rating: 60, type: "thermal-magnetic", poles: 2 },
+        symbol: "breaker",
+        icon: "fas fa-shield-alt",
+        maxVoltage: 240,
+        maxCurrent: 60,
+        compatibleGauges: ["6", "8"],
+        price: 95.75
+      },
+      {
+        name: "30A 2-Pole Breaker (Square D QOB)",
+        type: "protection",
+        category: "breaker",
+        specifications: { rating: 30, type: "thermal-magnetic", poles: 2, brand: "Square D", series: "QOB", breakRating: "22KA" },
+        symbol: "breaker",
+        icon: "fas fa-shield-alt",
+        maxVoltage: 240,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 65.50
+      },
+      {
+        name: "100A Industrial Breaker",
+        type: "protection",
+        category: "breaker",
+        specifications: { rating: 100, type: "thermal-magnetic", poles: 3, application: "industrial" },
+        symbol: "breaker",
+        icon: "fas fa-shield-alt",
+        maxVoltage: 480,
+        maxCurrent: 100,
+        compatibleGauges: ["1", "2", "3"],
+        price: 185.75
+      },
+      {
         name: "GFCI 15A Outlet",
         type: "protection",
         category: "gfci",
@@ -946,6 +982,123 @@ export class MemStorage implements IStorage {
         price: 7.85 // per foot
       },
 
+      // MC Cable Assemblies from EXAMPLE04
+      {
+        name: "3 Conductor 6AWG MC Cable",
+        type: "wire",
+        category: "mc-cable",
+        specifications: { 
+          conductors: 3, 
+          gauge: "#6", 
+          ground: "#8AWG",
+          type: "MC Cable",
+          voltage: 600,
+          jacket: "Steel Armor",
+          colors: "Black, White, Green"
+        },
+        symbol: "wire",
+        icon: "fas fa-minus",
+        maxVoltage: 600,
+        maxCurrent: 55,
+        compatibleGauges: ["6", "8"],
+        price: 9.85 // per foot
+      },
+      {
+        name: "4 Conductor 6AWG MC Cable",
+        type: "wire",
+        category: "mc-cable",
+        specifications: { 
+          conductors: 4, 
+          gauge: "#6", 
+          ground: "#8AWG",
+          type: "MC Cable",
+          voltage: 600,
+          jacket: "Steel Armor",
+          colors: "Black, White, Red, Green"
+        },
+        symbol: "wire",
+        icon: "fas fa-minus",
+        maxVoltage: 600,
+        maxCurrent: 55,
+        compatibleGauges: ["6", "8"],
+        price: 12.25 // per foot
+      },
+      {
+        name: "3 Conductor 10AWG MC Cable",
+        type: "wire",
+        category: "mc-cable",
+        specifications: { 
+          conductors: 3, 
+          gauge: "#10", 
+          type: "MC Cable",
+          voltage: 600,
+          jacket: "Steel Armor",
+          colors: "Black, White, Green"
+        },
+        symbol: "wire",
+        icon: "fas fa-minus",
+        maxVoltage: 600,
+        maxCurrent: 30,
+        compatibleGauges: ["10"],
+        price: 6.45 // per foot
+      },
+
+      // Outlet Boxes and Accessories from EXAMPLE04
+      {
+        name: "Cast Aluminum Outlet Box 1/2\"",
+        type: "enclosure",
+        category: "outlet-box",
+        specifications: { 
+          material: "Cast Aluminum", 
+          gangs: 1,
+          depth: "2.5/8\"",
+          conduitSize: "1/2\"",
+          type: "weatherproof"
+        },
+        symbol: "box",
+        icon: "fas fa-square",
+        maxVoltage: 600,
+        maxCurrent: 30,
+        compatibleGauges: ["10", "12"],
+        price: 45.25
+      },
+      {
+        name: "Cast Aluminum Outlet Box 3/4\"",
+        type: "enclosure",
+        category: "outlet-box",
+        specifications: { 
+          material: "Cast Aluminum", 
+          gangs: 1,
+          depth: "2.5/8\"",
+          conduitSize: "3/4\"",
+          type: "weatherproof"
+        },
+        symbol: "box",
+        icon: "fas fa-square",
+        maxVoltage: 600,
+        maxCurrent: 60,
+        compatibleGauges: ["6", "8", "10"],
+        price: 52.75
+      },
+      {
+        name: "4\" Square Junction Box",
+        type: "enclosure",
+        category: "junction-box",
+        specifications: { 
+          size: "4\" Square", 
+          depth: "2 1/8\"",
+          material: "Welded Steel",
+          mounting: "Raised Ground",
+          type: "junction"
+        },
+        symbol: "box",
+        icon: "fas fa-square",
+        maxVoltage: 600,
+        maxCurrent: 100,
+        compatibleGauges: ["6", "8", "10", "12"],
+        price: 38.50
+      },
+
       // Conduit Components (from Excel data)
       {
         name: "3/4\" Grey Flexible Conduit",
@@ -1071,6 +1224,32 @@ export class MemStorage implements IStorage {
         maxCurrent: 20,
         compatibleGauges: ["10", "12"],
         price: 85.25
+      },
+
+      // Additional Components from EXAMPLE04
+      {
+        name: "520C6W",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "industrial", poles: 3, voltage: 415, current: 20, pattern: "520C6W", phase: "3Y" },
+        symbol: "industrial",
+        icon: "fas fa-plug",
+        maxVoltage: 415,
+        maxCurrent: 20,
+        compatibleGauges: ["10"],
+        price: 98.75
+      },
+      {
+        name: "5100C6W",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "industrial", poles: 3, voltage: 600, current: 100, pattern: "5100C6W" },
+        symbol: "industrial",
+        icon: "fas fa-plug",
+        maxVoltage: 600,
+        maxCurrent: 100,
+        compatibleGauges: ["1", "2", "3"],
+        price: 285.50
       }
     ];
 
