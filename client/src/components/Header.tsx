@@ -83,10 +83,6 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
           <div className="flex items-center space-x-3">
             <PanelControls />
             <div className="w-px h-6 bg-technical-200 dark:bg-technical-600"></div>
-            <div className="text-xs text-muted-foreground">
-              Use ⤢ buttons to expand panels horizontally
-            </div>
-            <div className="w-px h-6 bg-technical-200 dark:bg-technical-600"></div>
             <Button 
               onClick={handleExportXLSX}
               className="bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all duration-200"

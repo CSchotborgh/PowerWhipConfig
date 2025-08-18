@@ -16,7 +16,6 @@ export default function Configurator() {
   const [rightPanelExpanded, setRightPanelExpanded] = useState(true);
   const [leftPanelFullWidth, setLeftPanelFullWidth] = useState(false);
   const [rightPanelFullWidth, setRightPanelFullWidth] = useState(false);
-  const [canvasFullWidth, setCanvasFullWidth] = useState(false);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -113,21 +112,11 @@ export default function Configurator() {
           </div>
           
           {/* Main Content Area */}
-          {!leftPanelFullWidth && !rightPanelFullWidth && !canvasFullWidth && (
+          {!leftPanelFullWidth && !rightPanelFullWidth && (
             <main className="flex-1 flex bg-white dark:bg-technical-800 rounded-tl-xl shadow-inner">
             {/* Design Canvas Area */}
             <div className="flex-1 p-6 bg-gradient-to-br from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30">
-              <div className="h-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-sm overflow-hidden relative">
-                {/* Canvas Full Width Toggle */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCanvasFullWidth(true)}
-                  className="absolute top-2 right-2 z-10 h-8 w-8 p-0"
-                  title="Expand canvas to full width"
-                >
-                  ⤢
-                </Button>
+              <div className="h-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-sm overflow-hidden">
                 <DesignCanvas />
               </div>
             </div>
@@ -218,36 +207,6 @@ export default function Configurator() {
                   </div>
                   <div className="flex-1 overflow-hidden">
                     <SpecificationPanel isExpanded={true} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Canvas Full Width Mode */}
-          {canvasFullWidth && (
-            <div className="w-full h-full bg-white dark:bg-technical-800 border-t-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col shadow-lg">
-              <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
-                <div className="h-full flex flex-col">
-                  {/* Canvas Header with Full Width Toggle */}
-                  <div className="flex items-center justify-between p-3 border-b border-technical-200/50 dark:border-technical-600/50">
-                    <h2 className="text-sm font-semibold text-technical-700 dark:text-technical-300">
-                      Design Canvas - Full Width
-                    </h2>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCanvasFullWidth(false)}
-                      className="h-7 w-7 p-0"
-                      title="Restore canvas width"
-                    >
-                      ⟲
-                    </Button>
-                  </div>
-                  <div className="flex-1 overflow-hidden p-6">
-                    <div className="h-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-sm overflow-hidden">
-                      <DesignCanvas />
-                    </div>
                   </div>
                 </div>
               </div>
