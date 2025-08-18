@@ -14,9 +14,6 @@ export default function Configurator() {
   const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation" | "order">("configuration");
   const [leftPanelExpanded, setLeftPanelExpanded] = useState(true);
   const [rightPanelExpanded, setRightPanelExpanded] = useState(true);
-  const [leftPanelFullWidth, setLeftPanelFullWidth] = useState(false);
-  const [rightPanelFullWidth, setRightPanelFullWidth] = useState(false);
-  const [canvasFullWidth, setCanvasFullWidth] = useState(false);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -40,7 +37,7 @@ export default function Configurator() {
         <Header activeTab={activeTab} onTabChange={setActiveTab} />
         
         {/* Main Body Container - Enhanced Mobile Layout */}
-        <div className={`flex flex-1 overflow-hidden bg-gradient-to-br from-technical-50 to-technical-100 dark:from-technical-900 dark:to-technical-800 relative ${leftPanelFullWidth || rightPanelFullWidth ? 'flex-col' : ''}`}>
+        <div className="flex flex-1 overflow-hidden bg-gradient-to-br from-technical-50 to-technical-100 dark:from-technical-900 dark:to-technical-800 relative">
           
           {/* Mobile Scroll Hint */}
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 md:hidden">
@@ -49,35 +46,12 @@ export default function Configurator() {
             </div>
           </div>
           {/* Left Panel - Tab Content */}
-          <div className={`relative ${leftPanelFullWidth ? 'w-full h-full' : 'flex'}`}>
-            <aside className={`bg-white dark:bg-technical-800 border-r-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg ${
-              leftPanelExpanded 
-                ? leftPanelFullWidth 
-                  ? "w-full h-full" 
-                  : "w-80 md:w-80 lg:w-96 xl:w-1/3" 
-                : "w-12"
-            } ${leftPanelFullWidth ? 'max-h-full' : 'max-h-screen'}`}>
+          <div className="relative flex">
+            <aside className={`bg-white dark:bg-technical-800 border-r-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg ${leftPanelExpanded ? "w-80 md:w-80" : "w-12"} max-h-screen`}>
               {leftPanelExpanded && (
                 <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
                   <div className="h-full border-r border-technical-100 dark:border-technical-600/30 flex flex-col">
-                    {/* Panel Header with Full Width Toggle */}
-                    <div className="flex items-center justify-between p-3 border-b border-technical-200/50 dark:border-technical-600/50">
-                      <h2 className="text-sm font-semibold text-technical-700 dark:text-technical-300">
-                        {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-                      </h2>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setLeftPanelFullWidth(!leftPanelFullWidth)}
-                        className="h-7 w-7 p-0"
-                        title={leftPanelFullWidth ? "Restore panel width" : "Expand to full width"}
-                      >
-                        {leftPanelFullWidth ? "⟲" : "⤢"}
-                      </Button>
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      {renderTabContent()}
-                    </div>
+                    {renderTabContent()}
                   </div>
                 </div>
               )}
@@ -95,39 +69,26 @@ export default function Configurator() {
             </aside>
             
             {/* Left Panel Toggle Button */}
-            {!leftPanelFullWidth && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLeftPanelExpanded(!leftPanelExpanded)}
-                className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-6 rounded-r-xl border border-l-0 border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 hover:bg-technical-50 dark:hover:bg-technical-700 shadow-lg hover:shadow-xl transition-all"
-                title={leftPanelExpanded ? "Collapse panel" : "Expand panel"}
-              >
-                {leftPanelExpanded ? (
-                  <ChevronLeft className="h-4 w-4 text-technical-500" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-technical-500" />
-                )}
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLeftPanelExpanded(!leftPanelExpanded)}
+              className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-6 rounded-r-xl border border-l-0 border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 hover:bg-technical-50 dark:hover:bg-technical-700 shadow-lg hover:shadow-xl transition-all"
+              title={leftPanelExpanded ? "Collapse panel" : "Expand panel"}
+            >
+              {leftPanelExpanded ? (
+                <ChevronLeft className="h-4 w-4 text-technical-500" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-technical-500" />
+              )}
+            </Button>
           </div>
           
           {/* Main Content Area */}
-          {!leftPanelFullWidth && !rightPanelFullWidth && !canvasFullWidth && (
-            <main className="flex-1 flex bg-white dark:bg-technical-800 rounded-tl-xl shadow-inner">
+          <main className="flex-1 flex bg-white dark:bg-technical-800 rounded-tl-xl shadow-inner">
             {/* Design Canvas Area */}
             <div className="flex-1 p-6 bg-gradient-to-br from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30">
-              <div className="h-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-sm overflow-hidden relative">
-                {/* Canvas Full Width Toggle */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCanvasFullWidth(true)}
-                  className="absolute top-2 right-2 z-10 h-8 w-8 p-0"
-                  title="Expand canvas to full width"
-                >
-                  ⤢
-                </Button>
+              <div className="h-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-sm overflow-hidden">
                 <DesignCanvas />
               </div>
             </div>
@@ -149,110 +110,9 @@ export default function Configurator() {
                 )}
               </Button>
               
-              <div className={`bg-white dark:bg-technical-800 border-l-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg ${
-                rightPanelExpanded 
-                  ? rightPanelFullWidth 
-                    ? "w-full h-full" 
-                    : "w-80 md:w-80 lg:w-96 xl:w-1/3" 
-                  : "w-12"
-              } ${rightPanelFullWidth ? 'max-h-full' : 'max-h-screen'}`}>
-                {rightPanelExpanded && (
-                  <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
-                    <div className="h-full border-l border-technical-100 dark:border-technical-600/30 flex flex-col">
-                      {/* Panel Header with Full Width Toggle */}
-                      <div className="flex items-center justify-between p-3 border-b border-technical-200/50 dark:border-technical-600/50">
-                        <h2 className="text-sm font-semibold text-technical-700 dark:text-technical-300">
-                          Specifications
-                        </h2>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setRightPanelFullWidth(!rightPanelFullWidth)}
-                          className="h-7 w-7 p-0"
-                          title={rightPanelFullWidth ? "Restore panel width" : "Expand to full width"}
-                        >
-                          {rightPanelFullWidth ? "⟲" : "⤢"}
-                        </Button>
-                      </div>
-                      <div className="flex-1 overflow-hidden">
-                        <SpecificationPanel isExpanded={true} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Collapsed State */}
-                {!rightPanelExpanded && (
-                  <div className="flex-1 flex flex-col items-center justify-center p-2 space-y-4 bg-gradient-to-b from-technical-50/50 to-white dark:from-technical-700/50 dark:to-technical-800">
-                    <div className="text-technical-400 dark:text-technical-500 text-xs text-center p-3 rounded-xl bg-white dark:bg-technical-700 shadow-md">
-                      <div className="text-[10px] leading-tight font-medium">
-                        Specs
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <SpecificationPanel isExpanded={rightPanelExpanded} />
             </div>
           </main>
-          )}
-          
-          {/* Right Panel Full Width Mode */}
-          {rightPanelFullWidth && rightPanelExpanded && (
-            <div className="w-full h-full bg-white dark:bg-technical-800 border-t-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col shadow-lg">
-              <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
-                <div className="h-full flex flex-col">
-                  {/* Panel Header with Full Width Toggle */}
-                  <div className="flex items-center justify-between p-3 border-b border-technical-200/50 dark:border-technical-600/50">
-                    <h2 className="text-sm font-semibold text-technical-700 dark:text-technical-300">
-                      Specifications - Full Width
-                    </h2>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setRightPanelFullWidth(false)}
-                      className="h-7 w-7 p-0"
-                      title="Restore panel width"
-                    >
-                      ⟲
-                    </Button>
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <SpecificationPanel isExpanded={true} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Canvas Full Width Mode */}
-          {canvasFullWidth && (
-            <div className="w-full h-full bg-white dark:bg-technical-800 border-t-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col shadow-lg">
-              <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
-                <div className="h-full flex flex-col">
-                  {/* Canvas Header with Full Width Toggle */}
-                  <div className="flex items-center justify-between p-3 border-b border-technical-200/50 dark:border-technical-600/50">
-                    <h2 className="text-sm font-semibold text-technical-700 dark:text-technical-300">
-                      Design Canvas - Full Width
-                    </h2>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCanvasFullWidth(false)}
-                      className="h-7 w-7 p-0"
-                      title="Restore canvas width"
-                    >
-                      ⟲
-                    </Button>
-                  </div>
-                  <div className="flex-1 overflow-hidden p-6">
-                    <div className="h-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-sm overflow-hidden">
-                      <DesignCanvas />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </ConfigurationProvider>
