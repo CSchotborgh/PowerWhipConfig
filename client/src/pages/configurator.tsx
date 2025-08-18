@@ -6,14 +6,16 @@ import DocumentationTab from "@/components/DocumentationTab";
 import OrderEntryTab from "@/components/OrderEntryTab";
 import DesignCanvas from "@/components/DesignCanvas";
 import SpecificationPanel from "@/components/SpecificationPanel";
+import { ParticleComponentLibrary, ParticleConfigurationPanel } from "@/components/ParticleStylePanel";
 import { ConfigurationProvider } from "@/contexts/ConfigurationContext";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 
 export default function Configurator() {
   const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation" | "order">("configuration");
   const [leftPanelExpanded, setLeftPanelExpanded] = useState(true);
   const [rightPanelExpanded, setRightPanelExpanded] = useState(true);
+  const [showParticlePanels, setShowParticlePanels] = useState(true);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -35,6 +37,19 @@ export default function Configurator() {
       <div className="h-screen flex flex-col bg-technical-50 dark:bg-technical-900 text-technical-900 dark:text-technical-50">
         {/* Header Navbar with Navigation */}
         <Header activeTab={activeTab} onTabChange={setActiveTab} />
+        
+        {/* Particle Style Toggle */}
+        <div className="fixed top-20 right-4 z-40">
+          <Button
+            variant={showParticlePanels ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowParticlePanels(!showParticlePanels)}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-lg"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Particle Mode
+          </Button>
+        </div>
         
         {/* Main Body Container - Enhanced Mobile Layout */}
         <div className="flex flex-1 overflow-hidden bg-gradient-to-br from-technical-50 to-technical-100 dark:from-technical-900 dark:to-technical-800 relative">
@@ -121,6 +136,14 @@ export default function Configurator() {
               <SpecificationPanel isExpanded={rightPanelExpanded} />
             </div>
           </main>
+          
+          {/* Particle Style Floating Panels */}
+          {showParticlePanels && (
+            <>
+              <ParticleComponentLibrary onClose={() => setShowParticlePanels(false)} />
+              <ParticleConfigurationPanel />
+            </>
+          )}
         </div>
       </div>
     </ConfigurationProvider>
