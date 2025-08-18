@@ -48,10 +48,10 @@ export default function Configurator() {
 
     const handleMouseMove = (e: MouseEvent) => {
       e.preventDefault();
-      const deltaX = e.clientX - startX;
+      const deltaX = startX - e.clientX;
       const containerWidth = window.innerWidth;
       const deltaPercent = (deltaX / containerWidth) * 100;
-      const newWidth = Math.max(15, Math.min(45, startWidth + deltaPercent));
+      const newWidth = Math.max(15, Math.min(45, startWidth - deltaPercent));
       setLeftPanelWidth(newWidth);
     };
 
@@ -81,10 +81,10 @@ export default function Configurator() {
 
     const handleMouseMove = (e: MouseEvent) => {
       e.preventDefault();
-      const deltaX = startX - e.clientX;
+      const deltaX = e.clientX - startX;
       const containerWidth = window.innerWidth;
       const deltaPercent = (deltaX / containerWidth) * 100;
-      const newWidth = Math.max(15, Math.min(45, startWidth + deltaPercent));
+      const newWidth = Math.max(15, Math.min(45, startWidth - deltaPercent));
       setRightPanelWidth(newWidth);
     };
 
