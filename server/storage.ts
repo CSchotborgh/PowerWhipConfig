@@ -499,6 +499,18 @@ export class MemStorage implements IStorage {
         compatibleGauges: ["6", "8"],
         price: 105.50
       },
+      {
+        name: "530C6W",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "california-standard", poles: 4, voltage: 480, current: 30, pattern: "530C6W" },
+        symbol: "cs-connector",
+        icon: "fas fa-plug",
+        maxVoltage: 480,
+        maxCurrent: 30,
+        compatibleGauges: ["8", "10"],
+        price: 78.25
+      },
 
       // Industrial Connectors
       {
@@ -536,6 +548,18 @@ export class MemStorage implements IStorage {
         maxCurrent: 60,
         compatibleGauges: ["4", "6"],
         price: 138.50
+      },
+      {
+        name: "560R9W",
+        type: "connector",
+        category: "receptacle",
+        specifications: { type: "industrial", poles: 4, voltage: 600, current: 60, pattern: "560R9W" },
+        symbol: "industrial",
+        icon: "fas fa-plug",
+        maxVoltage: 600,
+        maxCurrent: 60,
+        compatibleGauges: ["4", "6"],
+        price: 142.75
       },
       {
         name: "9C54U2",
@@ -808,6 +832,82 @@ export class MemStorage implements IStorage {
         maxCurrent: 200,
         compatibleGauges: ["1", "2", "4", "6"],
         price: 45.25 // per foot
+      },
+
+      // Multi-Conductor Wire Assemblies (from Excel data)
+      {
+        name: "3 #6AWG, 1 #8AWG GRD Assembly",
+        type: "wire",
+        category: "assembly",
+        specifications: { 
+          conductors: 4, 
+          power: "3 #6AWG", 
+          ground: "1 #8AWG", 
+          type: "SOOW",
+          configuration: "3P+G"
+        },
+        symbol: "wire-assembly",
+        icon: "fas fa-grip-lines",
+        maxVoltage: 480,
+        maxCurrent: 50,
+        compatibleGauges: ["6", "8"],
+        price: 8.75 // per foot
+      },
+      {
+        name: "4 #6AWG, 1 #8AWG GRD Assembly",
+        type: "wire",
+        category: "assembly",
+        specifications: { 
+          conductors: 5, 
+          power: "4 #6AWG", 
+          ground: "1 #8AWG", 
+          type: "SOOW",
+          configuration: "4P+G"
+        },
+        symbol: "wire-assembly",
+        icon: "fas fa-grip-lines",
+        maxVoltage: 480,
+        maxCurrent: 50,
+        compatibleGauges: ["6", "8"],
+        price: 11.25 // per foot
+      },
+      {
+        name: "5 #6AWG, 1 #8AWG GRD Assembly",
+        type: "wire",
+        category: "assembly",
+        specifications: { 
+          conductors: 6, 
+          power: "5 #6AWG", 
+          ground: "1 #8AWG", 
+          type: "SOOW",
+          configuration: "5P+G"
+        },
+        symbol: "wire-assembly",
+        icon: "fas fa-grip-lines",
+        maxVoltage: 480,
+        maxCurrent: 50,
+        compatibleGauges: ["6", "8"],
+        price: 13.75 // per foot
+      },
+
+      // Conduit Components (from Excel data)
+      {
+        name: "3/4\" Grey Flexible Conduit",
+        type: "conduit",
+        category: "flexible",
+        specifications: { 
+          size: "3/4\"", 
+          material: "PVC", 
+          color: "grey",
+          type: "flexible",
+          innerDiameter: 0.75
+        },
+        symbol: "conduit",
+        icon: "fas fa-tube",
+        maxVoltage: 600,
+        maxCurrent: 40,
+        compatibleGauges: ["6", "8", "10", "12"],
+        price: 3.25 // per foot
       }
     ];
 
