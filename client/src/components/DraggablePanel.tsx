@@ -33,6 +33,8 @@ export function DraggablePanel({
   const [isMinimized, setIsMinimized] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
+  const [resizeDirection, setResizeDirection] = useState<string>('');
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const panelRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -66,12 +68,25 @@ export function DraggablePanel({
     setIsDragging(false);
   };
 
-  // Global mouse event listeners
+  // Global mouse event listeners for dragging and resizing
   React.useEffect(() => {
-    const handleGlobalMouseMove = (e: MouseEvent) => handleMouseMove(e);
-    const handleGlobalMouseUp = () => handleMouseUp();
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (isDragging) {
+        handleMouseMove(e);
+      } else if (isResizing) {
+        handleResizeMove(e);
+      }
+    };
+    
+    const handleGlobalMouseUp = () => {
+      if (isDragging) {
+        handleMouseUp();
+      } else if (isResizing) {
+        handleResizeEnd();
+      }
+    };
 
-    if (isDragging) {
+    if (isDragging || isResizing) {
       document.addEventListener('mousemove', handleGlobalMouseMove);
       document.addEventListener('mouseup', handleGlobalMouseUp);
     }
@@ -80,10 +95,36 @@ export function DraggablePanel({
       document.removeEventListener('mousemove', handleGlobalMouseMove);
       document.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, [isDragging, dragOffset]);
+  }, [isDragging, isResizing, dragOffset, resizeStart, resizeDirection]);
 
   const toggleMinimize = () => {
     setIsMinimized(!isMinimized);
+  };
+
+  const handleScale = (newScaleOrDelta: number, isDelta: boolean = false) => {
+    if (!scalable) return;
+    let newScale: number;
+    if (isDelta) {
+      newScale = Math.max(0.5, Math.min(2, scale + newScaleOrDelta * 0.1));
+    } else {
+      newScale = Math.max(0.5, Math.min(2, newScaleOrDelta));
+    }
+    setScale(newScale);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if ((e.ctrlKey || e.metaKey) && scalable) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -1 : 1;
+      handleScale(delta, true);
+    }
+  };
+
+  const constrainSize = (newSize: { width: number; height: number }) => {
+    return {
+      width: Math.max(minSize.width, Math.min(maxSize.width, newSize.width)),
+      height: Math.max(minSize.height, Math.min(maxSize.height, newSize.height))
+    };
   };
 
   const resetSize = () => {
@@ -91,24 +132,58 @@ export function DraggablePanel({
     setScale(1);
   };
 
-  const handleResize = (direction: 'width' | 'height', delta: number) => {
-    setSize(prev => ({
-      ...prev,
-      [direction]: Math.max(minSize[direction], Math.min(maxSize[direction], prev[direction] + delta))
-    }));
+  const handleResizeStart = (e: React.MouseEvent, direction: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeDirection(direction);
+    setResizeStart({
+      x: e.clientX,
+      y: e.clientY,
+      width: size.width,
+      height: size.height
+    });
   };
 
-  const handleScale = (newScale: number) => {
-    const clampedScale = Math.max(0.5, Math.min(2, newScale));
-    setScale(clampedScale);
-  };
+  const handleResizeMove = (e: MouseEvent) => {
+    if (!isResizing || !resizeDirection) return;
 
-  const handleWheel = (e: React.WheelEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      handleScale(scale + delta);
+    const deltaX = e.clientX - resizeStart.x;
+    const deltaY = e.clientY - resizeStart.y;
+
+    let newWidth = resizeStart.width;
+    let newHeight = resizeStart.height;
+
+    if (resizeDirection.includes('right')) {
+      newWidth = resizeStart.width + deltaX;
     }
+    if (resizeDirection.includes('left')) {
+      newWidth = resizeStart.width - deltaX;
+    }
+    if (resizeDirection.includes('bottom')) {
+      newHeight = resizeStart.height + deltaY;
+    }
+    if (resizeDirection.includes('top')) {
+      newHeight = resizeStart.height - deltaY;
+    }
+
+    const constrainedSize = constrainSize({ width: newWidth, height: newHeight });
+    setSize(constrainedSize);
+
+    // Adjust position for left/top resize
+    if (resizeDirection.includes('left')) {
+      const widthDiff = constrainedSize.width - size.width;
+      setPosition(prev => ({ ...prev, x: prev.x - widthDiff }));
+    }
+    if (resizeDirection.includes('top')) {
+      const heightDiff = constrainedSize.height - size.height;
+      setPosition(prev => ({ ...prev, y: prev.y - heightDiff }));
+    }
+  };
+
+  const handleResizeEnd = () => {
+    setIsResizing(false);
+    setResizeDirection('');
   };
 
   return (

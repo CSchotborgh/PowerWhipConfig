@@ -84,12 +84,20 @@ export default function Configurator() {
             </Button>
           </div>
           
-          {/* Main Content Area */}
-          <main className="flex-1 flex bg-white dark:bg-technical-800 rounded-tl-xl shadow-inner">
-            {/* Design Canvas Area */}
-            <div className="flex-1 p-6 bg-gradient-to-br from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30">
+          {/* Main Content Area - Responsive to Panel Expansion */}
+          <main className={`flex-1 flex bg-white dark:bg-technical-800 rounded-tl-xl shadow-inner transition-all duration-300 ease-in-out ${
+            !leftPanelExpanded ? 'ml-12' : ''
+          } ${!rightPanelExpanded ? 'mr-12' : ''}`}>
+            {/* Design Canvas Area - Flexible Scale */}
+            <div className={`flex-1 p-6 bg-gradient-to-br from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 transition-all duration-300 ease-in-out ${
+              leftPanelExpanded && rightPanelExpanded ? 'scale-100' : 
+              !leftPanelExpanded && !rightPanelExpanded ? 'scale-110' : 'scale-105'
+            }`}>
               <div className="h-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-sm overflow-hidden">
-                <DesignCanvas />
+                <DesignCanvas 
+                  leftPanelExpanded={leftPanelExpanded} 
+                  rightPanelExpanded={rightPanelExpanded}
+                />
               </div>
             </div>
             

@@ -22,16 +22,36 @@ interface DroppedComponent {
 
 interface DesignCanvasProps {
   onToggleView?: () => void;
+  leftPanelExpanded?: boolean;
+  rightPanelExpanded?: boolean;
 }
 
 
 
-export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
+export default function DesignCanvas({ 
+  onToggleView, 
+  leftPanelExpanded = true, 
+  rightPanelExpanded = true 
+}: DesignCanvasProps) {
   const [droppedComponents, setDroppedComponents] = useState<DroppedComponent[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
   const [viewMode, setViewMode] = useState<"design" | "order" | "transformer" | "configurator" | "excel">("design");
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Dynamic canvas scaling based on available space
+  const getCanvasScale = () => {
+    if (!leftPanelExpanded && !rightPanelExpanded) return 1.1;
+    if (!leftPanelExpanded || !rightPanelExpanded) return 1.05;
+    return 1;
+  };
+
+  const getCanvasSize = () => {
+    const baseWidth = leftPanelExpanded && rightPanelExpanded ? 'w-full' : 
+                     !leftPanelExpanded && !rightPanelExpanded ? 'w-[120%]' : 'w-[110%]';
+    const baseHeight = 'h-full';
+    return `${baseWidth} ${baseHeight}`;
+  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
