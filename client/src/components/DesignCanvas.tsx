@@ -127,58 +127,63 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
     <div className="flex-1 flex h-full">
       {/* Canvas Area */}
       <div className="flex-1 flex flex-col bg-white dark:bg-technical-900">
-        {/* Canvas Toolbar */}
-        <div className="p-4 border-b border-technical-200 dark:border-technical-600 bg-technical-50 dark:bg-technical-800">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h2 className="text-xl font-bold text-technical-900 dark:text-technical-100">
+        {/* Canvas Toolbar - Responsive */}
+        <div className="p-2 sm:p-4 border-b border-technical-200 dark:border-technical-600 bg-technical-50 dark:bg-technical-800">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            {/* Top Row - Title and Zoom Controls */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg sm:text-xl font-bold text-technical-900 dark:text-technical-100 truncate mr-2">
                 {viewMode === "design" ? "Design Canvas" : 
-                 viewMode === "order" ? "Order Entry System" : 
+                 viewMode === "order" ? "Order Entry" : 
                  viewMode === "transformer" ? "Excel Transformer" :
-                 viewMode === "configurator" ? "ConfiguratorDataset Analyzer" :
-                 "Excel-like Interface"}
+                 viewMode === "configurator" ? "Configurator" :
+                 "Excel Interface"}
               </h2>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setCanvasScale(prev => Math.max(0.25, prev - 0.25))}
+                  className="px-2 sm:px-3"
                 >
-                  Zoom Out
+                  <span className="hidden sm:inline">Zoom Out</span>
+                  <span className="sm:hidden">-</span>
                 </Button>
-                <span className="text-sm text-technical-600 dark:text-technical-400 min-w-16 text-center">
+                <span className="text-xs sm:text-sm text-technical-600 dark:text-technical-400 min-w-8 sm:min-w-16 text-center">
                   {Math.round(canvasScale * 100)}%
                 </span>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setCanvasScale(prev => Math.min(3, prev + 0.25))}
+                  className="px-2 sm:px-3"
                 >
-                  Zoom In
+                  <span className="hidden sm:inline">Zoom In</span>
+                  <span className="sm:hidden">+</span>
                 </Button>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={clearCanvas}>
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Clear
-              </Button>
-              <Button size="sm" variant="default">
-                <Save className="w-4 h-4 mr-2" />
-                Save Design
-              </Button>
-              <div className="flex gap-2">
-                <Button onClick={toggleViewMode} variant="outline">
-                  {viewMode === "design" ? "Switch to Order Entry" : 
-                   viewMode === "order" ? "Switch to Excel Transformer" :
-                   viewMode === "transformer" ? "Switch to Configurator" :
-                   viewMode === "configurator" ? "Switch to Excel Interface" :
-                   "Switch to Design Canvas"}
+            
+            {/* Bottom Row - Action Buttons */}
+            <div className="flex items-center justify-between gap-1 sm:gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <Button size="sm" variant="outline" onClick={clearCanvas} className="px-2 sm:px-3">
+                  <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Clear</span>
                 </Button>
+                <Button size="sm" variant="default" className="px-2 sm:px-3">
+                  <Save className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Save</span>
+                </Button>
+              </div>
+              
+              {/* Mode Buttons - Responsive */}
+              <div className="flex gap-1">
                 <Button 
                   onClick={() => setViewMode("design")} 
                   variant={viewMode === "design" ? "default" : "outline"}
                   size="sm"
+                  className="px-2 sm:px-3 text-xs sm:text-sm"
                 >
                   Design
                 </Button>
@@ -186,15 +191,18 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
                   onClick={() => setViewMode("order")} 
                   variant={viewMode === "order" ? "default" : "outline"}
                   size="sm"
+                  className="px-2 sm:px-3 text-xs sm:text-sm"
                 >
-                  Order Entry
+                  Order
                 </Button>
                 <Button 
                   onClick={() => setViewMode("transformer")} 
                   variant={viewMode === "transformer" ? "default" : "outline"}
                   size="sm"
+                  className="px-2 sm:px-3 text-xs sm:text-sm"
                 >
-                  Excel Transformer
+                  <span className="hidden sm:inline">Transformer</span>
+                  <span className="sm:hidden">Excel</span>
                 </Button>
               </div>
             </div>
@@ -283,17 +291,17 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
         </div>
       </div>
 
-      {/* Properties Panel */}
+      {/* Properties Panel - Responsive */}
       {selectedComponentData && (
-        <div className="w-80 border-l border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800">
+        <div className="w-64 sm:w-72 lg:w-80 border-l border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 flex-shrink-0">
           <Card className="h-full rounded-none border-0">
-            <CardHeader className="border-b border-technical-200 dark:border-technical-600">
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="w-4 h-4 text-primary" />
-                Component Properties
+            <CardHeader className="border-b border-technical-200 dark:border-technical-600 p-3 sm:p-4">
+              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                <Settings className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+                <span className="truncate">Component Properties</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 space-y-4">
+            <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
               <div>
                 <label className="text-sm font-medium text-technical-700 dark:text-technical-300">
                   Name
