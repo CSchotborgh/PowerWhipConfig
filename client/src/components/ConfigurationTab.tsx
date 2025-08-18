@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { CheckCircle, AlertTriangle, Sliders, ChevronDown } from "lucide-react";
+import { CheckCircle, AlertTriangle, Sliders, ChevronDown, Database } from "lucide-react";
 import { useConfiguration } from "@/contexts/ConfigurationContext";
 import { cn } from "@/lib/utils";
 import ComponentLibrary from "./ComponentLibrary";

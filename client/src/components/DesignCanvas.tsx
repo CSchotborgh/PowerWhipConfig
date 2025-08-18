@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Grid, Layers, Settings, RotateCcw, Save } from "lucide-react";
@@ -31,6 +31,8 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
   const [viewMode, setViewMode] = useState<"design" | "order" | "transformer" | "configurator" | "excel">("design");
+  const [isDraggingComponent, setIsDraggingComponent] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const handleDrop = (e: React.DragEvent) => {
@@ -77,6 +79,56 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
     }
   };
 
+  const handleComponentMouseDown = (e: React.MouseEvent, componentId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const component = droppedComponents.find(c => c.id === componentId);
+    if (!component || !canvasRef.current) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const canvasX = (e.clientX - rect.left) / canvasScale;
+    const canvasY = (e.clientY - rect.top) / canvasScale;
+    
+    setIsDraggingComponent(true);
+    setSelectedComponent(componentId);
+    setDragOffset({
+      x: canvasX - component.x,
+      y: canvasY - component.y
+    });
+    
+    // Add global cursor and prevent text selection
+    document.body.style.cursor = 'move';
+    document.body.style.userSelect = 'none';
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDraggingComponent || !selectedComponent || !canvasRef.current) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const canvasX = (e.clientX - rect.left) / canvasScale;
+    const canvasY = (e.clientY - rect.top) / canvasScale;
+    
+    const newX = Math.max(0, Math.min(rect.width / canvasScale - 100, canvasX - dragOffset.x));
+    const newY = Math.max(0, Math.min(rect.height / canvasScale - 100, canvasY - dragOffset.y));
+    
+    setDroppedComponents(prev => 
+      prev.map(comp => 
+        comp.id === selectedComponent 
+          ? { ...comp, x: newX, y: newY }
+          : comp
+      )
+    );
+  };
+
+  const handleMouseUp = () => {
+    if (isDraggingComponent) {
+      setIsDraggingComponent(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+  };
+
   const clearCanvas = () => {
     setDroppedComponents([]);
     setSelectedComponent(null);
@@ -105,6 +157,19 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   };
 
   const selectedComponentData = droppedComponents.find(comp => comp.id === selectedComponent);
+
+  // Add global event listeners for component dragging
+  useEffect(() => {
+    if (isDraggingComponent) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDraggingComponent, selectedComponent, dragOffset, canvasScale]);
 
   // Show different views based on mode
   if (viewMode === "order") {
@@ -240,10 +305,13 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
               <div
                 key={component.id}
                 className={cn(
-                  "absolute cursor-pointer p-3 rounded-lg border-2 bg-white dark:bg-technical-800 shadow-lg transition-all",
+                  "absolute cursor-pointer p-3 rounded-lg border-2 bg-white dark:bg-technical-800 shadow-lg transition-all select-none",
                   selectedComponent === component.id 
                     ? "border-primary ring-2 ring-primary/50" 
-                    : "border-technical-300 dark:border-technical-600 hover:border-primary/50"
+                    : "border-technical-300 dark:border-technical-600 hover:border-primary/50",
+                  isDraggingComponent && selectedComponent === component.id 
+                    ? "cursor-move shadow-2xl" 
+                    : ""
                 )}
                 style={{
                   left: component.x,
@@ -252,6 +320,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
                 }}
                 onClick={() => handleComponentClick(component.id)}
                 onDoubleClick={() => deleteComponent(component.id)}
+                onMouseDown={(e) => handleComponentMouseDown(e, component.id)}
               >
                 <div className="flex items-center gap-2">
                   <span className="text-xl">{getComponentIcon(component.type)}</span>
