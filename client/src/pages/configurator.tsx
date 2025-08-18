@@ -6,6 +6,8 @@ import ConfigurationTab from "@/components/ConfigurationTab";
 import VisualDesignTab from "@/components/VisualDesignTab";
 import OrderEntryTab from "@/components/OrderEntryTab";
 import DocumentationTab from "@/components/DocumentationTab";
+import ExpandedComponentLibrary from "@/components/ExpandedComponentLibrary";
+import { DraggablePanel } from "@/components/DraggablePanel";
 import { ConfigurationProvider } from "@/contexts/ConfigurationContext";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";

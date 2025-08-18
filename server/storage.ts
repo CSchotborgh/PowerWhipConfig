@@ -1099,6 +1099,201 @@ export class MemStorage implements IStorage {
         price: 38.50
       },
 
+      // Fittings & Adapters from MasterBubbleUpLookup
+      {
+        name: "NPT Adapter Male 1-1/2\" to Female 3/4\"",
+        type: "fitting",
+        category: "adapter",
+        specifications: { 
+          type: "NPT Adapter",
+          male: "1-1/2\"",
+          female: "3/4\"",
+          material: "Metal",
+          partNumber: "180-A630-00"
+        },
+        symbol: "fitting",
+        icon: "fas fa-link",
+        maxVoltage: 600,
+        maxCurrent: 100,
+        compatibleGauges: ["6", "8", "10"],
+        price: 28.75
+      },
+      {
+        name: "FMC/MC Cable Clamp 3/4\"NPT",
+        type: "fitting",
+        category: "clamp",
+        specifications: { 
+          type: "Cable Clamp",
+          size: "3/4\"NPT",
+          range: "0.68-1.11\"",
+          application: "FMC/MC Cable",
+          partNumber: "300-4076-00"
+        },
+        symbol: "fitting",
+        icon: "fas fa-compress",
+        maxVoltage: 600,
+        maxCurrent: 60,
+        compatibleGauges: ["6", "8", "10"],
+        price: 15.25
+      },
+      {
+        name: "AC Cable Bushing No 4",
+        type: "fitting",
+        category: "bushing",
+        specifications: { 
+          type: "AC Cable Bushing",
+          number: "4",
+          wireTypes: "12/4, 10/2, 10/3, 4/3, 2/1",
+          size: "3/4\"",
+          partNumber: "300-4B04-00"
+        },
+        symbol: "fitting",
+        icon: "fas fa-circle",
+        maxVoltage: 600,
+        maxCurrent: 60,
+        compatibleGauges: ["2", "4", "10", "12"],
+        price: 12.50
+      },
+
+      // Terminals & Hardware
+      {
+        name: "Wire Nut Red (18AWG-10AWG)",
+        type: "terminal",
+        category: "wire-nut",
+        specifications: { 
+          type: "Wire Nut",
+          color: "Red",
+          range: "2x18AWG to 4x10AWG",
+          partNumber: "301-7200-00"
+        },
+        symbol: "terminal",
+        icon: "fas fa-bolt",
+        maxVoltage: 600,
+        maxCurrent: 30,
+        compatibleGauges: ["10", "12", "14", "16", "18"],
+        price: 0.85
+      },
+      {
+        name: "Grounding Wire with Screw",
+        type: "terminal",
+        category: "grounding",
+        specifications: { 
+          type: "Grounding Wire",
+          wire: "THHN 10AWG Solid Green",
+          length: "8\"",
+          hardware: "Ground Screw",
+          partNumber: "080-TG10-10"
+        },
+        symbol: "terminal",
+        icon: "fas fa-ground",
+        maxVoltage: 600,
+        maxCurrent: 30,
+        compatibleGauges: ["10"],
+        price: 3.25
+      },
+
+      // Backshells & Assemblies
+      {
+        name: "Backshell 60A Cast Aluminum",
+        type: "assembly",
+        category: "backshell",
+        specifications: { 
+          type: "Backshell",
+          current: "60A",
+          material: "Cast Aluminum",
+          angle: "15 Degree",
+          connection: "1-1/2\" NPT",
+          brand: "Hubbell",
+          partNumber: "270-B660-H0"
+        },
+        symbol: "assembly",
+        icon: "fas fa-shield",
+        maxVoltage: 600,
+        maxCurrent: 60,
+        compatibleGauges: ["6", "8"],
+        price: 125.75
+      },
+
+      // Labels & Marking
+      {
+        name: "Brady White Labels 1\"x1.75\"",
+        type: "marking",
+        category: "label",
+        specifications: { 
+          type: "Paper Label",
+          color: "White",
+          size: "1\" x 1.75\"",
+          format: "4x10 on 8.5x11\" sheet",
+          partNumber: "397-B120-01"
+        },
+        symbol: "label",
+        icon: "fas fa-tag",
+        maxVoltage: 0,
+        maxCurrent: 0,
+        compatibleGauges: [],
+        price: 0.15
+      },
+      {
+        name: "Brady Self-Laminating Label 2\"x7\"",
+        type: "marking",
+        category: "label",
+        specifications: { 
+          type: "Self-Laminating Label",
+          color: "White",
+          size: "2\" x 7\"",
+          printable: "1.5\" x 2\"",
+          properties: "Water & Oil Resistant",
+          rating: "UL Listed",
+          partNumber: "397-B270-00"
+        },
+        symbol: "label",
+        icon: "fas fa-tag",
+        maxVoltage: 0,
+        maxCurrent: 0,
+        compatibleGauges: [],
+        price: 2.85
+      },
+
+      // Industrial THHN Wire from BOM
+      {
+        name: "THHN 6AWG Stranded Black",
+        type: "wire",
+        category: "thhn",
+        specifications: { 
+          type: "THHN",
+          gauge: "6AWG",
+          stranding: "Stranded",
+          color: "Black",
+          voltage: "600V",
+          rating: "UL Listed"
+        },
+        symbol: "wire",
+        icon: "fas fa-minus",
+        maxVoltage: 600,
+        maxCurrent: 55,
+        compatibleGauges: ["6"],
+        price: 4.25 // per foot
+      },
+      {
+        name: "THHN 10AWG Stranded Brown",
+        type: "wire",
+        category: "thhn",
+        specifications: { 
+          type: "THHN",
+          gauge: "10AWG",
+          stranding: "Stranded",
+          color: "Brown",
+          voltage: "600V",
+          rating: "UL Listed"
+        },
+        symbol: "wire",
+        icon: "fas fa-minus",
+        maxVoltage: 600,
+        maxCurrent: 30,
+        compatibleGauges: ["10"],
+        price: 2.85 // per foot
+      },
+
       // Conduit Components (from Excel data)
       {
         name: "3/4\" Grey Flexible Conduit",

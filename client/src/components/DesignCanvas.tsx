@@ -9,6 +9,8 @@ import PerformanceOrderEntry from "./PerformanceOrderEntry";
 import ExcelTransformer from "./ExcelTransformer";
 import ExcelFileViewer from "./ExcelFileViewer";
 import ExcelLikeInterface from "./ExcelLikeInterface";
+import ExpandedComponentLibrary from "./ExpandedComponentLibrary";
+import { DraggablePanel } from "./DraggablePanel";
 
 interface DroppedComponent {
   id: string;
@@ -33,6 +35,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   const [viewMode, setViewMode] = useState<"design" | "order" | "transformer" | "configurator" | "excel">("design");
   const [isDraggingComponent, setIsDraggingComponent] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [showComponentLibrary, setShowComponentLibrary] = useState(true);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const handleDrop = (e: React.DragEvent) => {
@@ -224,6 +227,14 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button 
+                size="sm" 
+                variant={showComponentLibrary ? "default" : "outline"}
+                onClick={() => setShowComponentLibrary(!showComponentLibrary)}
+              >
+                <Layers className="w-4 h-4 mr-2" />
+                {showComponentLibrary ? "Hide" : "Show"} Components
+              </Button>
               <Button size="sm" variant="outline" onClick={clearCanvas}>
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Clear
@@ -430,6 +441,19 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Floating Component Library Panel */}
+      {showComponentLibrary && viewMode === "design" && (
+        <DraggablePanel
+          title="Component Library - MasterBubbleUpLookup"
+          defaultPosition={{ x: 50, y: 100 }}
+          defaultSize={{ width: 400, height: 600 }}
+          onClose={() => setShowComponentLibrary(false)}
+          className="z-50"
+        >
+          <ExpandedComponentLibrary />
+        </DraggablePanel>
       )}
     </div>
   );
