@@ -14,6 +14,8 @@ export default function Configurator() {
   const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation" | "order">("configuration");
   const [leftPanelExpanded, setLeftPanelExpanded] = useState(true);
   const [rightPanelExpanded, setRightPanelExpanded] = useState(true);
+  const [leftPanelFullWidth, setLeftPanelFullWidth] = useState(false);
+  const [rightPanelFullWidth, setRightPanelFullWidth] = useState(false);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -47,11 +49,34 @@ export default function Configurator() {
           </div>
           {/* Left Panel - Tab Content */}
           <div className="relative flex">
-            <aside className={`bg-white dark:bg-technical-800 border-r-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg ${leftPanelExpanded ? "w-80 md:w-80" : "w-12"} max-h-screen`}>
+            <aside className={`bg-white dark:bg-technical-800 border-r-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg ${
+              leftPanelExpanded 
+                ? leftPanelFullWidth 
+                  ? "w-full" 
+                  : "w-80 md:w-80 lg:w-96 xl:w-1/3" 
+                : "w-12"
+            } max-h-screen`}>
               {leftPanelExpanded && (
                 <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
                   <div className="h-full border-r border-technical-100 dark:border-technical-600/30 flex flex-col">
-                    {renderTabContent()}
+                    {/* Panel Header with Full Width Toggle */}
+                    <div className="flex items-center justify-between p-3 border-b border-technical-200/50 dark:border-technical-600/50">
+                      <h2 className="text-sm font-semibold text-technical-700 dark:text-technical-300">
+                        {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                      </h2>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setLeftPanelFullWidth(!leftPanelFullWidth)}
+                        className="h-7 w-7 p-0"
+                        title={leftPanelFullWidth ? "Restore panel width" : "Expand to full width"}
+                      >
+                        {leftPanelFullWidth ? "⟲" : "⤢"}
+                      </Button>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      {renderTabContent()}
+                    </div>
                   </div>
                 </div>
               )}
@@ -85,7 +110,7 @@ export default function Configurator() {
           </div>
           
           {/* Main Content Area */}
-          <main className="flex-1 flex bg-white dark:bg-technical-800 rounded-tl-xl shadow-inner">
+          <main className={`flex-1 flex bg-white dark:bg-technical-800 rounded-tl-xl shadow-inner ${leftPanelFullWidth || rightPanelFullWidth ? 'hidden' : ''}`}>
             {/* Design Canvas Area */}
             <div className="flex-1 p-6 bg-gradient-to-br from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30">
               <div className="h-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-sm overflow-hidden">
@@ -110,7 +135,49 @@ export default function Configurator() {
                 )}
               </Button>
               
-              <SpecificationPanel isExpanded={rightPanelExpanded} />
+              <div className={`bg-white dark:bg-technical-800 border-l-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg ${
+                rightPanelExpanded 
+                  ? rightPanelFullWidth 
+                    ? "w-full" 
+                    : "w-80 md:w-80 lg:w-96 xl:w-1/3" 
+                  : "w-12"
+              } max-h-screen`}>
+                {rightPanelExpanded && (
+                  <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
+                    <div className="h-full border-l border-technical-100 dark:border-technical-600/30 flex flex-col">
+                      {/* Panel Header with Full Width Toggle */}
+                      <div className="flex items-center justify-between p-3 border-b border-technical-200/50 dark:border-technical-600/50">
+                        <h2 className="text-sm font-semibold text-technical-700 dark:text-technical-300">
+                          Specifications
+                        </h2>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setRightPanelFullWidth(!rightPanelFullWidth)}
+                          className="h-7 w-7 p-0"
+                          title={rightPanelFullWidth ? "Restore panel width" : "Expand to full width"}
+                        >
+                          {rightPanelFullWidth ? "⟲" : "⤢"}
+                        </Button>
+                      </div>
+                      <div className="flex-1 overflow-hidden">
+                        <SpecificationPanel isExpanded={true} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Collapsed State */}
+                {!rightPanelExpanded && (
+                  <div className="flex-1 flex flex-col items-center justify-center p-2 space-y-4 bg-gradient-to-b from-technical-50/50 to-white dark:from-technical-700/50 dark:to-technical-800">
+                    <div className="text-technical-400 dark:text-technical-500 text-xs text-center p-3 rounded-xl bg-white dark:bg-technical-700 shadow-md">
+                      <div className="text-[10px] leading-tight font-medium">
+                        Specs
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </main>
         </div>
