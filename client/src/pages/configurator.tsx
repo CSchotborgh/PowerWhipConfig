@@ -39,7 +39,7 @@ export default function Configurator() {
         <Header activeTab={activeTab} onTabChange={setActiveTab} />
         
         {/* Main Body Container - Enhanced Mobile Layout */}
-        <div className="flex flex-1 overflow-hidden bg-gradient-to-br from-technical-50 to-technical-100 dark:from-technical-900 dark:to-technical-800 relative">
+        <div className={`flex flex-1 overflow-hidden bg-gradient-to-br from-technical-50 to-technical-100 dark:from-technical-900 dark:to-technical-800 relative ${leftPanelFullWidth || rightPanelFullWidth ? 'flex-col' : ''}`}>
           
           {/* Mobile Scroll Hint */}
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 md:hidden">
@@ -48,14 +48,14 @@ export default function Configurator() {
             </div>
           </div>
           {/* Left Panel - Tab Content */}
-          <div className="relative flex">
+          <div className={`relative ${leftPanelFullWidth ? 'w-full h-full' : 'flex'}`}>
             <aside className={`bg-white dark:bg-technical-800 border-r-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg ${
               leftPanelExpanded 
                 ? leftPanelFullWidth 
-                  ? "w-full" 
+                  ? "w-full h-full" 
                   : "w-80 md:w-80 lg:w-96 xl:w-1/3" 
                 : "w-12"
-            } max-h-screen`}>
+            } ${leftPanelFullWidth ? 'max-h-full' : 'max-h-screen'}`}>
               {leftPanelExpanded && (
                 <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
                   <div className="h-full border-r border-technical-100 dark:border-technical-600/30 flex flex-col">
@@ -94,23 +94,26 @@ export default function Configurator() {
             </aside>
             
             {/* Left Panel Toggle Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLeftPanelExpanded(!leftPanelExpanded)}
-              className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-6 rounded-r-xl border border-l-0 border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 hover:bg-technical-50 dark:hover:bg-technical-700 shadow-lg hover:shadow-xl transition-all"
-              title={leftPanelExpanded ? "Collapse panel" : "Expand panel"}
-            >
-              {leftPanelExpanded ? (
-                <ChevronLeft className="h-4 w-4 text-technical-500" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-technical-500" />
-              )}
-            </Button>
+            {!leftPanelFullWidth && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLeftPanelExpanded(!leftPanelExpanded)}
+                className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-6 rounded-r-xl border border-l-0 border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 hover:bg-technical-50 dark:hover:bg-technical-700 shadow-lg hover:shadow-xl transition-all"
+                title={leftPanelExpanded ? "Collapse panel" : "Expand panel"}
+              >
+                {leftPanelExpanded ? (
+                  <ChevronLeft className="h-4 w-4 text-technical-500" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-technical-500" />
+                )}
+              </Button>
+            )}
           </div>
           
           {/* Main Content Area */}
-          <main className={`flex-1 flex bg-white dark:bg-technical-800 rounded-tl-xl shadow-inner ${leftPanelFullWidth || rightPanelFullWidth ? 'hidden' : ''}`}>
+          {!leftPanelFullWidth && !rightPanelFullWidth && (
+            <main className="flex-1 flex bg-white dark:bg-technical-800 rounded-tl-xl shadow-inner">
             {/* Design Canvas Area */}
             <div className="flex-1 p-6 bg-gradient-to-br from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30">
               <div className="h-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-sm overflow-hidden">
@@ -138,10 +141,10 @@ export default function Configurator() {
               <div className={`bg-white dark:bg-technical-800 border-l-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg ${
                 rightPanelExpanded 
                   ? rightPanelFullWidth 
-                    ? "w-full" 
+                    ? "w-full h-full" 
                     : "w-80 md:w-80 lg:w-96 xl:w-1/3" 
                   : "w-12"
-              } max-h-screen`}>
+              } ${rightPanelFullWidth ? 'max-h-full' : 'max-h-screen'}`}>
                 {rightPanelExpanded && (
                   <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
                     <div className="h-full border-l border-technical-100 dark:border-technical-600/30 flex flex-col">
@@ -180,6 +183,35 @@ export default function Configurator() {
               </div>
             </div>
           </main>
+          )}
+          
+          {/* Right Panel Full Width Mode */}
+          {rightPanelFullWidth && rightPanelExpanded && (
+            <div className="w-full h-full bg-white dark:bg-technical-800 border-t-2 border-technical-200/50 dark:border-technical-600/50 flex flex-col shadow-lg">
+              <div className="flex-1 overflow-hidden bg-gradient-to-b from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30 h-full">
+                <div className="h-full flex flex-col">
+                  {/* Panel Header with Full Width Toggle */}
+                  <div className="flex items-center justify-between p-3 border-b border-technical-200/50 dark:border-technical-600/50">
+                    <h2 className="text-sm font-semibold text-technical-700 dark:text-technical-300">
+                      Specifications - Full Width
+                    </h2>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setRightPanelFullWidth(false)}
+                      className="h-7 w-7 p-0"
+                      title="Restore panel width"
+                    >
+                      ⟲
+                    </Button>
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <SpecificationPanel isExpanded={true} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </ConfigurationProvider>
