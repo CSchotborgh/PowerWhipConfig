@@ -181,9 +181,9 @@ export default function Configurator() {
           
           {/* Main Content Area */}
           <main className="flex-1 flex bg-white dark:bg-technical-800 rounded-tl-xl shadow-inner">
-            {/* Design Canvas Area */}
-            <div className="flex-1 p-6 bg-gradient-to-br from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30">
-              <div className="h-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-sm overflow-hidden">
+            {/* Design Canvas Area - Responsive */}
+            <div className="flex-1 min-w-0 p-6 bg-gradient-to-br from-white to-technical-50/30 dark:from-technical-800 dark:to-technical-700/30">
+              <div className="h-full w-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-sm overflow-hidden">
                 <DesignCanvas />
               </div>
             </div>
@@ -235,7 +235,7 @@ export default function Configurator() {
                           {rightPanelWidth}px wide
                         </div>
                       </div>
-                      <div className="flex-1 overflow-hidden">
+                      <div className="flex-1 overflow-hidden w-full">
                         <SpecificationPanel isExpanded={true} />
                       </div>
                     </div>

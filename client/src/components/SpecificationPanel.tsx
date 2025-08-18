@@ -42,8 +42,8 @@ export default function SpecificationPanel({ isExpanded }: SpecificationPanelPro
 
   return (
     <div className={cn(
-      "bg-white dark:bg-technical-800 border-l border-technical-200 dark:border-technical-700 flex flex-col transition-all duration-300 ease-in-out max-h-screen",
-      isExpanded ? "w-80 md:w-80" : "w-12"
+      "bg-white dark:bg-technical-800 border-l border-technical-200 dark:border-technical-700 flex flex-col transition-all duration-300 ease-in-out max-h-screen h-full",
+      !isExpanded && "w-12"
     )}>
       <div className="p-4 border-b border-technical-200 dark:border-technical-700">
         <h3 className="font-semibold text-technical-900 dark:text-technical-100 flex items-center">
