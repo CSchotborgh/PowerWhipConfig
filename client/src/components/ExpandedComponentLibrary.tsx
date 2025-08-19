@@ -28,6 +28,8 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
   const [editingGaugeValue, setEditingGaugeValue] = useState<string>('');
   const [editingName, setEditingName] = useState<string | null>(null);
   const [editingNameValue, setEditingNameValue] = useState<string>('');
+  const [editingPrice, setEditingPrice] = useState<string | null>(null);
+  const [editingPriceValue, setEditingPriceValue] = useState<string>('');
 
   const { data: components = [], isLoading } = useQuery<ElectricalComponent[]>({
     queryKey: ['/api/components'],
@@ -217,6 +219,41 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
   const cancelNameEdit = () => {
     setEditingName(null);
     setEditingNameValue('');
+  };
+
+  // Helper functions for price editing
+  const startEditingPrice = (componentId: string, currentPrice: number | null) => {
+    setEditingPrice(componentId);
+    setEditingPriceValue((currentPrice || 0).toFixed(2));
+  };
+
+  const savePriceEdit = async (componentId: string) => {
+    const newPrice = parseFloat(editingPriceValue);
+    if (!isNaN(newPrice) && newPrice >= 0) {
+      const originalComponent = components.find(c => c.id === componentId);
+      if (originalComponent && originalComponent.price !== newPrice) {
+        // Create new component with modified price
+        const newComponent = {
+          ...originalComponent,
+          id: undefined, // Let backend generate new ID
+          name: `${originalComponent.name} ($${newPrice.toFixed(2)})`,
+          price: newPrice,
+        };
+        
+        try {
+          await createComponentMutation.mutateAsync(newComponent);
+        } catch (error) {
+          console.error('Failed to create component with new price:', error);
+        }
+      }
+    }
+    setEditingPrice(null);
+    setEditingPriceValue('');
+  };
+
+  const cancelPriceEdit = () => {
+    setEditingPrice(null);
+    setEditingPriceValue('');
   };
 
   // Auto-expand categories when searching
@@ -704,9 +741,53 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                               </div>
                               
                               {component.price && (
-                                <div className="text-xs font-medium text-green-600">
-                                  ${component.price.toFixed(2)}
-                                  {(component.type === 'wire' || component.type === 'conduit') && ' /ft'}
+                                <div className="relative">
+                                  {editingPrice === component.id ? (
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-xs">$</span>
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={editingPriceValue}
+                                        onChange={(e) => setEditingPriceValue(e.target.value)}
+                                        className="h-6 w-20 text-xs px-1"
+                                        autoFocus
+                                        onKeyDown={async (e) => {
+                                          if (e.key === 'Enter') await savePriceEdit(component.id);
+                                          if (e.key === 'Escape') cancelPriceEdit();
+                                        }}
+                                      />
+                                      {(component.type === 'wire' || component.type === 'conduit') && (
+                                        <span className="text-xs">/ft</span>
+                                      )}
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={async () => await savePriceEdit(component.id)}
+                                        className="h-5 w-5 p-0"
+                                      >
+                                        <Check className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={cancelPriceEdit}
+                                        className="h-5 w-5 p-0"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div 
+                                      className="text-xs font-medium text-green-600 cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20 px-1 py-0.5 rounded group inline-flex items-center gap-1"
+                                      onClick={() => startEditingPrice(component.id, component.price)}
+                                    >
+                                      <span>${component.price.toFixed(2)}</span>
+                                      {(component.type === 'wire' || component.type === 'conduit') && <span> /ft</span>}
+                                      <Edit3 className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>
