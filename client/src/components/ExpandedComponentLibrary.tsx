@@ -23,6 +23,8 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
   const [editingVoltageValue, setEditingVoltageValue] = useState<string>('');
   const [editingCurrent, setEditingCurrent] = useState<string | null>(null);
   const [editingCurrentValue, setEditingCurrentValue] = useState<string>('');
+  const [editingGauge, setEditingGauge] = useState<string | null>(null);
+  const [editingGaugeValue, setEditingGaugeValue] = useState<string>('');
 
   const { data: components = [], isLoading } = useQuery<ElectricalComponent[]>({
     queryKey: ['/api/components'],
@@ -99,6 +101,30 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
   const cancelCurrentEdit = () => {
     setEditingCurrent(null);
     setEditingCurrentValue('');
+  };
+
+  // Helper functions for gauge editing
+  const startEditingGauge = (componentId: string, currentGauge: string) => {
+    setEditingGauge(componentId);
+    setEditingGaugeValue(currentGauge);
+  };
+
+  const saveGaugeEdit = (componentId: string) => {
+    const newGauge = editingGaugeValue.trim();
+    if (newGauge) {
+      // Update the component in memory (this would typically update a global state or backend)
+      const component = components.find(c => c.id === componentId);
+      if (component && component.compatibleGauges) {
+        (component.compatibleGauges as any)[0] = newGauge;
+      }
+    }
+    setEditingGauge(null);
+    setEditingGaugeValue('');
+  };
+
+  const cancelGaugeEdit = () => {
+    setEditingGauge(null);
+    setEditingGaugeValue('');
   };
 
   // Auto-expand categories when searching
@@ -501,9 +527,49 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                                   </div>
                                 )}
                                 {(component.compatibleGauges as any)?.length > 0 && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {(component.compatibleGauges as any)[0]} AWG
-                                  </Badge>
+                                  <div className="relative">
+                                    {editingGauge === component.id ? (
+                                      <div className="flex items-center gap-1">
+                                        <Input
+                                          type="text"
+                                          value={editingGaugeValue}
+                                          onChange={(e) => setEditingGaugeValue(e.target.value)}
+                                          className="h-6 w-16 text-xs px-1"
+                                          autoFocus
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') saveGaugeEdit(component.id);
+                                            if (e.key === 'Escape') cancelGaugeEdit();
+                                          }}
+                                        />
+                                        <span className="text-xs">AWG</span>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() => saveGaugeEdit(component.id)}
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          <Check className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={cancelGaugeEdit}
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <Badge 
+                                        variant="outline" 
+                                        className="text-xs cursor-pointer hover:bg-secondary/20 group"
+                                        onClick={() => startEditingGauge(component.id, (component.compatibleGauges as any)[0])}
+                                      >
+                                        <span>{(component.compatibleGauges as any)[0]} AWG</span>
+                                        <Edit3 className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                      </Badge>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                               
