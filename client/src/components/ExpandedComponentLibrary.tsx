@@ -21,6 +21,8 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
   ]);
   const [editingVoltage, setEditingVoltage] = useState<string | null>(null);
   const [editingVoltageValue, setEditingVoltageValue] = useState<string>('');
+  const [editingCurrent, setEditingCurrent] = useState<string | null>(null);
+  const [editingCurrentValue, setEditingCurrentValue] = useState<string>('');
 
   const { data: components = [], isLoading } = useQuery<ElectricalComponent[]>({
     queryKey: ['/api/components'],
@@ -73,6 +75,30 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
   const cancelVoltageEdit = () => {
     setEditingVoltage(null);
     setEditingVoltageValue('');
+  };
+
+  // Helper functions for current editing
+  const startEditingCurrent = (componentId: string, currentAmp: number) => {
+    setEditingCurrent(componentId);
+    setEditingCurrentValue(currentAmp.toString());
+  };
+
+  const saveCurrentEdit = (componentId: string) => {
+    const newCurrent = parseInt(editingCurrentValue);
+    if (!isNaN(newCurrent) && newCurrent > 0) {
+      // Update the component in memory (this would typically update a global state or backend)
+      const component = components.find(c => c.id === componentId);
+      if (component) {
+        component.maxCurrent = newCurrent;
+      }
+    }
+    setEditingCurrent(null);
+    setEditingCurrentValue('');
+  };
+
+  const cancelCurrentEdit = () => {
+    setEditingCurrent(null);
+    setEditingCurrentValue('');
   };
 
   // Auto-expand categories when searching
@@ -430,9 +456,49 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                                   </div>
                                 )}
                                 {component.maxCurrent && component.maxCurrent > 0 && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {component.maxCurrent}A
-                                  </Badge>
+                                  <div className="relative">
+                                    {editingCurrent === component.id ? (
+                                      <div className="flex items-center gap-1">
+                                        <Input
+                                          type="number"
+                                          value={editingCurrentValue}
+                                          onChange={(e) => setEditingCurrentValue(e.target.value)}
+                                          className="h-6 w-16 text-xs px-1"
+                                          autoFocus
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') saveCurrentEdit(component.id);
+                                            if (e.key === 'Escape') cancelCurrentEdit();
+                                          }}
+                                        />
+                                        <span className="text-xs">A</span>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() => saveCurrentEdit(component.id)}
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          <Check className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={cancelCurrentEdit}
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <Badge 
+                                        variant="secondary" 
+                                        className="text-xs cursor-pointer hover:bg-secondary/80 group"
+                                        onClick={() => startEditingCurrent(component.id, component.maxCurrent)}
+                                      >
+                                        <span>{component.maxCurrent}A</span>
+                                        <Edit3 className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                      </Badge>
+                                    )}
+                                  </div>
                                 )}
                                 {(component.compatibleGauges as any)?.length > 0 && (
                                   <Badge variant="outline" className="text-xs">
