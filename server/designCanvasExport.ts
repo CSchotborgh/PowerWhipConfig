@@ -43,29 +43,251 @@ export class DesignCanvasExporter {
     // Create a new workbook
     const workbook = XLSX.utils.book_new();
 
-    // Sheet 1: Design Canvas Components (Main Output)
+    // Sheet 1: Standard Order Entry Header (using Parse Processing functions)
+    const orderEntryData = this.createOrderEntryHeaderSheet(components);
+    const orderEntrySheet = XLSX.utils.aoa_to_sheet(orderEntryData);
+    XLSX.utils.book_append_sheet(workbook, orderEntrySheet, 'Order Entry');
+
+    // Sheet 2: Design Canvas Components (Main Output)
     const designCanvasData = this.createDesignCanvasSheet(components);
     const designCanvasSheet = XLSX.utils.json_to_sheet(designCanvasData);
     XLSX.utils.book_append_sheet(workbook, designCanvasSheet, 'Design Canvas Output');
 
-    // Sheet 2: Receptacle Pattern Lookup
+    // Sheet 3: Receptacle Pattern Lookup
     const receptacleLookupData = this.createReceptacleLookupSheet(components);
     const receptacleLookupSheet = XLSX.utils.json_to_sheet(receptacleLookupData);
     XLSX.utils.book_append_sheet(workbook, receptacleLookupSheet, 'Receptacle Pattern Lookup');
 
-    // Sheet 3: Master Bubble Lookup Reference
+    // Sheet 4: Master Bubble Lookup Reference
     if (this.masterBubbleLookupData.length > 0) {
       const masterBubbleSheet = XLSX.utils.json_to_sheet(this.masterBubbleLookupData);
       XLSX.utils.book_append_sheet(workbook, masterBubbleSheet, 'Master Bubble Lookup');
     }
 
-    // Sheet 4: Export Summary and Instructions
+    // Sheet 5: Export Summary and Instructions
     const summaryData = this.createExportSummarySheet(components);
     const summarySheet = XLSX.utils.json_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Export Summary');
 
     // Generate the Excel buffer
     return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+  }
+
+  // NEW: Create standard order entry header sheet using Parse Processing functions
+  private createOrderEntryHeaderSheet(components: DroppedComponent[]): any[][] {
+    const orderEntryData: any[][] = [];
+    let lineNumber = 1;
+    
+    // Header row based on PreSal output format structure
+    orderEntryData.push([
+      'Line', 'Qty', 'Choose receptacle', 'Select Cable/Conduit Type', 'Whip Length (ft)', 
+      'Tail Length (ft)', 'Label Color (Background/Text)', 'building', 'PDU', 'Panel',
+      'First Circuit', 'Second Circuit', 'Third Circuit', 'Cage', 'Cabinet Number',
+      'Included Breaker', 'Mounting bolt', 'Conduit Size', 'Conductor AWG', 'Green AWG', 
+      'Voltage', 'Box', 'L1', 'L2', 'L3', 'N', 'E', 'Drawing number', 'Notes to Enconnex',
+      'Orderable Part number', 'base price', 'Per foot', 'length', 'Bolt adder',
+      'assembled price', 'Breaker adder', 'Price to Wesco', 'List Price',
+      'Budgetary pricing text', 'phase type', 'conductor count', 'neutral', 'current',
+      'UseVoltage', 'plate hole', 'box', 'Box code', 'Box options', 'Breaker options'
+    ]);
+
+    // Process each component using Parse Processing logic
+    components.forEach((component, index) => {
+      // Parse component specifications similar to existing Parse Processing functions
+      const specs = component.specifications || {};
+      const receptacleType = this.determineReceptacleType(component);
+      const cableType = this.determineCableType(component);
+      const whipLength = this.determineWhipLength(component);
+      const tailLength = this.determineTailLength(component);
+      
+      // Generate order entry row following PreSal format structure
+      orderEntryData.push([
+        lineNumber.toString(),
+        '1', // Default quantity
+        receptacleType,
+        cableType,
+        whipLength,
+        tailLength,
+        this.determineLabelColor(component),
+        '', // building
+        '', // PDU  
+        '', // Panel
+        '1', // First Circuit
+        '3', // Second Circuit
+        '5', // Third Circuit
+        '', // Cage
+        '', // Cabinet Number
+        '', // Included Breaker
+        '', // Mounting bolt
+        this.determineConduitSize(component),
+        this.determineConductorAWG(component),
+        this.determineGroundAWG(component),
+        this.determineVoltage(component),
+        this.determineBoxType(component),
+        '--------', // L1
+        '--------', // L2
+        '--------', // L3
+        '--------', // N
+        '------->', // E
+        `PWxx-${receptacleType}T-xxSALx(103)`, // Drawing number
+        `Design Canvas Component: ${component.name}`, // Notes to Enconnex
+        `PW250K-${receptacleType}T-D${lineNumber}SAL1234`, // Orderable Part number
+        this.determineBasePrice(component), // base price
+        '6', // Per foot
+        '260', // length
+        '0', // Bolt adder
+        this.determineAssembledPrice(component), // assembled price
+        '0', // Breaker adder
+        this.determineAssembledPrice(component), // Price to Wesco
+        this.determineListPrice(component), // List Price
+        `${component.name} from Design Canvas - Position (${Math.round(component.x)}, ${Math.round(component.y)})`, // Budgetary pricing text
+        this.determinePhaseType(component), // phase type
+        this.determineConductorCount(component), // conductor count
+        '0', // neutral
+        this.determineCurrent(component), // current
+        this.determineVoltage(component), // UseVoltage
+        this.determinePlateHole(component), // plate hole
+        this.determineBoxCode(component), // box
+        this.determineBoxCode(component), // Box code
+        '', // Box options
+        this.determineBreakerOptions(component) // Breaker options
+      ]);
+      
+      lineNumber++;
+    });
+
+    return orderEntryData;
+  }
+
+  // Helper functions for Parse Processing logic
+  private determineReceptacleType(component: DroppedComponent): string {
+    if (component.name.includes('NEMA')) {
+      return component.name.replace(/NEMA\s*/i, '');
+    }
+    if (component.specifications?.pattern) {
+      return component.specifications.pattern;
+    }
+    return component.name;
+  }
+
+  private determineCableType(component: DroppedComponent): string {
+    if (component.type === 'wire' || component.name.toLowerCase().includes('cable')) {
+      return 'MC';
+    }
+    return 'MCC'; // Default
+  }
+
+  private determineWhipLength(component: DroppedComponent): string {
+    if (component.specifications?.length) {
+      return component.specifications.length.toString();
+    }
+    return '250'; // Default
+  }
+
+  private determineTailLength(component: DroppedComponent): string {
+    return '10'; // Default
+  }
+
+  private determineLabelColor(component: DroppedComponent): string {
+    return 'Black (conduit)'; // Default
+  }
+
+  private determineConduitSize(component: DroppedComponent): string {
+    if (component.specifications?.conduitSize) {
+      return component.specifications.conduitSize;
+    }
+    return '3/4'; // Default
+  }
+
+  private determineConductorAWG(component: DroppedComponent): string {
+    if (component.specifications?.gauge) {
+      return component.specifications.gauge.toString();
+    }
+    if (component.name.includes('12 AWG')) return '12';
+    if (component.name.includes('14 AWG')) return '14';
+    if (component.name.includes('10 AWG')) return '10';
+    return '6'; // Default
+  }
+
+  private determineGroundAWG(component: DroppedComponent): string {
+    return '8'; // Default
+  }
+
+  private determineVoltage(component: DroppedComponent): string {
+    if (component.specifications?.voltage) {
+      return component.specifications.voltage.toString();
+    }
+    return '208'; // Default
+  }
+
+  private determineBoxType(component: DroppedComponent): string {
+    if (component.type === 'enclosure' || component.name.toLowerCase().includes('box')) {
+      return component.name;
+    }
+    return 'Standard Power Whip Box'; // Default
+  }
+
+  private determineBasePrice(component: DroppedComponent): string {
+    if (component.specifications?.price || component.specifications?.cost) {
+      return (component.specifications.price || component.specifications.cost).toString();
+    }
+    return '287.2'; // Default
+  }
+
+  private determineAssembledPrice(component: DroppedComponent): string {
+    const basePrice = parseFloat(this.determineBasePrice(component));
+    return (basePrice * 6.4).toFixed(1); // Base price * factor
+  }
+
+  private determineListPrice(component: DroppedComponent): string {
+    const assembledPrice = parseFloat(this.determineAssembledPrice(component));
+    return (assembledPrice * 1.33).toFixed(2); // Assembled price * markup
+  }
+
+  private determinePhaseType(component: DroppedComponent): string {
+    if (component.specifications?.phases || component.specifications?.poles) {
+      const phases = component.specifications.phases || component.specifications.poles;
+      return phases === 1 ? '1P' : phases === 3 ? '3D' : '1P';
+    }
+    return '3D'; // Default
+  }
+
+  private determineConductorCount(component: DroppedComponent): string {
+    if (component.specifications?.conductors) {
+      return component.specifications.conductors.toString();
+    }
+    if (component.specifications?.poles) {
+      return component.specifications.poles.toString();
+    }
+    return '3'; // Default
+  }
+
+  private determineCurrent(component: DroppedComponent): string {
+    if (component.specifications?.current) {
+      return component.specifications.current.toString();
+    }
+    if (component.specifications?.rating) {
+      return component.specifications.rating.toString();
+    }
+    return '60'; // Default
+  }
+
+  private determinePlateHole(component: DroppedComponent): string {
+    const current = this.determineCurrent(component);
+    return `${current}AH`;
+  }
+
+  private determineBoxCode(component: DroppedComponent): string {
+    const current = this.determineCurrent(component);
+    return `${current}AH`;
+  }
+
+  private determineBreakerOptions(component: DroppedComponent): string {
+    if (component.type === 'protection' || component.name.toLowerCase().includes('breaker')) {
+      const current = this.determineCurrent(component);
+      return `${this.determinePhaseType(component) === '1P' ? '1' : '3'} Pole, ${current}A, 240/120V, Bolt in, 22KA, Square D, QOB${current}0VH`;
+    }
+    return '3 Pole, 60A, 240/120V, Bolt in, 22KA, Square D, QOB360VH'; // Default
   }
 
   private createDesignCanvasSheet(components: DroppedComponent[]) {
