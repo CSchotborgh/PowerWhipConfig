@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Search, Plug, Shield, Zap, Cable, Settings, Package, Tag, Wrench, Terminal } from 'lucide-react';
+import { Search, Plug, Shield, Zap, Cable, Settings, Package, Tag, Wrench, Terminal, X, Filter } from 'lucide-react';
 import type { ElectricalComponent } from '@shared/schema';
 
 interface ExpandedComponentLibraryProps {
@@ -14,7 +14,8 @@ interface ExpandedComponentLibraryProps {
 }
 
 export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLibraryProps) {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [highlightedComponent, setHighlightedComponent] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([
     'connectors-receptacles', 'protection', 'wire-cable'
   ]);
@@ -24,12 +25,57 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
     refetchOnWindowFocus: false
   });
 
-  const filteredComponents = components.filter(component => {
-    const matchesSearch = component.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (component.specifications as any)?.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (component.specifications as any)?.partNumber?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
+  // Enhanced filtering logic from ComponentLibrary
+  const filteredComponents = useMemo(() => {
+    if (!components) return [];
+    if (!searchQuery.trim()) return components;
+    
+    const query = searchQuery.toLowerCase();
+    return components.filter(component => 
+      component.name.toLowerCase().includes(query) ||
+      component.type.toLowerCase().includes(query) ||
+      component.category.toLowerCase().includes(query) ||
+      (component.specifications && JSON.stringify(component.specifications).toLowerCase().includes(query))
+    );
+  }, [components, searchQuery]);
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setHighlightedComponent(null);
+  };
+
+  const isComponentHighlighted = (componentId: string) => {
+    return highlightedComponent === componentId || 
+           (searchQuery.trim() && !highlightedComponent);
+  };
+
+  // Auto-expand categories when searching
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const categoriesWithResults = componentCategories
+        .filter(cat => cat.items.length > 0)
+        .map(cat => cat.id);
+      setExpandedCategories(categoriesWithResults);
+    } else {
+      setExpandedCategories(['connectors-receptacles', 'protection', 'wire-cable']);
+    }
+  }, [searchQuery]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        document.querySelector('.component-search input')?.focus();
+      }
+      if (e.key === 'Escape' && searchQuery) {
+        clearSearch();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [searchQuery]);
 
   const componentCategories = [
     {
@@ -163,20 +209,64 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
 
   return (
     <div className="space-y-4 h-full flex flex-col">
-      {/* Search */}
-      <div className="relative">
+      {/* Enhanced Search with Clear Button */}
+      <div className="relative component-search">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
-          placeholder="Search components..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
+          placeholder="Search components... (e.g., NEMA, 20A, junction, THHN, Brady) - Press Ctrl+K to focus"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 pr-10 bg-white dark:bg-technical-800 border-technical-200 dark:border-technical-600 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+          autoComplete="off"
+          spellCheck={false}
         />
+        {searchQuery && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearSearch}
+            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-technical-100 dark:hover:bg-technical-700"
+            title="Clear search"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        )}
       </div>
 
-      {/* Total count */}
-      <div className="text-sm text-muted-foreground">
-        {filteredComponents.length} total components from MasterBubbleUpLookup
+      {/* Search Results Info & Filter Summary */}
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Filter className="h-3 w-3" />
+          <span>
+            {searchQuery ? (
+              <span className="font-medium">
+                {filteredComponents.length} of {components.length} components
+                {searchQuery && (
+                  <span className="text-primary ml-1">
+                    matching "{searchQuery}"
+                  </span>
+                )}
+              </span>
+            ) : (
+              <>{filteredComponents.length} total components from MasterBubbleUpLookup</>
+            )}
+          </span>
+        </div>
+        {searchQuery && (
+          <div className="flex items-center gap-1">
+            <Badge variant="outline" className="text-xs">
+              ESC to clear
+            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearSearch}
+              className="h-6 px-2 text-xs"
+            >
+              Clear search
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Categories */}
@@ -203,9 +293,15 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                     category.items.map((component) => (
                       <Card 
                         key={component.name} 
-                        className="cursor-grab hover:bg-muted/50 transition-colors"
+                        className={`cursor-grab transition-all duration-200 ${
+                          isComponentHighlighted(component.name)
+                            ? 'border-primary bg-primary/10 dark:bg-primary/20 shadow-lg ring-2 ring-primary/30 search-highlight'
+                            : 'hover:bg-muted/50 border-technical-200 dark:border-technical-600'
+                        }`}
                         draggable
                         onDragStart={(e) => handleDragStart(e, component)}
+                        onMouseEnter={() => searchQuery && setHighlightedComponent(component.name)}
+                        onMouseLeave={() => setHighlightedComponent(null)}
                       >
                         <CardContent className="p-3">
                           <div className="flex items-start justify-between gap-3">
