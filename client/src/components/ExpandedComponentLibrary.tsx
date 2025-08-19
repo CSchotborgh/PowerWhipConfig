@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Search, Plug, Shield, Zap, Cable, Settings, Package, Tag, Wrench, Terminal, X, Filter } from 'lucide-react';
+import { Search, Plug, Shield, Zap, Cable, Settings, Package, Tag, Wrench, Terminal, X, Filter, Edit3, Check } from 'lucide-react';
 import type { ElectricalComponent } from '@shared/schema';
 
 interface ExpandedComponentLibraryProps {
@@ -19,6 +19,8 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
   const [expandedCategories, setExpandedCategories] = useState<string[]>([
     'connectors-receptacles', 'protection', 'wire-cable'
   ]);
+  const [editingVoltage, setEditingVoltage] = useState<string | null>(null);
+  const [editingVoltageValue, setEditingVoltageValue] = useState<string>('');
 
   const { data: components = [], isLoading } = useQuery<ElectricalComponent[]>({
     queryKey: ['/api/components'],
@@ -47,6 +49,30 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
   const isComponentHighlighted = (componentId: string) => {
     return highlightedComponent === componentId || 
            (searchQuery.trim() && !highlightedComponent);
+  };
+
+  // Helper functions for voltage editing
+  const startEditingVoltage = (componentId: string, currentVoltage: number) => {
+    setEditingVoltage(componentId);
+    setEditingVoltageValue(currentVoltage.toString());
+  };
+
+  const saveVoltageEdit = (componentId: string) => {
+    const newVoltage = parseInt(editingVoltageValue);
+    if (!isNaN(newVoltage) && newVoltage > 0) {
+      // Update the component in memory (this would typically update a global state or backend)
+      const component = components.find(c => c.id === componentId);
+      if (component) {
+        component.maxVoltage = newVoltage;
+      }
+    }
+    setEditingVoltage(null);
+    setEditingVoltageValue('');
+  };
+
+  const cancelVoltageEdit = () => {
+    setEditingVoltage(null);
+    setEditingVoltageValue('');
   };
 
   // Auto-expand categories when searching
@@ -359,9 +385,49 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                               
                               <div className="flex flex-wrap gap-1 mb-2">
                                 {component.maxVoltage && component.maxVoltage > 0 && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {component.maxVoltage}V
-                                  </Badge>
+                                  <div className="relative">
+                                    {editingVoltage === component.id ? (
+                                      <div className="flex items-center gap-1">
+                                        <Input
+                                          type="number"
+                                          value={editingVoltageValue}
+                                          onChange={(e) => setEditingVoltageValue(e.target.value)}
+                                          className="h-6 w-16 text-xs px-1"
+                                          autoFocus
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') saveVoltageEdit(component.id);
+                                            if (e.key === 'Escape') cancelVoltageEdit();
+                                          }}
+                                        />
+                                        <span className="text-xs">V</span>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() => saveVoltageEdit(component.id)}
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          <Check className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={cancelVoltageEdit}
+                                          className="h-5 w-5 p-0"
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <Badge 
+                                        variant="secondary" 
+                                        className="text-xs cursor-pointer hover:bg-secondary/80 group"
+                                        onClick={() => startEditingVoltage(component.id, component.maxVoltage)}
+                                      >
+                                        <span>{component.maxVoltage}V</span>
+                                        <Edit3 className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                      </Badge>
+                                    )}
+                                  </div>
                                 )}
                                 {component.maxCurrent && component.maxCurrent > 0 && (
                                   <Badge variant="secondary" className="text-xs">
