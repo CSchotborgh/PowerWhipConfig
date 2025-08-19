@@ -9,6 +9,7 @@ import DocumentationTab from "@/components/DocumentationTab";
 import ExpandedComponentLibrary from "@/components/ExpandedComponentLibrary";
 import { DraggablePanel } from "@/components/DraggablePanel";
 import { ConfigurationProvider } from "@/contexts/ConfigurationContext";
+import { DesignCanvasProvider } from "@/contexts/DesignCanvasContext";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -100,9 +101,10 @@ export default function Configurator() {
 
   return (
     <ConfigurationProvider>
-      <div className="h-screen flex flex-col bg-technical-50 dark:bg-technical-900 text-technical-900 dark:text-technical-50">
-        {/* Header Navbar with Navigation */}
-        <Header activeTab={activeTab} onTabChange={setActiveTab} />
+      <DesignCanvasProvider>
+        <div className="h-screen flex flex-col bg-technical-50 dark:bg-technical-900 text-technical-900 dark:text-technical-50">
+          {/* Header Navbar with Navigation */}
+          <Header activeTab={activeTab} onTabChange={setActiveTab} />
         
         {/* Main Body Container - Enhanced Mobile Layout */}
         <div className="flex flex-1 overflow-hidden bg-gradient-to-br from-technical-50 to-technical-100 dark:from-technical-900 dark:to-technical-800 relative">
@@ -189,10 +191,10 @@ export default function Configurator() {
                 <DesignCanvas />
               </div>
             </div>
-
           </main>
         </div>
-      </div>
+        </div>
+      </DesignCanvasProvider>
     </ConfigurationProvider>
   );
 }

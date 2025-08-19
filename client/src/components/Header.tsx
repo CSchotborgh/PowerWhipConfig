@@ -3,6 +3,17 @@ import { FileSpreadsheet, FileText, Settings, Eye, ShoppingCart } from "lucide-r
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { PanelControls } from "./PanelControls";
+import { useDesignCanvas } from "@/contexts/DesignCanvasContext";
+
+interface DroppedComponent {
+  id: string;
+  type: string;
+  name: string;
+  x: number;
+  y: number;
+  specifications?: Record<string, any>;
+  partNumber?: string;
+}
 
 interface HeaderProps {
   activeTab: "configuration" | "visual" | "documentation" | "order";
@@ -11,6 +22,15 @@ interface HeaderProps {
 
 export default function Header({ activeTab, onTabChange }: HeaderProps) {
   const { toast } = useToast();
+  // Use optional chaining to handle cases where context might not be available
+  let droppedComponents: DroppedComponent[] = [];
+  try {
+    const { droppedComponents: contextComponents } = useDesignCanvas();
+    droppedComponents = contextComponents;
+  } catch (error) {
+    // Context not available, use empty array
+    console.warn('DesignCanvas context not available in Header');
+  }
 
   const tabs = [
     {
@@ -35,19 +55,52 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
     },
   ];
 
-  const handleExportXLSX = () => {
-    toast({
-      title: "Exporting XLSX",
-      description: "Your configuration is being exported to Excel format...",
-    });
-    
-    // Here you would implement actual XLSX export logic
-    setTimeout(() => {
+  const handleExportXLSX = async () => {
+    try {
+      toast({
+        title: "Exporting XLSX",
+        description: "Generating receptacle pattern lookup file...",
+      });
+
+      // Get design canvas components from context/props if available
+      const response = await fetch('/api/design-canvas/export-xlsx', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          components: droppedComponents,
+          exportType: 'receptacle-pattern-lookup'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `ReceptaclePatternLookup_${Date.now()}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
       toast({
         title: "Export Complete",
-        description: "Configuration exported successfully to XLSX format.",
+        description: "Receptacle pattern lookup file downloaded successfully.",
       });
-    }, 2000);
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export XLSX file. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleExportPDF = () => {
