@@ -3,17 +3,9 @@ import { FileSpreadsheet, FileText, Settings, Eye, ShoppingCart } from "lucide-r
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { PanelControls } from "./PanelControls";
-import { useDesignCanvas } from "@/contexts/DesignCanvasContext";
+import { DesignCanvasExportButton } from "./DesignCanvasExportButton";
 
-interface DroppedComponent {
-  id: string;
-  type: string;
-  name: string;
-  x: number;
-  y: number;
-  specifications?: Record<string, any>;
-  partNumber?: string;
-}
+
 
 interface HeaderProps {
   activeTab: "configuration" | "visual" | "documentation" | "order";
@@ -22,15 +14,7 @@ interface HeaderProps {
 
 export default function Header({ activeTab, onTabChange }: HeaderProps) {
   const { toast } = useToast();
-  // Use optional chaining to handle cases where context might not be available
-  let droppedComponents: DroppedComponent[] = [];
-  try {
-    const { droppedComponents: contextComponents } = useDesignCanvas();
-    droppedComponents = contextComponents;
-  } catch (error) {
-    // Context not available, use empty array
-    console.warn('DesignCanvas context not available in Header');
-  }
+
 
   const tabs = [
     {
@@ -62,14 +46,14 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
         description: "Generating receptacle pattern lookup file...",
       });
 
-      // Get design canvas components from context/props if available
+      // Get design canvas components (using empty array as fallback)
       const response = await fetch('/api/design-canvas/export-xlsx', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          components: droppedComponents,
+          components: [], // Will be replaced by dedicated export button
           exportType: 'receptacle-pattern-lookup'
         }),
       });
@@ -136,13 +120,7 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
           <div className="flex items-center space-x-3">
             <PanelControls />
             <div className="w-px h-6 bg-technical-200 dark:bg-technical-600"></div>
-            <Button 
-              onClick={handleExportXLSX}
-              className="bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all duration-200"
-            >
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
-              Export XLSX
-            </Button>
+            <DesignCanvasExportButton />
             <Button 
               onClick={handleExportPDF}
               variant="outline"

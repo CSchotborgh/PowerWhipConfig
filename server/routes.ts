@@ -1937,7 +1937,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const filePath = './attached_assets/ConfiguratorModelDatasetEPW_1754006250837.xlsx';
       
       // Check if file exists before processing
-      const fs = require('fs');
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: 'ConfiguratorModelDatasetEPW file not found' });
       }
@@ -3033,131 +3032,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // NEW: Design Canvas XLSX Export with Receptacle Pattern Lookup
+  // Design Canvas XLSX Export endpoint - Dedicated standalone export
   app.post("/api/design-canvas/export-xlsx", async (req, res) => {
     try {
       const { components, exportType } = req.body;
       
       console.log(`Design Canvas Export: Processing ${components?.length || 0} components for ${exportType}`);
       
-      // Create receptacle pattern lookup data
-      const receptaclePatterns: any[] = [];
-      const currentDate = new Date().toLocaleDateString();
-      
-      // Add header row
-      receptaclePatterns.push([
-        'Pattern ID',
-        'Receptacle Type', 
-        'Component Name',
-        'Category',
-        'Specifications',
-        'Part Number',
-        'X Position',
-        'Y Position',
-        'Canvas Type',
-        'Export Date',
-        'Lookup Status'
-      ]);
-      
-      // Process each design canvas component
-      if (components && Array.isArray(components)) {
-        components.forEach((component: any, index: number) => {
-          receptaclePatterns.push([
-            `PATTERN_${index + 1}`,
-            component.type || 'Unknown',
-            component.name || 'Unnamed Component',
-            component.category || 'Uncategorized',
-            component.specifications ? JSON.stringify(component.specifications) : '',
-            component.partNumber || component.id || '',
-            component.x || 0,
-            component.y || 0,
-            'Design Canvas',
-            currentDate,
-            'Ready for Lookup'
-          ]);
-        });
-      } else {
-        // Add sample patterns when no components are provided
-        const samplePatterns = [
-          ['SAMPLE_1', 'connector', 'NEMA 5-15P', 'Connectors & Receptacles', '{"voltage": 125, "current": 15}', 'NEMA-5-15P', 100, 150, 'Design Canvas', currentDate, 'Sample Entry'],
-          ['SAMPLE_2', 'protection', '20A Circuit Breaker', 'Protection Devices', '{"rating": 20, "type": "thermal"}', 'CB-20A', 200, 250, 'Design Canvas', currentDate, 'Sample Entry'],
-          ['SAMPLE_3', 'receptacle', 'NEMA 5-20R', 'Connectors & Receptacles', '{"voltage": 125, "current": 20}', 'NEMA-5-20R', 300, 350, 'Design Canvas', currentDate, 'Sample Entry']
-        ];
-        receptaclePatterns.push(...samplePatterns);
+      if (!components || !Array.isArray(components)) {
+        return res.status(400).json({ error: 'Invalid components data' });
       }
+
+      // Use dedicated Design Canvas Exporter
+      const { DesignCanvasExporter } = await import('./designCanvasExport');
+      const exporter = new DesignCanvasExporter();
       
-      // Create Master Bubble Lookup data sheet
-      const masterBubbleLookup: any[] = [];
-      masterBubbleLookup.push([
-        'Receptacle ID',
-        'Choose receptacle',
-        'Select Cable/Conduit Type',
-        'Whip Length (ft)',
-        'Tail Length (ft)',
-        'Voltage Rating',
-        'Current Rating',
-        'Configuration',
-        'Lookup Match',
-        'Status'
-      ]);
-      
-      // Add lookup entries based on patterns
-      receptaclePatterns.slice(1).forEach((pattern: any[]) => {
-        if (pattern[0] !== 'Pattern ID') { // Skip header
-          masterBubbleLookup.push([
-            pattern[0], // Pattern ID as Receptacle ID
-            pattern[1], // Receptacle Type as Choose receptacle
-            'LFMC', // Default cable type
-            '25', // Default whip length
-            '6', // Default tail length
-            '120V', // Default voltage
-            '15A', // Default current
-            'Standard', // Default configuration
-            'Found', // Lookup status
-            'Active' // Status
-          ]);
-        }
+      // Export design canvas to Excel buffer
+      const excelBuffer = await exporter.exportDesignCanvas({
+        components,
+        exportType: exportType || 'receptacle-pattern-lookup'
       });
-      
-      // Create Excel workbook with multiple sheets
-      const workbook = XLSX.utils.book_new();
-      
-      // Add Receptacle Pattern Lookup sheet
-      const patternsSheet = XLSX.utils.aoa_to_sheet(receptaclePatterns);
-      XLSX.utils.book_append_sheet(workbook, patternsSheet, "Receptacle Pattern Lookup");
-      
-      // Add Master Bubble Lookup sheet
-      const lookupSheet = XLSX.utils.aoa_to_sheet(masterBubbleLookup);
-      XLSX.utils.book_append_sheet(workbook, lookupSheet, "Master Bubble Lookup");
-      
-      // Add Design Canvas Summary sheet
-      const summaryData = [
-        ['Design Canvas Export Summary'],
-        [''],
-        ['Export Date:', currentDate],
-        ['Total Components:', components?.length || 0],
-        ['Export Type:', exportType || 'receptacle-pattern-lookup'],
-        ['Generated Patterns:', receptaclePatterns.length - 1],
-        ['Lookup Entries:', masterBubbleLookup.length - 1],
-        [''],
-        ['Instructions:'],
-        ['1. Use "Receptacle Pattern Lookup" sheet to view design canvas components'],
-        ['2. Use "Master Bubble Lookup" sheet for receptacle pattern matching'],
-        ['3. Enter additional receptacle patterns (one per line) for lookup processing'],
-        ['4. Export format compatible with PreSalOutputFile processing']
-      ];
-      
-      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-      XLSX.utils.book_append_sheet(workbook, summarySheet, "Export Summary");
-      
-      // Generate Excel file buffer
-      const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-      
-      // Set response headers for file download
+
+      // Set response headers for DesignCanvasOutput.xlsx download
+      res.setHeader('Content-Disposition', 'attachment; filename=DesignCanvasOutput.xlsx');
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename="ReceptaclePatternLookup_${Date.now()}.xlsx"`);
+      
+      // Send the Excel file
       res.send(excelBuffer);
       
-      console.log(`Design Canvas XLSX export completed: ${receptaclePatterns.length - 1} patterns exported`);
+      console.log(`DesignCanvasOutput.xlsx export completed: ${components?.length || 0} components exported`);
       
     } catch (error) {
       console.error('Design Canvas XLSX export error:', error);

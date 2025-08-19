@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Grid, Layers, Settings, RotateCcw, Save, Undo, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useDesignCanvas } from "@/contexts/DesignCanvasContext";
 import AGGridOrderEntry from "./AGGridOrderEntry";
 import VirtualizedOrderEntry from "./VirtualizedOrderEntry";
 import PerformanceOrderEntry from "./PerformanceOrderEntry";
@@ -29,7 +30,7 @@ interface DesignCanvasProps {
 
 
 export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
-  const [droppedComponents, setDroppedComponents] = useState<DroppedComponent[]>([]);
+  const { droppedComponents, setDroppedComponents, addComponent, removeComponent, updateComponent } = useDesignCanvas();
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
   const [viewMode, setViewMode] = useState<"design" | "order" | "transformer" | "configurator" | "excel">("design");
@@ -61,11 +62,8 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
           partNumber: componentData.partNumber
         };
         
-        setDroppedComponents(prev => {
-          const newComponents = [...prev, newComponent];
-          saveToHistory(newComponents);
-          return newComponents;
-        });
+        addComponent(newComponent);
+        saveToHistory([...droppedComponents, newComponent]);
       }
     } catch (error) {
       console.error('Error parsing dropped component:', error);
@@ -82,11 +80,9 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   };
 
   const deleteComponent = (componentId: string) => {
-    setDroppedComponents(prev => {
-      const newComponents = prev.filter(comp => comp.id !== componentId);
-      saveToHistory(newComponents);
-      return newComponents;
-    });
+    const newComponents = droppedComponents.filter(comp => comp.id !== componentId);
+    setDroppedComponents(newComponents);
+    saveToHistory(newComponents);
     if (selectedComponent === componentId) {
       setSelectedComponent(null);
     }
@@ -107,7 +103,8 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
       setHistoryIndex(newIndex);
-      setDroppedComponents([...componentHistory[newIndex]]);
+      const restoredComponents = [...componentHistory[newIndex]];
+      setDroppedComponents(restoredComponents);
       setSelectedComponent(null);
     }
   };
@@ -122,9 +119,10 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
 
   // Clear all components
   const clearCanvasWithHistory = () => {
-    setDroppedComponents([]);
+    const emptyComponents: DroppedComponent[] = [];
+    setDroppedComponents(emptyComponents);
     setSelectedComponent(null);
-    saveToHistory([]);
+    saveToHistory(emptyComponents);
   };
 
   const handleComponentMouseDown = (e: React.MouseEvent, componentId: string) => {
@@ -160,13 +158,12 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
     const newX = Math.max(0, Math.min(rect.width / canvasScale - 100, canvasX - dragOffset.x));
     const newY = Math.max(0, Math.min(rect.height / canvasScale - 100, canvasY - dragOffset.y));
     
-    setDroppedComponents(prev => 
-      prev.map(comp => 
-        comp.id === selectedComponent 
-          ? { ...comp, x: newX, y: newY }
-          : comp
-      )
+    const updatedComponents = droppedComponents.map(comp => 
+      comp.id === selectedComponent 
+        ? { ...comp, x: newX, y: newY }
+        : comp
     );
+    setDroppedComponents(updatedComponents);
   };
 
   const handleMouseUp = () => {
