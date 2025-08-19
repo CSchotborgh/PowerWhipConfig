@@ -66,7 +66,8 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 'k') {
         e.preventDefault();
-        document.querySelector('.component-search input')?.focus();
+        const searchInput = document.querySelector('.component-search input') as HTMLInputElement;
+        searchInput?.focus();
       }
       if (e.key === 'Escape' && searchQuery) {
         clearSearch();
@@ -83,6 +84,9 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
       name: 'Connectors & Receptacles',
       icon: <Plug className="h-4 w-4" />,
       color: 'bg-blue-50 dark:bg-blue-900/20',
+      headerColor: 'bg-blue-100 dark:bg-blue-800/30 border-blue-200 dark:border-blue-700',
+      iconColor: 'text-blue-600 dark:text-blue-400',
+      badgeColor: 'bg-blue-500 text-white',
       items: filteredComponents.filter(comp => 
         comp.category === 'receptacle' || 
         comp.category === 'plug' || 
@@ -95,6 +99,9 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
       name: 'Protection Devices',
       icon: <Shield className="h-4 w-4" />,
       color: 'bg-green-50 dark:bg-green-900/20',
+      headerColor: 'bg-green-100 dark:bg-green-800/30 border-green-200 dark:border-green-700',
+      iconColor: 'text-green-600 dark:text-green-400',
+      badgeColor: 'bg-green-500 text-white',
       items: filteredComponents.filter(comp => 
         comp.category === 'breaker' || 
         comp.category === 'gfci' || 
@@ -108,6 +115,9 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
       name: 'Wire & Cable',
       icon: <Cable className="h-4 w-4" />,
       color: 'bg-purple-50 dark:bg-purple-900/20',
+      headerColor: 'bg-purple-100 dark:bg-purple-800/30 border-purple-200 dark:border-purple-700',
+      iconColor: 'text-purple-600 dark:text-purple-400',
+      badgeColor: 'bg-purple-500 text-white',
       items: filteredComponents.filter(comp => 
         comp.category === 'mc-cable' || 
         comp.category === 'thhn' || 
@@ -124,6 +134,9 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
       name: 'Fittings & Adapters',
       icon: <Settings className="h-4 w-4" />,
       color: 'bg-orange-50 dark:bg-orange-900/20',
+      headerColor: 'bg-orange-100 dark:bg-orange-800/30 border-orange-200 dark:border-orange-700',
+      iconColor: 'text-orange-600 dark:text-orange-400',
+      badgeColor: 'bg-orange-500 text-white',
       items: filteredComponents.filter(comp => 
         comp.category === 'adapter' || 
         comp.category === 'clamp' || 
@@ -136,6 +149,9 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
       name: 'Terminals & Hardware',
       icon: <Terminal className="h-4 w-4" />,
       color: 'bg-red-50 dark:bg-red-900/20',
+      headerColor: 'bg-red-100 dark:bg-red-800/30 border-red-200 dark:border-red-700',
+      iconColor: 'text-red-600 dark:text-red-400',
+      badgeColor: 'bg-red-500 text-white',
       items: filteredComponents.filter(comp => 
         comp.category === 'wire-nut' || 
         comp.category === 'grounding' || 
@@ -148,6 +164,9 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
       name: 'Assemblies & Backshells',
       icon: <Wrench className="h-4 w-4" />,
       color: 'bg-indigo-50 dark:bg-indigo-900/20',
+      headerColor: 'bg-indigo-100 dark:bg-indigo-800/30 border-indigo-200 dark:border-indigo-700',
+      iconColor: 'text-indigo-600 dark:text-indigo-400',
+      badgeColor: 'bg-indigo-500 text-white',
       items: filteredComponents.filter(comp => 
         comp.category === 'backshell' || 
         comp.category === 'assembly' ||
@@ -159,6 +178,9 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
       name: 'Labels & Marking',
       icon: <Tag className="h-4 w-4" />,
       color: 'bg-pink-50 dark:bg-pink-900/20',
+      headerColor: 'bg-pink-100 dark:bg-pink-800/30 border-pink-200 dark:border-pink-700',
+      iconColor: 'text-pink-600 dark:text-pink-400',
+      badgeColor: 'bg-pink-500 text-white',
       items: filteredComponents.filter(comp => 
         comp.category === 'label' || 
         comp.category === 'marking' ||
@@ -170,6 +192,9 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
       name: 'Enclosures & Boxes',
       icon: <Package className="h-4 w-4" />,
       color: 'bg-teal-50 dark:bg-teal-900/20',
+      headerColor: 'bg-teal-100 dark:bg-teal-800/30 border-teal-200 dark:border-teal-700',
+      iconColor: 'text-teal-600 dark:text-teal-400',
+      badgeColor: 'bg-teal-500 text-white',
       items: filteredComponents.filter(comp => 
         comp.category === 'outlet-box' || 
         comp.category === 'junction-box' || 
@@ -273,21 +298,28 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
       <ScrollArea className="flex-1">
         <Accordion type="multiple" value={expandedCategories} onValueChange={setExpandedCategories}>
           {componentCategories.map((category) => (
-            <AccordionItem key={category.id} value={category.id}>
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  {category.icon}
-                  <span className="font-medium">{category.name}</span>
-                  <Badge variant="secondary" className="ml-auto">
-                    {category.items.length}
-                  </Badge>
+            <AccordionItem key={category.id} value={category.id} className="border rounded-lg mb-2">
+              <AccordionTrigger className={`hover:no-underline rounded-t-lg px-4 py-3 ${category.headerColor} transition-colors`}>
+                <div className="flex items-center gap-3 w-full">
+                  <div className={`p-1.5 rounded-md bg-white/70 dark:bg-black/20 ${category.iconColor}`}>
+                    {category.icon}
+                  </div>
+                  <span className={`font-semibold text-left ${category.iconColor}`}>{category.name}</span>
+                  <div className="ml-auto flex items-center gap-2">
+                    <Badge className={`${category.badgeColor} font-medium shadow-sm`}>
+                      {category.items.length} items
+                    </Badge>
+                  </div>
                 </div>
               </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-2 pt-2">
+              <AccordionContent className={`${category.color} border-t-0 rounded-b-lg`}>
+                <div className="space-y-3 p-4">
                   {category.items.length === 0 ? (
-                    <div className="text-sm text-muted-foreground italic p-2">
-                      No components in this category
+                    <div className="text-sm text-muted-foreground italic p-4 text-center bg-white/50 dark:bg-black/20 rounded-lg">
+                      No components found in this category
+                      {searchQuery && (
+                        <div className="text-xs mt-1">Try adjusting your search terms</div>
+                      )}
                     </div>
                   ) : (
                     category.items.map((component) => (
@@ -303,11 +335,13 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                         onMouseEnter={() => searchQuery && setHighlightedComponent(component.name)}
                         onMouseLeave={() => setHighlightedComponent(null)}
                       >
-                        <CardContent className="p-3">
+                        <CardContent className="p-3 bg-white/60 dark:bg-black/10 rounded-lg shadow-sm">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                {category.icon}
+                                <div className={`${category.iconColor}`}>
+                                  {category.icon}
+                                </div>
                                 <h4 className="font-medium text-sm truncate">{component.name}</h4>
                               </div>
                               
