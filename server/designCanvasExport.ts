@@ -73,7 +73,7 @@ export class DesignCanvasExporter {
     return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
   }
 
-  // NEW: Create standard order entry header sheet using Parse Processing functions
+  // ENHANCED: Create sophisticated Design Canvas parsing rules
   private createOrderEntryHeaderSheet(components: DroppedComponent[]): any[][] {
     const orderEntryData: any[][] = [];
     let lineNumber = 1;
@@ -91,72 +91,278 @@ export class DesignCanvasExporter {
       'UseVoltage', 'plate hole', 'box', 'Box code', 'Box options', 'Breaker options'
     ]);
 
-    // Process each component using Parse Processing logic
-    components.forEach((component, index) => {
-      // Parse component specifications similar to existing Parse Processing functions
-      const specs = component.specifications || {};
-      const receptacleType = this.determineReceptacleType(component);
-      const cableType = this.determineCableType(component);
-      const whipLength = this.determineWhipLength(component);
-      const tailLength = this.determineTailLength(component);
-      
-      // Generate order entry row following PreSal format structure
+    // Apply sophisticated Design Canvas parsing rules
+    const processedRows = this.applyDesignCanvasParsingRules(components);
+    
+    processedRows.forEach(rowData => {
       orderEntryData.push([
-        lineNumber.toString(),
-        '1', // Default quantity
-        receptacleType,
-        cableType,
-        whipLength,
-        tailLength,
-        this.determineLabelColor(component),
-        '', // building
-        '', // PDU  
-        '', // Panel
-        '1', // First Circuit
-        '3', // Second Circuit
-        '5', // Third Circuit
-        '', // Cage
-        '', // Cabinet Number
-        '', // Included Breaker
-        '', // Mounting bolt
-        this.determineConduitSize(component),
-        this.determineConductorAWG(component),
-        this.determineGroundAWG(component),
-        this.determineVoltage(component),
-        this.determineBoxType(component),
-        '--------', // L1
-        '--------', // L2
-        '--------', // L3
-        '--------', // N
-        '------->', // E
-        `PWxx-${receptacleType}T-xxSALx(103)`, // Drawing number
-        `Design Canvas Component: ${component.name}`, // Notes to Enconnex
-        `PW250K-${receptacleType}T-D${lineNumber}SAL1234`, // Orderable Part number
-        this.determineBasePrice(component), // base price
-        '6', // Per foot
-        '260', // length
-        '0', // Bolt adder
-        this.determineAssembledPrice(component), // assembled price
-        '0', // Breaker adder
-        this.determineAssembledPrice(component), // Price to Wesco
-        this.determineListPrice(component), // List Price
-        `${component.name} from Design Canvas - Position (${Math.round(component.x)}, ${Math.round(component.y)})`, // Budgetary pricing text
-        this.determinePhaseType(component), // phase type
-        this.determineConductorCount(component), // conductor count
-        '0', // neutral
-        this.determineCurrent(component), // current
-        this.determineVoltage(component), // UseVoltage
-        this.determinePlateHole(component), // plate hole
-        this.determineBoxCode(component), // box
-        this.determineBoxCode(component), // Box code
-        '', // Box options
-        this.determineBreakerOptions(component) // Breaker options
+        (lineNumber++).toString(),
+        rowData.qty,
+        rowData.receptacle,
+        rowData.cableConduitType,
+        rowData.whipLength,
+        rowData.tailLength,
+        rowData.labelColor,
+        rowData.building || '',
+        rowData.pdu || '',
+        rowData.panel || '',
+        rowData.firstCircuit || '1',
+        rowData.secondCircuit || '3',
+        rowData.thirdCircuit || '5',
+        rowData.cage || '',
+        rowData.cabinetNumber || '',
+        rowData.includedBreaker || '',
+        rowData.mountingBolt || '',
+        rowData.conduitSize,
+        rowData.conductorAWG,
+        rowData.greenAWG,
+        rowData.voltage,
+        rowData.box,
+        rowData.l1 || '--------',
+        rowData.l2 || '--------',
+        rowData.l3 || '--------',
+        rowData.n || '--------',
+        rowData.e || '------->',
+        rowData.drawingNumber,
+        rowData.notesToEnconnex,
+        rowData.orderablePartNumber,
+        rowData.basePrice,
+        rowData.perFoot || '6',
+        rowData.length || '260',
+        rowData.boltAdder || '0',
+        rowData.assembledPrice,
+        rowData.breakerAdder || '0',
+        rowData.priceToWesco,
+        rowData.listPrice,
+        rowData.budgetaryPricingText,
+        rowData.phaseType,
+        rowData.conductorCount,
+        rowData.neutral || '0',
+        rowData.current,
+        rowData.useVoltage,
+        rowData.plateHole,
+        rowData.boxCode,
+        rowData.boxCode, // Box code duplicate
+        rowData.boxOptions || '',
+        rowData.breakerOptions
       ]);
-      
-      lineNumber++;
     });
 
     return orderEntryData;
+  }
+
+  // NEW: Apply Design Canvas parsing rules where connectors/receptacles create new rows
+  private applyDesignCanvasParsingRules(components: DroppedComponent[]): any[] {
+    const processedRows: any[] = [];
+    
+    // Group components by spatial proximity and electrical relationships
+    const componentGroups = this.groupComponentsByElectricalRelationships(components);
+    
+    componentGroups.forEach(group => {
+      // Find the primary connector/receptacle that triggers the row creation
+      const primaryConnector = this.findPrimaryConnector(group);
+      
+      if (primaryConnector) {
+        // Create a new row with this connector/receptacle as the base
+        const baseRowData = this.createBaseRowFromConnector(primaryConnector);
+        
+        // Place each design object in its appropriate cell based on component type
+        group.forEach(component => {
+          if (component.id !== primaryConnector.id) {
+            this.placeComponentInAppropriateCell(baseRowData, component);
+          }
+        });
+        
+        processedRows.push(baseRowData);
+      } else {
+        // Handle non-connector components that don't trigger new rows
+        if (group.length > 0) {
+          const standaloneRowData = this.createStandaloneComponentRow(group[0]);
+          group.slice(1).forEach(component => {
+            this.placeComponentInAppropriateCell(standaloneRowData, component);
+          });
+          processedRows.push(standaloneRowData);
+        }
+      }
+    });
+    
+    return processedRows;
+  }
+
+  // Group components by spatial proximity and electrical relationships
+  private groupComponentsByElectricalRelationships(components: DroppedComponent[]): DroppedComponent[][] {
+    const groups: DroppedComponent[][] = [];
+    const processed = new Set<string>();
+    const PROXIMITY_THRESHOLD = 150; // pixels
+    
+    components.forEach(component => {
+      if (processed.has(component.id)) return;
+      
+      const currentGroup = [component];
+      processed.add(component.id);
+      
+      // Find nearby components within threshold
+      components.forEach(otherComponent => {
+        if (processed.has(otherComponent.id)) return;
+        
+        const distance = Math.sqrt(
+          Math.pow(component.x - otherComponent.x, 2) + 
+          Math.pow(component.y - otherComponent.y, 2)
+        );
+        
+        if (distance <= PROXIMITY_THRESHOLD) {
+          currentGroup.push(otherComponent);
+          processed.add(otherComponent.id);
+        }
+      });
+      
+      groups.push(currentGroup);
+    });
+    
+    return groups;
+  }
+
+  // Find the primary connector/receptacle that should trigger row creation
+  private findPrimaryConnector(components: DroppedComponent[]): DroppedComponent | null {
+    // Priority order: receptacles > plugs > twist-lock > other connectors
+    const receptacles = components.filter(c => 
+      c.type === 'connector' && (c.name.includes('R') || c.specifications?.type === 'receptacle')
+    );
+    if (receptacles.length > 0) return receptacles[0];
+    
+    const plugs = components.filter(c => 
+      c.type === 'connector' && (c.name.includes('P') || c.specifications?.type === 'plug')
+    );
+    if (plugs.length > 0) return plugs[0];
+    
+    const connectors = components.filter(c => c.type === 'connector');
+    if (connectors.length > 0) return connectors[0];
+    
+    return null;
+  }
+
+  // Create base row data from the primary connector/receptacle
+  private createBaseRowFromConnector(connector: DroppedComponent): any {
+    const receptacleType = this.determineReceptacleType(connector);
+    const basePrice = parseFloat(this.determineBasePrice(connector));
+    const assembledPrice = parseFloat(this.determineAssembledPrice(connector));
+    
+    return {
+      qty: '1',
+      receptacle: receptacleType,
+      cableConduitType: 'MCC', // Default, will be updated by cable components
+      whipLength: '250', // Default, will be updated by length specifications
+      tailLength: '10', // Default
+      labelColor: 'Black (conduit)',
+      conduitSize: '3/4', // Default, will be updated by conduit components
+      conductorAWG: this.determineConductorAWG(connector),
+      greenAWG: this.determineGroundAWG(connector),
+      voltage: this.determineVoltage(connector),
+      box: 'Standard Power Whip Box', // Default, will be updated by enclosure components
+      drawingNumber: `PWxx-${receptacleType}T-xxSALx(103)`,
+      notesToEnconnex: `Design Canvas: ${connector.name} at (${Math.round(connector.x)}, ${Math.round(connector.y)})`,
+      orderablePartNumber: `PW250K-${receptacleType}T-DCxxSALx`,
+      basePrice: basePrice.toString(),
+      assembledPrice: assembledPrice.toString(),
+      priceToWesco: assembledPrice.toString(),
+      listPrice: this.determineListPrice(connector),
+      budgetaryPricingText: `${connector.name} from Design Canvas - Position (${Math.round(connector.x)}, ${Math.round(connector.y)})`,
+      phaseType: this.determinePhaseType(connector),
+      conductorCount: this.determineConductorCount(connector),
+      current: this.determineCurrent(connector),
+      useVoltage: this.determineVoltage(connector),
+      plateHole: this.determinePlateHole(connector),
+      boxCode: this.determineBoxCode(connector),
+      breakerOptions: this.determineBreakerOptions(connector)
+    };
+  }
+
+  // Create row for standalone components (no connector triggers)
+  private createStandaloneComponentRow(component: DroppedComponent): any {
+    const basePrice = parseFloat(this.determineBasePrice(component));
+    const assembledPrice = parseFloat(this.determineAssembledPrice(component));
+    
+    return {
+      qty: '1',
+      receptacle: `*${component.name}`,
+      cableConduitType: this.determineCableType(component),
+      whipLength: this.determineWhipLength(component),
+      tailLength: this.determineTailLength(component),
+      labelColor: this.determineLabelColor(component),
+      conduitSize: this.determineConduitSize(component),
+      conductorAWG: this.determineConductorAWG(component),
+      greenAWG: this.determineGroundAWG(component),
+      voltage: this.determineVoltage(component),
+      box: this.determineBoxType(component),
+      drawingNumber: `DCxx-${component.type.toUpperCase()}T-xxSALx`,
+      notesToEnconnex: `Design Canvas: ${component.name} at (${Math.round(component.x)}, ${Math.round(component.y)})`,
+      orderablePartNumber: `DC-${component.type.toUpperCase()}-${component.id.slice(-8)}`,
+      basePrice: basePrice.toString(),
+      assembledPrice: assembledPrice.toString(),
+      priceToWesco: assembledPrice.toString(),
+      listPrice: this.determineListPrice(component),
+      budgetaryPricingText: `${component.name} from Design Canvas - Position (${Math.round(component.x)}, ${Math.round(component.y)})`,
+      phaseType: this.determinePhaseType(component),
+      conductorCount: this.determineConductorCount(component),
+      current: this.determineCurrent(component),
+      useVoltage: this.determineVoltage(component),
+      plateHole: this.determinePlateHole(component),
+      boxCode: this.determineBoxCode(component),
+      breakerOptions: this.determineBreakerOptions(component)
+    };
+  }
+
+  // Place each design object in its appropriate cell based on component type
+  private placeComponentInAppropriateCell(baseRowData: any, component: DroppedComponent): void {
+    switch (component.type) {
+      case 'wire':
+      case 'cable':
+        // Wire/Cable components update cable/conduit type and conductor specifications
+        baseRowData.cableConduitType = this.determineCableType(component);
+        baseRowData.conductorAWG = this.determineConductorAWG(component);
+        if (component.specifications?.length) {
+          baseRowData.whipLength = component.specifications.length.toString();
+        }
+        baseRowData.notesToEnconnex += ` | Cable: ${component.name}`;
+        break;
+        
+      case 'protection':
+        // Protection components (breakers) update breaker specifications
+        baseRowData.includedBreaker = component.name;
+        baseRowData.breakerOptions = this.determineBreakerOptions(component);
+        baseRowData.current = this.determineCurrent(component);
+        baseRowData.notesToEnconnex += ` | Breaker: ${component.name}`;
+        break;
+        
+      case 'enclosure':
+        // Enclosure components update box specifications
+        baseRowData.box = component.name;
+        baseRowData.boxCode = this.determineBoxCode(component);
+        baseRowData.notesToEnconnex += ` | Enclosure: ${component.name}`;
+        break;
+        
+      case 'fitting':
+        // Fitting components update conduit size and mounting specifications
+        if (component.specifications?.size || component.name.match(/(\d+\/\d+|\d+)"/)) {
+          const sizeMatch = component.name.match(/(\d+\/\d+|\d+)"/);
+          if (sizeMatch) {
+            baseRowData.conduitSize = sizeMatch[1] + '"';
+          }
+        }
+        baseRowData.mountingBolt = component.name;
+        baseRowData.notesToEnconnex += ` | Fitting: ${component.name}`;
+        break;
+        
+      case 'terminal':
+        // Terminal components update connection specifications
+        baseRowData.notesToEnconnex += ` | Terminal: ${component.name}`;
+        break;
+        
+      default:
+        // Other components get added to notes
+        baseRowData.notesToEnconnex += ` | ${component.type}: ${component.name}`;
+        break;
+    }
   }
 
   // Helper functions for Parse Processing logic
