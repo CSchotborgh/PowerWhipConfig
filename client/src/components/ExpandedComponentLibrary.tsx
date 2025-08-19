@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +32,27 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
     refetchOnWindowFocus: false
   });
 
+  // Mutation for creating new components
+  const createComponentMutation = useMutation({
+    mutationFn: async (component: Omit<ElectricalComponent, 'id'>) => {
+      const response = await fetch('/api/components', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(component)
+      });
+      if (!response.ok) {
+        throw new Error('Failed to create component');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate and refetch components
+      queryClient.invalidateQueries({ queryKey: ['/api/components'] });
+    }
+  });
+
   // Enhanced filtering logic from ComponentLibrary
   const filteredComponents = useMemo(() => {
     if (!components) return [];
@@ -56,18 +78,29 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
   };
 
   // Helper functions for voltage editing
-  const startEditingVoltage = (componentId: string, currentVoltage: number) => {
+  const startEditingVoltage = (componentId: string, currentVoltage: number | null) => {
     setEditingVoltage(componentId);
-    setEditingVoltageValue(currentVoltage.toString());
+    setEditingVoltageValue((currentVoltage || 0).toString());
   };
 
-  const saveVoltageEdit = (componentId: string) => {
+  const saveVoltageEdit = async (componentId: string) => {
     const newVoltage = parseInt(editingVoltageValue);
     if (!isNaN(newVoltage) && newVoltage > 0) {
-      // Update the component in memory (this would typically update a global state or backend)
-      const component = components.find(c => c.id === componentId);
-      if (component) {
-        component.maxVoltage = newVoltage;
+      const originalComponent = components.find(c => c.id === componentId);
+      if (originalComponent && originalComponent.maxVoltage !== newVoltage) {
+        // Create new component with modified voltage
+        const newComponent = {
+          ...originalComponent,
+          id: undefined, // Let backend generate new ID
+          name: `${originalComponent.name} (${newVoltage}V)`,
+          maxVoltage: newVoltage,
+        };
+        
+        try {
+          await createComponentMutation.mutateAsync(newComponent);
+        } catch (error) {
+          console.error('Failed to create modified component:', error);
+        }
       }
     }
     setEditingVoltage(null);
@@ -80,18 +113,29 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
   };
 
   // Helper functions for current editing
-  const startEditingCurrent = (componentId: string, currentAmp: number) => {
+  const startEditingCurrent = (componentId: string, currentAmp: number | null) => {
     setEditingCurrent(componentId);
-    setEditingCurrentValue(currentAmp.toString());
+    setEditingCurrentValue((currentAmp || 0).toString());
   };
 
-  const saveCurrentEdit = (componentId: string) => {
+  const saveCurrentEdit = async (componentId: string) => {
     const newCurrent = parseInt(editingCurrentValue);
     if (!isNaN(newCurrent) && newCurrent > 0) {
-      // Update the component in memory (this would typically update a global state or backend)
-      const component = components.find(c => c.id === componentId);
-      if (component) {
-        component.maxCurrent = newCurrent;
+      const originalComponent = components.find(c => c.id === componentId);
+      if (originalComponent && originalComponent.maxCurrent !== newCurrent) {
+        // Create new component with modified current
+        const newComponent = {
+          ...originalComponent,
+          id: undefined, // Let backend generate new ID
+          name: `${originalComponent.name} (${newCurrent}A)`,
+          maxCurrent: newCurrent,
+        };
+        
+        try {
+          await createComponentMutation.mutateAsync(newComponent);
+        } catch (error) {
+          console.error('Failed to create modified component:', error);
+        }
       }
     }
     setEditingCurrent(null);
@@ -109,13 +153,25 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
     setEditingGaugeValue(currentGauge);
   };
 
-  const saveGaugeEdit = (componentId: string) => {
+  const saveGaugeEdit = async (componentId: string) => {
     const newGauge = editingGaugeValue.trim();
     if (newGauge) {
-      // Update the component in memory (this would typically update a global state or backend)
-      const component = components.find(c => c.id === componentId);
-      if (component && component.compatibleGauges) {
-        (component.compatibleGauges as any)[0] = newGauge;
+      const originalComponent = components.find(c => c.id === componentId);
+      const currentGauge = (originalComponent?.compatibleGauges as any)?.[0];
+      if (originalComponent && currentGauge !== newGauge) {
+        // Create new component with modified gauge
+        const newComponent = {
+          ...originalComponent,
+          id: undefined, // Let backend generate new ID
+          name: `${originalComponent.name} (${newGauge} AWG)`,
+          compatibleGauges: [newGauge],
+        };
+        
+        try {
+          await createComponentMutation.mutateAsync(newComponent);
+        } catch (error) {
+          console.error('Failed to create modified component:', error);
+        }
       }
     }
     setEditingGauge(null);
@@ -446,8 +502,8 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                                           onChange={(e) => setEditingVoltageValue(e.target.value)}
                                           className="h-6 w-16 text-xs px-1"
                                           autoFocus
-                                          onKeyDown={(e) => {
-                                            if (e.key === 'Enter') saveVoltageEdit(component.id);
+                                          onKeyDown={async (e) => {
+                                            if (e.key === 'Enter') await saveVoltageEdit(component.id);
                                             if (e.key === 'Escape') cancelVoltageEdit();
                                           }}
                                         />
@@ -455,7 +511,7 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                                         <Button
                                           size="sm"
                                           variant="ghost"
-                                          onClick={() => saveVoltageEdit(component.id)}
+                                          onClick={async () => await saveVoltageEdit(component.id)}
                                           className="h-5 w-5 p-0"
                                         >
                                           <Check className="h-3 w-3" />
@@ -491,8 +547,8 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                                           onChange={(e) => setEditingCurrentValue(e.target.value)}
                                           className="h-6 w-16 text-xs px-1"
                                           autoFocus
-                                          onKeyDown={(e) => {
-                                            if (e.key === 'Enter') saveCurrentEdit(component.id);
+                                          onKeyDown={async (e) => {
+                                            if (e.key === 'Enter') await saveCurrentEdit(component.id);
                                             if (e.key === 'Escape') cancelCurrentEdit();
                                           }}
                                         />
@@ -500,7 +556,7 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                                         <Button
                                           size="sm"
                                           variant="ghost"
-                                          onClick={() => saveCurrentEdit(component.id)}
+                                          onClick={async () => await saveCurrentEdit(component.id)}
                                           className="h-5 w-5 p-0"
                                         >
                                           <Check className="h-3 w-3" />
@@ -536,8 +592,8 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                                           onChange={(e) => setEditingGaugeValue(e.target.value)}
                                           className="h-6 w-16 text-xs px-1"
                                           autoFocus
-                                          onKeyDown={(e) => {
-                                            if (e.key === 'Enter') saveGaugeEdit(component.id);
+                                          onKeyDown={async (e) => {
+                                            if (e.key === 'Enter') await saveGaugeEdit(component.id);
                                             if (e.key === 'Escape') cancelGaugeEdit();
                                           }}
                                         />
@@ -545,7 +601,7 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                                         <Button
                                           size="sm"
                                           variant="ghost"
-                                          onClick={() => saveGaugeEdit(component.id)}
+                                          onClick={async () => await saveGaugeEdit(component.id)}
                                           className="h-5 w-5 p-0"
                                         >
                                           <Check className="h-3 w-3" />
