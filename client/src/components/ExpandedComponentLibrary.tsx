@@ -549,7 +549,7 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                                 <div className={`${category.iconColor}`}>
                                   {category.icon}
                                 </div>
-                                {editingName === component.id ? (
+                                {editingName === component.id && (component.type === 'connector' || component.type === 'receptacle') ? (
                                   <div className="flex items-center gap-1 flex-1">
                                     <Input
                                       type="text"
@@ -581,11 +581,21 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                                   </div>
                                 ) : (
                                   <h4 
-                                    className="font-medium text-sm truncate cursor-pointer hover:bg-secondary/20 px-1 py-0.5 rounded group flex items-center gap-1 flex-1"
-                                    onClick={() => startEditingName(component.id, component.name)}
+                                    className={`font-medium text-sm truncate flex items-center gap-1 flex-1 ${
+                                      (component.type === 'connector' || component.type === 'receptacle') 
+                                        ? 'cursor-pointer hover:bg-secondary/20 px-1 py-0.5 rounded group' 
+                                        : ''
+                                    }`}
+                                    onClick={() => {
+                                      if (component.type === 'connector' || component.type === 'receptacle') {
+                                        startEditingName(component.id, component.name);
+                                      }
+                                    }}
                                   >
                                     <span className="truncate">{component.name}</span>
-                                    <Edit3 className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                    {(component.type === 'connector' || component.type === 'receptacle') && (
+                                      <Edit3 className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                    )}
                                   </h4>
                                 )}
                               </div>
@@ -603,7 +613,8 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                               )}
                               
                               <div className="flex flex-wrap gap-1 mb-2">
-                                {component.maxVoltage && component.maxVoltage > 0 && (
+                                {component.maxVoltage && component.maxVoltage > 0 && 
+                                 (component.type === 'connector' || component.type === 'receptacle' || component.type === 'protection') && (
                                   <div className="relative">
                                     {editingVoltage === component.id ? (
                                       <div className="flex items-center gap-1">
@@ -648,7 +659,8 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                                     )}
                                   </div>
                                 )}
-                                {component.maxCurrent && component.maxCurrent > 0 && (
+                                {component.maxCurrent && component.maxCurrent > 0 && 
+                                 (component.type === 'connector' || component.type === 'receptacle' || component.type === 'protection') && (
                                   <div className="relative">
                                     {editingCurrent === component.id ? (
                                       <div className="flex items-center gap-1">
@@ -693,7 +705,8 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                                     )}
                                   </div>
                                 )}
-                                {(component.compatibleGauges as any)?.length > 0 && (
+                                {(component.compatibleGauges as any)?.length > 0 && 
+                                 (component.type === 'connector' || component.type === 'receptacle' || component.type === 'wire') && (
                                   <div className="relative">
                                     {editingGauge === component.id ? (
                                       <div className="flex items-center gap-1">
