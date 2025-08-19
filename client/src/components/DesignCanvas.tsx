@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Grid, Layers, Settings, RotateCcw, Save } from "lucide-react";
+import { Grid, Layers, Settings, RotateCcw, Save, Undo, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AGGridOrderEntry from "./AGGridOrderEntry";
 import VirtualizedOrderEntry from "./VirtualizedOrderEntry";
@@ -36,6 +36,8 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   const [isDraggingComponent, setIsDraggingComponent] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showComponentLibrary, setShowComponentLibrary] = useState(true);
+  const [componentHistory, setComponentHistory] = useState<DroppedComponent[][]>([[]]);
+  const [historyIndex, setHistoryIndex] = useState(0);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const handleDrop = (e: React.DragEvent) => {
@@ -59,7 +61,11 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
           partNumber: componentData.partNumber
         };
         
-        setDroppedComponents(prev => [...prev, newComponent]);
+        setDroppedComponents(prev => {
+          const newComponents = [...prev, newComponent];
+          saveToHistory(newComponents);
+          return newComponents;
+        });
       }
     } catch (error) {
       console.error('Error parsing dropped component:', error);
@@ -76,10 +82,49 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   };
 
   const deleteComponent = (componentId: string) => {
-    setDroppedComponents(prev => prev.filter(comp => comp.id !== componentId));
+    setDroppedComponents(prev => {
+      const newComponents = prev.filter(comp => comp.id !== componentId);
+      saveToHistory(newComponents);
+      return newComponents;
+    });
     if (selectedComponent === componentId) {
       setSelectedComponent(null);
     }
+  };
+
+  // Save state to history for undo functionality
+  const saveToHistory = (components: DroppedComponent[]) => {
+    setComponentHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1);
+      newHistory.push([...components]);
+      return newHistory;
+    });
+    setHistoryIndex(prev => prev + 1);
+  };
+
+  // Undo last action
+  const undoLastAction = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setDroppedComponents([...componentHistory[newIndex]]);
+      setSelectedComponent(null);
+    }
+  };
+
+  // Delete last added component
+  const deleteLastComponent = () => {
+    if (droppedComponents.length > 0) {
+      const lastComponent = droppedComponents[droppedComponents.length - 1];
+      deleteComponent(lastComponent.id);
+    }
+  };
+
+  // Clear all components
+  const clearCanvasWithHistory = () => {
+    setDroppedComponents([]);
+    setSelectedComponent(null);
+    saveToHistory([]);
   };
 
   const handleComponentMouseDown = (e: React.MouseEvent, componentId: string) => {
@@ -132,10 +177,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
     }
   };
 
-  const clearCanvas = () => {
-    setDroppedComponents([]);
-    setSelectedComponent(null);
-  };
+
 
   const getComponentIcon = (type: string) => {
     switch (type) {
@@ -173,6 +215,32 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
       };
     }
   }, [isDraggingComponent, selectedComponent, dragOffset, canvasScale]);
+
+  // Add keyboard shortcuts for undo functionality
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'z') {
+        e.preventDefault();
+        undoLastAction();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [historyIndex, componentHistory]);
+
+  // Add right-click context menu for delete last component
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      if (canvasRef.current && canvasRef.current.contains(e.target as Node)) {
+        e.preventDefault();
+        deleteLastComponent();
+      }
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    return () => document.removeEventListener('contextmenu', handleContextMenu);
+  }, [droppedComponents]);
 
   // Show different views based on mode
   if (viewMode === "order") {
@@ -235,7 +303,17 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
                 <Layers className="w-4 h-4 mr-2" />
                 {showComponentLibrary ? "Hide" : "Show"} Components
               </Button>
-              <Button size="sm" variant="outline" onClick={clearCanvas}>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={undoLastAction}
+                disabled={historyIndex === 0}
+                title="Undo last action (Ctrl+Z)"
+              >
+                <Undo className="w-4 h-4 mr-2" />
+                Undo
+              </Button>
+              <Button size="sm" variant="outline" onClick={clearCanvasWithHistory}>
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Clear
               </Button>
