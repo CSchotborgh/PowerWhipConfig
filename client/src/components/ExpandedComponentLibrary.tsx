@@ -26,6 +26,8 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
   const [editingCurrentValue, setEditingCurrentValue] = useState<string>('');
   const [editingGauge, setEditingGauge] = useState<string | null>(null);
   const [editingGaugeValue, setEditingGaugeValue] = useState<string>('');
+  const [editingName, setEditingName] = useState<string | null>(null);
+  const [editingNameValue, setEditingNameValue] = useState<string>('');
 
   const { data: components = [], isLoading } = useQuery<ElectricalComponent[]>({
     queryKey: ['/api/components'],
@@ -181,6 +183,40 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
   const cancelGaugeEdit = () => {
     setEditingGauge(null);
     setEditingGaugeValue('');
+  };
+
+  // Helper functions for name editing
+  const startEditingName = (componentId: string, currentName: string) => {
+    setEditingName(componentId);
+    setEditingNameValue(currentName);
+  };
+
+  const saveNameEdit = async (componentId: string) => {
+    const newName = editingNameValue.trim();
+    if (newName && newName.length > 0) {
+      const originalComponent = components.find(c => c.id === componentId);
+      if (originalComponent && originalComponent.name !== newName) {
+        // Create new component with modified name
+        const newComponent = {
+          ...originalComponent,
+          id: undefined, // Let backend generate new ID
+          name: newName,
+        };
+        
+        try {
+          await createComponentMutation.mutateAsync(newComponent);
+        } catch (error) {
+          console.error('Failed to create renamed component:', error);
+        }
+      }
+    }
+    setEditingName(null);
+    setEditingNameValue('');
+  };
+
+  const cancelNameEdit = () => {
+    setEditingName(null);
+    setEditingNameValue('');
   };
 
   // Auto-expand categories when searching
@@ -476,7 +512,45 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                                 <div className={`${category.iconColor}`}>
                                   {category.icon}
                                 </div>
-                                <h4 className="font-medium text-sm truncate">{component.name}</h4>
+                                {editingName === component.id ? (
+                                  <div className="flex items-center gap-1 flex-1">
+                                    <Input
+                                      type="text"
+                                      value={editingNameValue}
+                                      onChange={(e) => setEditingNameValue(e.target.value)}
+                                      className="h-6 text-xs px-1 flex-1"
+                                      autoFocus
+                                      onKeyDown={async (e) => {
+                                        if (e.key === 'Enter') await saveNameEdit(component.id);
+                                        if (e.key === 'Escape') cancelNameEdit();
+                                      }}
+                                    />
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={async () => await saveNameEdit(component.id)}
+                                      className="h-5 w-5 p-0"
+                                    >
+                                      <Check className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={cancelNameEdit}
+                                      className="h-5 w-5 p-0"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <h4 
+                                    className="font-medium text-sm truncate cursor-pointer hover:bg-secondary/20 px-1 py-0.5 rounded group flex items-center gap-1 flex-1"
+                                    onClick={() => startEditingName(component.id, component.name)}
+                                  >
+                                    <span className="truncate">{component.name}</span>
+                                    <Edit3 className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                  </h4>
+                                )}
                               </div>
                               
                               {(component.specifications as any)?.partNumber && (
