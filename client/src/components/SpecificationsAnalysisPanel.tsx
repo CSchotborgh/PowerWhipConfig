@@ -2,11 +2,25 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CheckCircle, AlertTriangle, Sliders, ChevronDown } from "lucide-react";
-import { useConfiguration } from "@/contexts/ConfigurationContext";
 import { cn } from "@/lib/utils";
 
-export default function SpecificationsAnalysisPanel() {
-  const { configuration } = useConfiguration();
+interface SpecificationsAnalysisPanelProps {
+  configuration?: {
+    name?: string;
+    voltage?: number;
+    current?: number;
+    wireGauge?: string;
+  };
+}
+
+export default function SpecificationsAnalysisPanel({ 
+  configuration = {
+    name: "PowerWhip-001",
+    voltage: 120,
+    current: 20,
+    wireGauge: "12"
+  }
+}: SpecificationsAnalysisPanelProps) {
   const [openSections, setOpenSections] = useState<string[]>(["current-config", "components", "analysis"]);
   
   const toggleSection = (section: string) => {
