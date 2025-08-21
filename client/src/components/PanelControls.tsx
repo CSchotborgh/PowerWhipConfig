@@ -17,13 +17,15 @@ import {
   Database,
   Eye,
   EyeOff,
-  FileSpreadsheet
+  FileSpreadsheet,
+  ShoppingCart
 } from 'lucide-react';
 import { usePanelManager } from './PanelManager';
 import { FloatingComponentLibrary } from './FloatingComponentLibrary';
 import { FloatingExcelTransformer } from './FloatingExcelTransformer';
 import ConfigurationDetailsPanel from './ConfigurationDetailsPanel';
 import SpecificationsAnalysisPanel from './SpecificationsAnalysisPanel';
+import { FloatingOrderEntryPanel } from './FloatingOrderEntryPanel';
 
 export function PanelControls() {
   const { panels, openPanel, closePanel } = usePanelManager();
@@ -106,6 +108,17 @@ export function PanelControls() {
       size: { width: 380, height: 450 },
       minSize: { width: 280, height: 350 },
       maxSize: { width: 600, height: 700 },
+      scalable: true
+    },
+    {
+      id: 'order-entry',
+      title: 'High-Performance Order Entry',
+      icon: <ShoppingCart className="h-4 w-4" />,
+      component: <FloatingOrderEntryPanel />,
+      position: { x: 800, y: 150 },
+      size: { width: 600, height: 700 },
+      minSize: { width: 400, height: 500 },
+      maxSize: { width: 1000, height: 900 },
       scalable: true
     },
     {

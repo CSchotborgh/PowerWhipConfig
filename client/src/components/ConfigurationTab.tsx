@@ -64,7 +64,7 @@ export default function ConfigurationTab() {
   const thermalAnalysis = calculateThermalAnalysis(currentConfig);
 
   // Generate dynamic validation results
-  const validationResults = [
+  const validationResults: Array<{status: "success" | "warning" | "error"; message: string}> = [
     {
       status: validation.isValid ? "success" : "error",
       message: validation.isValid ? "Configuration validated successfully" : "Configuration has validation errors"
