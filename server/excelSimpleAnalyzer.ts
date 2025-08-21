@@ -54,6 +54,11 @@ export class SimpleExcelAnalyzer {
 
   async analyzeFile(filePath: string, fileName: string): Promise<SimpleExcelAnalysis> {
     try {
+      // Validate file path
+      if (!filePath || typeof filePath !== 'string') {
+        throw new Error('Invalid file path provided');
+      }
+      
       const fileBuffer = await fs.readFile(filePath);
       const workbook = XLSX.read(fileBuffer, { type: 'buffer', cellFormula: true });
 

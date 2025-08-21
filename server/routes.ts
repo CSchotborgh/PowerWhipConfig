@@ -472,23 +472,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Advanced Excel analysis endpoints
   app.post('/api/excel/upload-analyze', upload.single('file'), async (req, res) => {
+    console.log('Upload analyze request received');
+    console.log('File details:', req.file ? {
+      fieldname: req.file.fieldname,
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      hasBuffer: !!req.file.buffer,
+      bufferLength: req.file.buffer?.length
+    } : 'No file');
+
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    if (!req.file.buffer || req.file.buffer.length === 0) {
+      return res.status(400).json({ error: 'Invalid file - no buffer data' });
     }
 
     try {
       const { SimpleExcelAnalyzer } = await import('./excelSimpleAnalyzer');
       const analyzer = new SimpleExcelAnalyzer();
       
-      // Use the uploaded file path
-      const filePath = req.file.path;
       const fileName = req.file.originalname || 'uploaded_file.xlsx';
       
-      if (!filePath || typeof filePath !== 'string') {
-        return res.status(400).json({ error: 'Invalid file upload - no file path' });
+      // Create temporary file from buffer since the analyzer expects file path
+      const tempPath = `./tmp/uploads/temp_${Date.now()}_${fileName}`;
+      await fs.promises.writeFile(tempPath, req.file.buffer);
+      console.log(`Created temp file: ${tempPath}, size: ${req.file.buffer.length} bytes`);
+      
+      const analysis = await analyzer.analyzeFile(tempPath, fileName);
+      
+      // Clean up temporary file
+      try {
+        await fs.promises.unlink(tempPath);
+      } catch (err) {
+        console.log('Note: temp file cleanup failed:', err);
       }
       
-      const analysis = await analyzer.analyzeFile(filePath, fileName);
+      console.log('Analysis completed successfully');
       res.json(analysis);
     } catch (error: unknown) {
       console.error('Advanced Excel analysis error:', error);
