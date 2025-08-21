@@ -50,12 +50,11 @@ interface SheetAnalysis {
 
 interface PatternAnalysis {
   id: string;
-  pattern: string;
-  category: 'length' | 'receptacle' | 'cable' | 'voltage' | 'current' | 'other';
+  type: string;
   frequency: number;
-  variations: string[];
-  standardMapping: string;
   confidence: number;
+  standardTerm: string;
+  variations: string[];
 }
 
 interface ExpressionAnalysis {
@@ -70,32 +69,23 @@ interface ExpressionAnalysis {
 }
 
 interface NomenclatureMapping {
-  id: string;
-  originalTerms: string[];
-  standardTerm: string;
-  category: string;
-  mappingRule: string;
+  original: string;
+  standardized: string;
   confidence: number;
+  category: string;
 }
 
 interface InstructionsScope {
-  sheetName: string;
-  configurationScope: string;
+  voltage: string;
+  current: string;
+  componentCount: number;
   requirements: string[];
-  specifications: Record<string, any>;
-  voltage?: number;
-  current?: number;
-  componentCount?: number;
 }
 
 interface TransformationRule {
-  id: string;
-  name: string;
   sourcePattern: string;
-  targetColumn: string;
-  transformFunction: string;
-  priority: number;
-  isActive: boolean;
+  targetFormat: string;
+  ruleType: string;
 }
 
 interface ExcelFileViewerEditorProps {
@@ -416,9 +406,9 @@ export function ExcelFileViewerEditor({
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <div className="font-medium">{pattern.pattern}</div>
+                      <div className="font-medium">{pattern.standardTerm}</div>
                       <div className="text-sm text-gray-500">
-                        Category: {pattern.category} | Frequency: {pattern.frequency}
+                        Category: {pattern.type} | Frequency: {pattern.frequency}
                       </div>
                     </div>
                     <Badge variant={pattern.confidence > 0.8 ? "default" : "secondary"}>
@@ -440,7 +430,7 @@ export function ExcelFileViewerEditor({
                     
                     <div className="text-sm">
                       <span className="font-medium">Standard Mapping:</span>
-                      <Badge className="ml-2">{pattern.standardMapping}</Badge>
+                      <Badge className="ml-2">{pattern.standardTerm}</Badge>
                     </div>
                   </div>
                 </CardContent>
@@ -487,12 +477,12 @@ export function ExcelFileViewerEditor({
           </TabsContent>
 
           <TabsContent value="nomenclature" className="space-y-4">
-            {analysis.nomenclatureMapping.map((mapping: NomenclatureMapping) => (
-              <Card key={mapping.id}>
+            {analysis.nomenclatureMapping.map((mapping: NomenclatureMapping, index: number) => (
+              <Card key={index}>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex-1">
-                      <div className="font-medium">{mapping.standardTerm}</div>
+                      <div className="font-medium">{mapping.standardized}</div>
                       <div className="text-sm text-gray-500">{mapping.category}</div>
                     </div>
                     <Badge variant={mapping.confidence > 0.8 ? "default" : "secondary"}>
@@ -502,20 +492,16 @@ export function ExcelFileViewerEditor({
                   
                   <div className="space-y-2">
                     <div className="text-sm">
-                      <span className="font-medium">Original Terms:</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {mapping.originalTerms.map((term: string, i: number) => (
-                          <Badge key={i} variant="outline" className="text-xs">
-                            {term}
-                          </Badge>
-                        ))}
-                      </div>
+                      <span className="font-medium">Original Term:</span>
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {mapping.original}
+                      </Badge>
                     </div>
                     
                     <div className="text-sm">
-                      <span className="font-medium">Mapping Rule:</span>
+                      <span className="font-medium">Standardized:</span>
                       <code className="ml-2 text-xs bg-gray-100 p-1 rounded">
-                        {mapping.mappingRule}
+                        {mapping.standardized}
                       </code>
                     </div>
                   </div>
@@ -531,32 +517,20 @@ export function ExcelFileViewerEditor({
                   <CardTitle>Instructions Sheet Analysis</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <span className="font-medium">Sheet:</span>
-                    <Badge className="ml-2">{analysis.instructionsScope.sheetName}</Badge>
-                  </div>
-                  
-                  <div>
-                    <span className="font-medium">Configuration Scope:</span>
-                    <p className="mt-1 text-sm">{analysis.instructionsScope.configurationScope}</p>
-                  </div>
-                  
-                  {analysis.instructionsScope.voltage && (
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <span className="font-medium">Voltage:</span>
-                        <div className="text-lg">{analysis.instructionsScope.voltage}V</div>
-                      </div>
-                      <div>
-                        <span className="font-medium">Current:</span>
-                        <div className="text-lg">{analysis.instructionsScope.current}A</div>
-                      </div>
-                      <div>
-                        <span className="font-medium">Components:</span>
-                        <div className="text-lg">{analysis.instructionsScope.componentCount}</div>
-                      </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <span className="font-medium">Voltage:</span>
+                      <div className="text-lg">{analysis.instructionsScope.voltage}</div>
                     </div>
-                  )}
+                    <div>
+                      <span className="font-medium">Current:</span>
+                      <div className="text-lg">{analysis.instructionsScope.current}</div>
+                    </div>
+                    <div>
+                      <span className="font-medium">Components:</span>
+                      <div className="text-lg">{analysis.instructionsScope.componentCount}</div>
+                    </div>
+                  </div>
                   
                   <div>
                     <span className="font-medium">Requirements:</span>
@@ -618,20 +592,20 @@ export function ExcelFileViewerEditor({
             </Button>
           </div>
           
-          {analysis?.transformationRules && (
+          {analysis?.transformationRules && analysis.transformationRules.length > 0 && (
             <div className="mt-6">
               <h4 className="font-medium mb-3">Transformation Rules</h4>
               <div className="space-y-2">
-                {analysis.transformationRules.map((rule: TransformationRule) => (
-                  <div key={rule.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                {analysis.transformationRules.map((rule: TransformationRule, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                     <div>
-                      <div className="font-medium">{rule.name}</div>
+                      <div className="font-medium">{rule.ruleType}</div>
                       <div className="text-sm text-gray-500">
-                        {rule.sourcePattern} → {rule.targetColumn}
+                        {rule.sourcePattern} → {rule.targetFormat}
                       </div>
                     </div>
-                    <Badge variant={rule.isActive ? "default" : "secondary"}>
-                      Priority: {rule.priority}
+                    <Badge variant="default">
+                      {rule.ruleType}
                     </Badge>
                   </div>
                 ))}
