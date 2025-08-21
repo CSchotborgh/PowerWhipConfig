@@ -17,13 +17,11 @@ import {
   Database,
   Eye,
   EyeOff,
-  FileSpreadsheet,
-  Grid3X3
+  FileSpreadsheet
 } from 'lucide-react';
 import { usePanelManager } from './PanelManager';
 import { FloatingComponentLibrary } from './FloatingComponentLibrary';
 import { FloatingExcelTransformer } from './FloatingExcelTransformer';
-import { FloatingExcelFileViewer } from './FloatingExcelFileViewer';
 import ConfigurationDetailsPanel from './ConfigurationDetailsPanel';
 
 export function PanelControls() {
@@ -61,17 +59,6 @@ export function PanelControls() {
       size: { width: 400, height: 550 },
       minSize: { width: 350, height: 450 },
       maxSize: { width: 600, height: 800 },
-      scalable: true
-    },
-    {
-      id: 'excel-file-viewer',
-      title: 'Excel File Viewer & Editor',
-      icon: <Grid3X3 className="h-4 w-4" />,
-      component: <FloatingExcelFileViewer />,
-      position: { x: 600, y: 200 },
-      size: { width: 500, height: 600 },
-      minSize: { width: 400, height: 500 },
-      maxSize: { width: 800, height: 900 },
       scalable: true
     },
     {
