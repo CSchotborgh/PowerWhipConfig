@@ -315,8 +315,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
               <div className="flex gap-2">
                 <Button onClick={toggleViewMode} variant="outline">
                   {viewMode === "design" ? "Switch to Order Entry" : 
-                   viewMode === "order" ? "Switch to Excel Transformer" :
-                   viewMode === "transformer" ? "Switch to Configurator" :
+                   viewMode === "order" ? "Switch to Configurator" :
                    viewMode === "configurator" ? "Switch to Excel Interface" :
                    "Switch to Design Canvas"}
                 </Button>
@@ -335,11 +334,18 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
                   Order Entry
                 </Button>
                 <Button 
-                  onClick={() => setViewMode("transformer")} 
-                  variant={viewMode === "transformer" ? "default" : "outline"}
+                  onClick={() => setViewMode("configurator")} 
+                  variant={viewMode === "configurator" ? "default" : "outline"}
                   size="sm"
                 >
-                  Excel Transformer
+                  Configurator
+                </Button>
+                <Button 
+                  onClick={() => setViewMode("excel")} 
+                  variant={viewMode === "excel" ? "default" : "outline"}
+                  size="sm"
+                >
+                  Excel
                 </Button>
               </div>
             </div>
