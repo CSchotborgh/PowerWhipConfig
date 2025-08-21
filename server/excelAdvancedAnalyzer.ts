@@ -163,6 +163,11 @@ export class ExcelAdvancedAnalyzer {
 
   async analyzeFile(filePath: string, fileName: string): Promise<ExcelAnalysis> {
     try {
+      // Validate file path
+      if (!filePath || typeof filePath !== 'string') {
+        throw new Error('Invalid file path provided');
+      }
+      
       // Read the Excel file
       const fileBuffer = await fs.readFile(filePath);
       this.workbook = XLSX.read(fileBuffer, { type: 'buffer', cellFormula: true, cellNF: true });

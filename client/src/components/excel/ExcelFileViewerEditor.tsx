@@ -129,7 +129,8 @@ export function ExcelFileViewerEditor({
       });
       
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
       }
       
       return response.json();
@@ -142,10 +143,10 @@ export function ExcelFileViewerEditor({
         description: `Found ${data.patterns.length} patterns and ${data.expressions.length} expressions`,
       });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
-        title: "Upload Failed",
-        description: "Failed to upload and analyze the Excel file",
+        title: "Upload Failed", 
+        description: error.message || "Failed to upload and analyze the Excel file",
         variant: "destructive",
       });
     }

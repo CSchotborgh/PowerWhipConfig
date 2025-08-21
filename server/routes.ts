@@ -311,6 +311,8 @@ function categorizeByReceptacle(receptacle: string): string {
   return 'Other Receptacle Type';
 }
 
+// Use existing multer configuration
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Power Whip Configuration routes
   app.get("/api/configurations", async (_req, res) => {
@@ -478,7 +480,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { ExcelAdvancedAnalyzer } = await import('./excelAdvancedAnalyzer');
       const analyzer = new ExcelAdvancedAnalyzer();
       
-      const analysis = await analyzer.analyzeFile(req.file.path, req.file.originalname);
+      // Use the uploaded file buffer if available, otherwise use path
+      const filePath = req.file.path || req.file.buffer;
+      const fileName = req.file.originalname || 'uploaded_file.xlsx';
+      
+      if (!filePath) {
+        return res.status(400).json({ error: 'Invalid file upload' });
+      }
+      
+      const analysis = await analyzer.analyzeFile(filePath, fileName);
       res.json(analysis);
     } catch (error) {
       console.error('Advanced Excel analysis error:', error);
