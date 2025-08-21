@@ -4,7 +4,7 @@ import DesignCanvas from "@/components/DesignCanvas";
 
 import ConfigurationTab from "@/components/ConfigurationTab";
 import VisualDesignTab from "@/components/VisualDesignTab";
-import OrderEntryTab from "@/components/OrderEntryTab";
+
 import DocumentationTab from "@/components/DocumentationTab";
 import ExpandedComponentLibrary from "@/components/ExpandedComponentLibrary";
 import { DraggablePanel } from "@/components/DraggablePanel";
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Configurator() {
-  const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation" | "order">("configuration");
+  const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation">("configuration");
   const [leftPanelExpanded, setLeftPanelExpanded] = useState(true);
   const [leftPanelWidth, setLeftPanelWidth] = useState(320); // Default width in pixels
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
@@ -25,8 +25,6 @@ export default function Configurator() {
         return <ConfigurationTab />;
       case "visual":
         return <VisualDesignTab />;
-      case "order":
-        return <OrderEntryTab />;
       case "documentation":
         return <DocumentationTab />;
       default:

@@ -8,8 +8,8 @@ import { DesignCanvasExportButton } from "./DesignCanvasExportButton";
 
 
 interface HeaderProps {
-  activeTab: "configuration" | "visual" | "documentation" | "order";
-  onTabChange: (tab: "configuration" | "visual" | "documentation" | "order") => void;
+  activeTab: "configuration" | "visual" | "documentation";
+  onTabChange: (tab: "configuration" | "visual" | "documentation") => void;
 }
 
 export default function Header({ activeTab, onTabChange }: HeaderProps) {
@@ -26,11 +26,6 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
       id: "visual" as const,
       label: "Visual Design", 
       icon: Eye,
-    },
-    {
-      id: "order" as const,
-      label: "Order Entry",
-      icon: ShoppingCart,
     },
     {
       id: "documentation" as const,

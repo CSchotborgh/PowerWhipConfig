@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Grid, Layers, Settings, RotateCcw, Save, Undo, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDesignCanvas } from "@/contexts/DesignCanvasContext";
-import AGGridOrderEntry from "./AGGridOrderEntry";
-import VirtualizedOrderEntry from "./VirtualizedOrderEntry";
-import PerformanceOrderEntry from "./PerformanceOrderEntry";
+
 
 import ExcelFileViewer from "./ExcelFileViewer";
 import ExcelLikeInterface from "./ExcelLikeInterface";
@@ -33,7 +31,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   const { droppedComponents, setDroppedComponents, addComponent, removeComponent, updateComponent } = useDesignCanvas();
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
-  const [viewMode, setViewMode] = useState<"design" | "order" | "configurator" | "excel">("design");
+  const [viewMode, setViewMode] = useState<"design" | "configurator" | "excel">("design");
   const [isDraggingComponent, setIsDraggingComponent] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showComponentLibrary, setShowComponentLibrary] = useState(true);
@@ -190,8 +188,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
 
   const toggleViewMode = () => {
     setViewMode(prev => {
-      if (prev === "design") return "order";
-      if (prev === "order") return "configurator";
+      if (prev === "design") return "configurator";
       if (prev === "configurator") return "excel";
       return "design";
     });
@@ -239,9 +236,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   }, [droppedComponents]);
 
   // Show different views based on mode
-  if (viewMode === "order") {
-    return <PerformanceOrderEntry onToggleView={toggleViewMode} />;
-  }
+
 
   if (viewMode === "configurator") {
     return <ExcelFileViewer onToggleView={toggleViewMode} />;
@@ -261,7 +256,6 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
             <div className="flex items-center gap-4">
               <h2 className="text-xl font-bold text-technical-900 dark:text-technical-100">
                 {viewMode === "design" ? "Design Canvas" : 
-                 viewMode === "order" ? "Order Entry System" : 
                  viewMode === "configurator" ? "ConfiguratorDataset Analyzer" :
                  "Excel-like Interface"}
               </h2>
@@ -314,8 +308,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
               </Button>
               <div className="flex gap-2">
                 <Button onClick={toggleViewMode} variant="outline">
-                  {viewMode === "design" ? "Switch to Order Entry" : 
-                   viewMode === "order" ? "Switch to Configurator" :
+                  {viewMode === "design" ? "Switch to Configurator" :
                    viewMode === "configurator" ? "Switch to Excel Interface" :
                    "Switch to Design Canvas"}
                 </Button>
@@ -325,13 +318,6 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
                   size="sm"
                 >
                   Design
-                </Button>
-                <Button 
-                  onClick={() => setViewMode("order")} 
-                  variant={viewMode === "order" ? "default" : "outline"}
-                  size="sm"
-                >
-                  Order Entry
                 </Button>
                 <Button 
                   onClick={() => setViewMode("configurator")} 
