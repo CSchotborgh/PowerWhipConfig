@@ -11,7 +11,7 @@ import { CheckCircle, AlertTriangle, Sliders, ChevronDown, Database } from "luci
 import { useConfiguration } from "@/contexts/ConfigurationContext";
 import { cn } from "@/lib/utils";
 import ComponentLibrary from "./ComponentLibrary";
-import ConfigurationDetailsPanel from "./ConfigurationDetailsPanel";
+
 
 const configurationSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -24,7 +24,7 @@ type ConfigurationFormData = z.infer<typeof configurationSchema>;
 
 export default function ConfigurationTab() {
   const { configuration, updateConfiguration } = useConfiguration();
-  const [openSections, setOpenSections] = useState<string[]>(["basic-config", "component-library", "specifications"]);
+  const [openSections, setOpenSections] = useState<string[]>(["basic-config", "component-library", "validation-status", "specifications"]);
   
   const form = useForm<ConfigurationFormData>({
     resolver: zodResolver(configurationSchema),
@@ -161,10 +161,7 @@ export default function ConfigurationTab() {
         <ComponentLibrary />
       </Collapsible>
 
-      {/* Configuration Details Panel */}
-      <div className="mt-6">
-        <ConfigurationDetailsPanel />
-      </div>
+
 
       {/* Validation Status */}
       <Collapsible
