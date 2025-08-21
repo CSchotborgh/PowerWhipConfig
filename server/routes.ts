@@ -468,6 +468,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Advanced Excel analysis endpoints
+  app.post('/api/excel/upload-analyze', upload.single('file'), async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    try {
+      const { ExcelAdvancedAnalyzer } = await import('./excelAdvancedAnalyzer');
+      const analyzer = new ExcelAdvancedAnalyzer();
+      
+      const analysis = await analyzer.analyzeFile(req.file.path, req.file.originalname);
+      res.json(analysis);
+    } catch (error) {
+      console.error('Advanced Excel analysis error:', error);
+      res.status(500).json({ error: 'Failed to analyze Excel file' });
+    }
+  });
+
+  app.get('/api/excel/analysis/:fileId', async (req, res) => {
+    try {
+      // In a real implementation, this would fetch from database
+      // For now, return mock data to match the interface
+      res.json({
+        fileId: req.params.fileId,
+        processingStatus: 'completed',
+        sheets: [],
+        patterns: [],
+        expressions: [],
+        nomenclatureMapping: [],
+        transformationRules: []
+      });
+    } catch (error) {
+      console.error('Get analysis error:', error);
+      res.status(500).json({ error: 'Failed to get analysis' });
+    }
+  });
+
+  app.post('/api/excel/apply-mappings', async (req, res) => {
+    try {
+      const { fileId, mappings } = req.body;
+      
+      const { ExcelAdvancedAnalyzer } = await import('./excelAdvancedAnalyzer');
+      const analyzer = new ExcelAdvancedAnalyzer();
+      
+      await analyzer.applyTransformationRules(mappings);
+      
+      res.json({ success: true, message: 'Mappings applied successfully' });
+    } catch (error) {
+      console.error('Apply mappings error:', error);
+      res.status(500).json({ error: 'Failed to apply mappings' });
+    }
+  });
+
+  app.post('/api/excel/transform-presal', async (req, res) => {
+    try {
+      const { fileId, transformationRules } = req.body;
+      
+      const { ExcelAdvancedAnalyzer } = await import('./excelAdvancedAnalyzer');
+      const analyzer = new ExcelAdvancedAnalyzer();
+      
+      const outputFile = await analyzer.generatePreSalOutput();
+      
+      res.json({ 
+        success: true, 
+        outputFile,
+        downloadUrl: `/downloads/${path.basename(outputFile)}`
+      });
+    } catch (error) {
+      console.error('Transform PreSal error:', error);
+      res.status(500).json({ error: 'Failed to transform to PreSal format' });
+    }
+  });
+
   // Ultra-fast caching system for Excel components
   let componentCache: { data: any[], timestamp: number, filePath: string } | null = null;
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache

@@ -26,6 +26,7 @@ import { FloatingExcelTransformer } from './FloatingExcelTransformer';
 import ConfigurationDetailsPanel from './ConfigurationDetailsPanel';
 import SpecificationsAnalysisPanel from './SpecificationsAnalysisPanel';
 import { FloatingOrderEntryPanel } from './FloatingOrderEntryPanel';
+import { ExcelFileViewerEditor } from './excel/ExcelFileViewerEditor';
 
 export function PanelControls() {
   const { panels, openPanel, closePanel } = usePanelManager();
@@ -108,6 +109,17 @@ export function PanelControls() {
       size: { width: 380, height: 450 },
       minSize: { width: 280, height: 350 },
       maxSize: { width: 600, height: 700 },
+      scalable: true
+    },
+    {
+      id: 'excel-file-viewer',
+      title: 'Excel File Viewer & Editor',
+      icon: <Database className="h-4 w-4" />,
+      component: <ExcelFileViewerEditor />,
+      position: { x: 600, y: 50 },
+      size: { width: 900, height: 700 },
+      minSize: { width: 600, height: 500 },
+      maxSize: { width: 1200, height: 900 },
       scalable: true
     },
     {
