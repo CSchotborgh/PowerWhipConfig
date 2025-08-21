@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 import DesignCanvas from "@/components/DesignCanvas";
-import SpecificationPanel from "@/components/SpecificationPanel";
+
 import ConfigurationTab from "@/components/ConfigurationTab";
 import VisualDesignTab from "@/components/VisualDesignTab";
 import OrderEntryTab from "@/components/OrderEntryTab";
@@ -16,11 +16,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 export default function Configurator() {
   const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation" | "order">("configuration");
   const [leftPanelExpanded, setLeftPanelExpanded] = useState(true);
-  const [rightPanelExpanded, setRightPanelExpanded] = useState(true);
   const [leftPanelWidth, setLeftPanelWidth] = useState(320); // Default width in pixels
-  const [rightPanelWidth, setRightPanelWidth] = useState(320);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
-  const [isDraggingRight, setIsDraggingRight] = useState(false);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -68,36 +65,7 @@ export default function Configurator() {
     document.addEventListener('mouseup', handleMouseUp);
   };
 
-  const handleRightPanelDrag = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDraggingRight(true);
-    
-    const startX = e.clientX;
-    const startWidth = rightPanelWidth;
-    
-    // Add global cursor style
-    document.body.style.cursor = 'ew-resize';
-    document.body.style.userSelect = 'none';
 
-    const handleMouseMove = (e: MouseEvent) => {
-      e.preventDefault();
-      const deltaX = startX - e.clientX;
-      const newWidth = Math.max(200, Math.min(window.innerWidth * 0.8, startWidth + deltaX));
-      setRightPanelWidth(newWidth);
-    };
-
-    const handleMouseUp = () => {
-      setIsDraggingRight(false);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
 
   return (
     <ConfigurationProvider>
