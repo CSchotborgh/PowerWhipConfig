@@ -23,6 +23,7 @@ import { usePanelManager } from './PanelManager';
 import { FloatingComponentLibrary } from './FloatingComponentLibrary';
 import { FloatingExcelTransformer } from './FloatingExcelTransformer';
 import ConfigurationDetailsPanel from './ConfigurationDetailsPanel';
+import SpecificationsAnalysisPanel from './SpecificationsAnalysisPanel';
 
 export function PanelControls() {
   const { panels, openPanel, closePanel } = usePanelManager();
@@ -59,6 +60,17 @@ export function PanelControls() {
       size: { width: 400, height: 550 },
       minSize: { width: 350, height: 450 },
       maxSize: { width: 600, height: 800 },
+      scalable: true
+    },
+    {
+      id: 'specifications-analysis',
+      title: 'Specifications & Analysis',
+      icon: <Zap className="h-4 w-4" />,
+      component: <SpecificationsAnalysisPanel />,
+      position: { x: 700, y: 200 },
+      size: { width: 480, height: 650 },
+      minSize: { width: 350, height: 450 },
+      maxSize: { width: 700, height: 900 },
       scalable: true
     },
     {
