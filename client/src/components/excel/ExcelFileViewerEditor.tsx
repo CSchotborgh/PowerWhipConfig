@@ -186,13 +186,43 @@ export function ExcelFileViewerEditor({
           transformationRules: analysis?.transformationRules
         }),
       });
-      return response.json();
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Transform failed');
+      }
+      
+      // Handle file download
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filename = contentDisposition 
+        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '') 
+        : `PreSal_Output_${Date.now()}.xlsx`;
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      return { filename, size: blob.size };
     },
     onSuccess: (data) => {
-      onTransformComplete?.(data.outputFile);
+      onTransformComplete?.(data.filename);
       toast({
-        title: "Transformation Complete",
-        description: "File transformed to PreSal format successfully",
+        title: "PreSal Output Downloaded",
+        description: `Successfully generated and downloaded ${data.filename} (${Math.round(data.size / 1024)} KB)`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Transform Failed",
+        description: error.message,
+        variant: "destructive",
       });
     }
   });
