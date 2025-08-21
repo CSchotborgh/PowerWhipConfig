@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 import multer from "multer";
 import * as XLSX from 'xlsx';
 import * as fs from 'fs';
-import Papa from 'papaparse';
+import * as Papa from 'papaparse';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -477,22 +477,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const { ExcelAdvancedAnalyzer } = await import('./excelAdvancedAnalyzer');
-      const analyzer = new ExcelAdvancedAnalyzer();
+      const { SimpleExcelAnalyzer } = await import('./excelSimpleAnalyzer');
+      const analyzer = new SimpleExcelAnalyzer();
       
-      // Use the uploaded file buffer if available, otherwise use path
-      const filePath = req.file.path || req.file.buffer;
+      // Use the uploaded file path
+      const filePath = req.file.path;
       const fileName = req.file.originalname || 'uploaded_file.xlsx';
       
-      if (!filePath) {
-        return res.status(400).json({ error: 'Invalid file upload' });
+      if (!filePath || typeof filePath !== 'string') {
+        return res.status(400).json({ error: 'Invalid file upload - no file path' });
       }
       
       const analysis = await analyzer.analyzeFile(filePath, fileName);
       res.json(analysis);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Advanced Excel analysis error:', error);
-      res.status(500).json({ error: 'Failed to analyze Excel file' });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ error: `Failed to analyze Excel file: ${errorMessage}` });
     }
   });
 
@@ -519,15 +520,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { fileId, mappings } = req.body;
       
-      const { ExcelAdvancedAnalyzer } = await import('./excelAdvancedAnalyzer');
-      const analyzer = new ExcelAdvancedAnalyzer();
+      const { SimpleExcelAnalyzer } = await import('./excelSimpleAnalyzer');
+      const analyzer = new SimpleExcelAnalyzer();
       
       await analyzer.applyTransformationRules(mappings);
       
       res.json({ success: true, message: 'Mappings applied successfully' });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Apply mappings error:', error);
-      res.status(500).json({ error: 'Failed to apply mappings' });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ error: `Failed to apply mappings: ${errorMessage}` });
     }
   });
 
@@ -724,7 +726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = MultiSheetProcessor.processAllSheets(req.file.buffer, req.file.originalname);
       
       res.json(result);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Multi-sheet processing error:', error);
       res.status(500).json({ 
         success: false,
@@ -1013,7 +1015,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const sheetPatterns: any[] = [];
         
         // Comprehensive cell scanning - capture ALL patterns including duplicates from every sheet
-        sheetData.forEach((row: any[], rowIndex) => {
+        (sheetData as any[][]).forEach((row: any[], rowIndex: number) => {
           row.forEach((cellValue, colIndex) => {
             if (cellValue !== null && cellValue !== undefined && cellValue !== '') {
               const stringValue = String(cellValue).trim();

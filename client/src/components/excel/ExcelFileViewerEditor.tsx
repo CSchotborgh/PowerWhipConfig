@@ -157,7 +157,10 @@ export function ExcelFileViewerEditor({
     queryKey: ['/api/excel/analysis', selectedFile?.name],
     queryFn: () => fetch(`/api/excel/analysis/${uploadMutation.data?.fileId}`).then(r => r.json()),
     enabled: !!uploadMutation.data?.fileId,
-    refetchInterval: (data: ExcelAnalysis) => data?.processingStatus === 'analyzing' ? 2000 : false,
+    refetchInterval: (query) => {
+      const data = query.state.data as ExcelAnalysis | undefined;
+      return data?.processingStatus === 'analyzing' ? 2000 : false;
+    },
   }) as { data: ExcelAnalysis | undefined, isLoading: boolean };
 
   // Pattern recognition and mapping
