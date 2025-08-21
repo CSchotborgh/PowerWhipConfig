@@ -7,7 +7,7 @@ import { useDesignCanvas } from "@/contexts/DesignCanvasContext";
 import AGGridOrderEntry from "./AGGridOrderEntry";
 import VirtualizedOrderEntry from "./VirtualizedOrderEntry";
 import PerformanceOrderEntry from "./PerformanceOrderEntry";
-import ExcelTransformer from "./ExcelTransformer";
+
 import ExcelFileViewer from "./ExcelFileViewer";
 import ExcelLikeInterface from "./ExcelLikeInterface";
 import ExpandedComponentLibrary from "./ExpandedComponentLibrary";
@@ -33,7 +33,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   const { droppedComponents, setDroppedComponents, addComponent, removeComponent, updateComponent } = useDesignCanvas();
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
-  const [viewMode, setViewMode] = useState<"design" | "order" | "transformer" | "configurator" | "excel">("design");
+  const [viewMode, setViewMode] = useState<"design" | "order" | "configurator" | "excel">("design");
   const [isDraggingComponent, setIsDraggingComponent] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showComponentLibrary, setShowComponentLibrary] = useState(true);
@@ -191,8 +191,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   const toggleViewMode = () => {
     setViewMode(prev => {
       if (prev === "design") return "order";
-      if (prev === "order") return "transformer";
-      if (prev === "transformer") return "configurator";
+      if (prev === "order") return "configurator";
       if (prev === "configurator") return "excel";
       return "design";
     });
@@ -244,10 +243,6 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
     return <PerformanceOrderEntry onToggleView={toggleViewMode} />;
   }
 
-  if (viewMode === "transformer") {
-    return <ExcelTransformer onToggleView={toggleViewMode} />;
-  }
-
   if (viewMode === "configurator") {
     return <ExcelFileViewer onToggleView={toggleViewMode} />;
   }
@@ -267,7 +262,6 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
               <h2 className="text-xl font-bold text-technical-900 dark:text-technical-100">
                 {viewMode === "design" ? "Design Canvas" : 
                  viewMode === "order" ? "Order Entry System" : 
-                 viewMode === "transformer" ? "Excel Transformer" :
                  viewMode === "configurator" ? "ConfiguratorDataset Analyzer" :
                  "Excel-like Interface"}
               </h2>
