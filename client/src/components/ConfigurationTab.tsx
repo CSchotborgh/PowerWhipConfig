@@ -11,6 +11,8 @@ import { CheckCircle, AlertTriangle, Sliders, ChevronDown, Database } from "luci
 import { useConfiguration } from "@/contexts/ConfigurationContext";
 import { cn } from "@/lib/utils";
 import ComponentLibrary from "./ComponentLibrary";
+import { validateConfiguration, calculateVoltageDrops, calculateThermalAnalysis } from "@/lib/electricalCalculations";
+import { ValidationOptions } from "./ValidationOptions";
 
 
 const configurationSchema = z.object({
@@ -25,6 +27,7 @@ type ConfigurationFormData = z.infer<typeof configurationSchema>;
 export default function ConfigurationTab() {
   const { configuration, updateConfiguration } = useConfiguration();
   const [openSections, setOpenSections] = useState<string[]>(["basic-config", "component-library", "validation-status"]);
+  const [validationMode, setValidationMode] = useState<"live" | "static" | "hidden">("live");
   
   const form = useForm<ConfigurationFormData>({
     resolver: zodResolver(configurationSchema),
@@ -48,10 +51,34 @@ export default function ConfigurationTab() {
     updateConfiguration(data);
   };
 
+  // Real-time validation using electrical calculations
+  const currentConfig = {
+    voltage: configuration.voltage || 120,
+    current: configuration.current || 20,
+    wireGauge: configuration.wireGauge || "12",
+    totalLength: 12.5, // Default length, could be from design canvas
+  };
+
+  const validation = validateConfiguration(currentConfig);
+  const voltageDrops = calculateVoltageDrops(currentConfig);
+  const thermalAnalysis = calculateThermalAnalysis(currentConfig);
+
+  // Generate dynamic validation results
   const validationResults = [
-    { status: "success", message: "Voltage compatibility verified" },
-    { status: "success", message: "Current rating within limits" },
-    { status: "warning", message: "Wire gauge recommendation: 10 AWG" },
+    {
+      status: validation.isValid ? "success" : "error",
+      message: validation.isValid ? "Configuration validated successfully" : "Configuration has validation errors"
+    },
+    {
+      status: voltageDrops.percentage <= 3 ? "success" : voltageDrops.percentage <= 5 ? "warning" : "error",
+      message: `Voltage drop: ${voltageDrops.percentage.toFixed(1)}% (${voltageDrops.percentage <= 3 ? "Excellent" : voltageDrops.percentage <= 5 ? "Acceptable" : "Exceeds limit"})`
+    },
+    {
+      status: thermalAnalysis.withinLimits && thermalAnalysis.safetyMargin >= 20 ? "success" : thermalAnalysis.withinLimits ? "warning" : "error",
+      message: `Thermal margin: ${thermalAnalysis.safetyMargin.toFixed(1)}°C (${thermalAnalysis.withinLimits ? "Safe" : "Unsafe"})`
+    },
+    ...validation.warnings.map(warning => ({ status: "warning" as const, message: warning })),
+    ...validation.errors.map(error => ({ status: "error" as const, message: error }))
   ];
 
   return (
@@ -163,46 +190,19 @@ export default function ConfigurationTab() {
 
 
 
-      {/* Validation Status */}
-      <Collapsible
-        open={openSections.includes("validation-status")}
-        onOpenChange={() => toggleSection("validation-status")}
-      >
-        <Card>
-          <CollapsibleTrigger className="w-full">
-            <CardHeader className="hover:bg-technical-50 dark:hover:bg-technical-800 transition-colors">
-              <CardTitle className="flex items-center justify-between text-technical-900 dark:text-technical-100">
-                <div className="flex items-center">
-                  <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-                  Validation Status
-                </div>
-                <ChevronDown className={cn(
-                  "w-4 h-4 transition-transform duration-200",
-                  openSections.includes("validation-status") ? "rotate-180" : ""
-                )} />
-              </CardTitle>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent>
-              <div className="space-y-2">
-                {validationResults.map((result, index) => (
-                  <div key={index} className="flex items-center space-x-2 text-sm">
-                    {result.status === "success" ? (
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                    )}
-                    <span className="text-technical-700 dark:text-technical-300">
-                      {result.message}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
+      {/* Validation Status with Mode Options */}
+      {validationMode !== "hidden" && (
+        <Collapsible
+          open={openSections.includes("validation-status")}
+          onOpenChange={() => toggleSection("validation-status")}
+        >
+          <ValidationOptions
+            mode={validationMode}
+            onModeChange={setValidationMode}
+            validationResults={validationResults}
+          />
+        </Collapsible>
+      )}
 
 
       </div>
