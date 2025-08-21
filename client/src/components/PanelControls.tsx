@@ -16,10 +16,12 @@ import {
   Zap,
   Database,
   Eye,
-  EyeOff
+  EyeOff,
+  FileSpreadsheet
 } from 'lucide-react';
 import { usePanelManager } from './PanelManager';
 import { FloatingComponentLibrary } from './FloatingComponentLibrary';
+import { FloatingExcelTransformer } from './FloatingExcelTransformer';
 import ConfigurationDetailsPanel from './ConfigurationDetailsPanel';
 
 export function PanelControls() {
@@ -34,7 +36,8 @@ export function PanelControls() {
       position: { x: 50, y: 100 },
       size: { width: 450, height: 600 },
       minSize: { width: 300, height: 400 },
-      maxSize: { width: 800, height: 900 }
+      maxSize: { width: 800, height: 900 },
+      scalable: true
     },
     {
       id: 'configuration-details',
@@ -44,7 +47,19 @@ export function PanelControls() {
       position: { x: 500, y: 100 },
       size: { width: 500, height: 650 },
       minSize: { width: 350, height: 450 },
-      maxSize: { width: 900, height: 1000 }
+      maxSize: { width: 900, height: 1000 },
+      scalable: true
+    },
+    {
+      id: 'excel-transformer',
+      title: 'Excel Transformer',
+      icon: <FileSpreadsheet className="h-4 w-4" />,
+      component: <FloatingExcelTransformer />,
+      position: { x: 550, y: 150 },
+      size: { width: 400, height: 550 },
+      minSize: { width: 350, height: 450 },
+      maxSize: { width: 600, height: 800 },
+      scalable: true
     },
     {
       id: 'validation-panel',
@@ -78,7 +93,8 @@ export function PanelControls() {
       position: { x: 950, y: 100 },
       size: { width: 380, height: 450 },
       minSize: { width: 280, height: 350 },
-      maxSize: { width: 600, height: 700 }
+      maxSize: { width: 600, height: 700 },
+      scalable: true
     },
     {
       id: 'export-panel',
@@ -112,7 +128,8 @@ export function PanelControls() {
       position: { x: 750, y: 300 },
       size: { width: 350, height: 400 },
       minSize: { width: 250, height: 300 },
-      maxSize: { width: 500, height: 600 }
+      maxSize: { width: 500, height: 600 },
+      scalable: true
     }
   ];
 
