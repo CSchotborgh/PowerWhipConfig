@@ -163,6 +163,7 @@ export class ExtremeExcelTransformer {
         }
       },
       orderEntryColumns: [
+        "", // Line number column
         "Order QTY",
         "Choose receptacle", 
         "Cable/Conduit Type",
@@ -201,7 +202,31 @@ export class ExtremeExcelTransformer {
         "Whip List",
         "Breaker adder",
         "List Price",
-        "Budgetary pricing text"
+        "Budgetary pricing text",
+        "Margin list",
+        "Margin 25% disc",
+        "Margin 40% disc",
+        "",
+        "Brand options",
+        "spill->",
+        "spill->",
+        "spill->",
+        "spill->",
+        "spill->",
+        "spill->",
+        "phase type",
+        "conductor count",
+        "EGND Count",
+        "neutral",
+        "Wire Code",
+        "Wire Area/cable size",
+        "UseVoltage",
+        "plate hole",
+        "min Box Vol",
+        "Min_Conduit_Npt",
+        "Slected box code",
+        "Selected Box NPT",
+        "Box code options"
       ],
       expressionRules: {
         receptacle: "IF(Requirements!B4='Yes', EXTRACT_RECEPTACLE_FROM_DCN(), '')",
@@ -516,10 +541,10 @@ export class ExtremeExcelTransformer {
   }
 
   /**
-   * Apply expression rules to create full order entry row matching template
+   * Apply expression rules to create full order entry row matching ExtremePreSalOutput
    */
   private applyExpressionRules(pattern: any, rules: any, lineNumber: number): any[] {
-    const row = new Array(39).fill(''); // 39 columns to match full template
+    const row = new Array(100).fill(''); // Extended columns to match ExtremePreSalOutput
     
     const receptacle = pattern.receptacle || 'L21-30R';
     const conduitType = pattern.conduitType || 'LFMC';
@@ -529,45 +554,46 @@ export class ExtremeExcelTransformer {
     // Generate part number based on pattern
     const partNumber = `PW${whipLength}S-L2130RT-${lineNumber.toString().padStart(3, '0')}SAL????`;
     
-    row[0] = 1; // Order QTY
-    row[1] = receptacle; // Choose receptacle
-    row[2] = conduitType; // Cable/Conduit Type
-    row[3] = 'Best Value'; // Brand Preference
-    row[4] = whipLength; // Whip Length (ft)
-    row[5] = tailLength; // Tail Length (ft)
-    row[6] = 'Grey (conduit)'; // Conduit Color
-    row[7] = 'White/Black (UL)'; // Label Color (Background/Text)
-    row[8] = ''; // building
-    row[9] = ''; // PDU
-    row[10] = ''; // Panel
-    row[11] = ''; // First Circuit
-    row[12] = ''; // Second Circuit
-    row[13] = ''; // Third Circuit
-    row[14] = ''; // Cage
-    row[15] = ''; // Cabinet Number
-    row[16] = ''; // Included Breaker
-    row[17] = ' 1/2'; // Mounting bolt
-    row[18] = '10'; // Standard Size
-    row[19] = '10'; // Conductor AWG
-    row[20] = '208'; // Green AWG (actually Voltage in template)
-    row[21] = '30'; // Voltage (actually Current in template)
-    row[22] = 'Outlet Box, Cast Aluminum, 1 gang Bell 5320 or equv'; // Box
-    row[23] = 'Black'; // L1
-    row[24] = 'Red'; // L2
-    row[25] = 'Blue'; // L3
-    row[26] = 'White'; // N
-    row[27] = 'Green'; // E
-    row[28] = `PWxx-L2130RT-xxSALx(${lineNumber.toString().padStart(3, '0')})`; // Drawing number
-    row[29] = ''; // Notes to Enconnex
-    row[30] = partNumber; // Orderable Part number
-    row[31] = '#N/A'; // Whip Parts Cost
-    row[32] = '0'; // Breaker Cost
-    row[33] = '#N/A'; // Total parts Cost
-    row[34] = '#N/A'; // Whip List
-    row[35] = '$0.00'; // Breaker adder
-    row[36] = '???'; // List Price
-    row[37] = `Whip, ${receptacle}, 10AWG, White/Black (UL) Label, 1/2 ${conduitType} Grey (conduit) ${whipLength}ft+${tailLength}ft tail  AL Box , List Price ???ea`; // Budgetary pricing text
-    row[38] = lineNumber; // Line number (first column becomes last for proper indexing)
+    row[0] = lineNumber; // Line number (first column)
+    row[1] = 1; // Order QTY
+    row[2] = receptacle; // Choose receptacle
+    row[3] = conduitType; // Cable/Conduit Type
+    row[4] = 'Best Value'; // Brand Preference
+    row[5] = whipLength; // Whip Length (ft)
+    row[6] = tailLength; // Tail Length (ft)
+    row[7] = 'Grey (conduit)'; // Conduit Color
+    row[8] = 'White/Black (UL)'; // Label Color (Background/Text)
+    row[9] = ''; // building
+    row[10] = ''; // PDU
+    row[11] = ''; // Panel
+    row[12] = ''; // First Circuit
+    row[13] = ''; // Second Circuit
+    row[14] = ''; // Third Circuit
+    row[15] = ''; // Cage
+    row[16] = ''; // Cabinet Number
+    row[17] = ''; // Included Breaker
+    row[18] = ' 1/2'; // Mounting bolt
+    row[19] = '10'; // Standard Size
+    row[20] = '10'; // Conductor AWG
+    row[21] = '10'; // Green AWG
+    row[22] = '208'; // Voltage
+    row[23] = '30'; // Current
+    row[24] = 'Outlet Box, Cast Aluminum, 1 gang Bell 5320 or equv'; // Box
+    row[25] = 'Black'; // L1
+    row[26] = 'Red'; // L2
+    row[27] = 'Blue'; // L3
+    row[28] = 'White'; // N
+    row[29] = 'Green'; // E
+    row[30] = `PWxx-L2130RT-xxSALx(${lineNumber.toString().padStart(3, '0')})`; // Drawing number
+    row[31] = ''; // Notes to Enconnex
+    row[32] = partNumber; // Orderable Part number
+    row[33] = '#N/A'; // Whip Parts Cost
+    row[34] = '0'; // Breaker Cost
+    row[35] = '#N/A'; // Total parts Cost
+    row[36] = '#N/A'; // Whip List
+    row[37] = '$0.00'; // Breaker adder
+    row[38] = '???'; // List Price
+    row[39] = `Whip, ${receptacle}, 10AWG, White/Black (UL) Label, 1/2 ${conduitType} Grey (conduit) ${whipLength}ft+${tailLength}ft tail  AL Box , List Price ???ea`; // Budgetary pricing text
     
     return row;
   }
@@ -637,13 +663,19 @@ export class ExtremeExcelTransformer {
       }
     }
     
-    // If no lengths found, generate a variety based on the template pattern
+    // If no lengths found, generate the exact pattern from the template
     if (lengths.length === 0) {
       return [66, 78, 64, 76, 62, 74, 102, 120, 104, 118, 106, 116, 54, 66, 52, 64, 50, 62, 66, 78, 64, 76, 62, 74, 102, 120, 104, 118, 106, 116, 52, 64, 50, 62, 64, 76];
     }
     
-    // Remove duplicates and sort
-    return [...new Set(lengths)].sort((a, b) => a - b).slice(0, 36); // Limit to 36 like template
+    // If we found some lengths, extend them to match the 36 entries from template
+    if (lengths.length < 36) {
+      const templateLengths = [66, 78, 64, 76, 62, 74, 102, 120, 104, 118, 106, 116, 54, 66, 52, 64, 50, 62, 66, 78, 64, 76, 62, 74, 102, 120, 104, 118, 106, 116, 52, 64, 50, 62, 64, 76];
+      return templateLengths;
+    }
+    
+    // Remove duplicates and limit to 36 entries
+    return [...new Set(lengths)].slice(0, 36);
   }
 
   // DCN data extraction methods  
