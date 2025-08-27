@@ -556,6 +556,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Natural language pattern parser endpoint
+  // Extreme Excel transformation endpoint
+  app.post('/api/excel/extreme-transform', upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { ExtremeExcelTransformer } = await import('./extremeExcelTransformer');
+      const transformer = new ExtremeExcelTransformer();
+      
+      const result = await transformer.transformToSALConfigurator(req.file.path);
+      
+      if (!result.success) {
+        return res.status(500).json({ 
+          error: 'Transformation failed', 
+          log: result.transformationLog 
+        });
+      }
+
+      // Stream the generated file
+      const outputPath = `./tmp/${result.outputFileName}`;
+      if (fs.existsSync(outputPath)) {
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${result.outputFileName}"`);
+        
+        const fileStream = fs.createReadStream(outputPath);
+        fileStream.pipe(res);
+        
+        console.log(`Extreme transformation completed: ${result.outputFileName}`);
+      } else {
+        res.status(500).json({ error: 'Output file not found' });
+      }
+      
+    } catch (error) {
+      console.error('Extreme transformation error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.post('/api/excel/parse-patterns', async (req, res) => {
     try {
       const { input } = req.body;

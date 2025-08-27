@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import PatternParserInterface from '../PatternParserInterface';
+import ExtremeTransformerInterface from '../ExtremeTransformerInterface';
 
 interface ExcelAnalysis {
   fileId: string;
@@ -658,7 +659,7 @@ export function ExcelFileViewerEditor({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="upload" className="flex items-center gap-2">
             <Upload className="h-4 w-4" />
             Upload & Analyze
@@ -671,6 +672,10 @@ export function ExcelFileViewerEditor({
             <Brain className="h-4 w-4" />
             Pattern Parser
           </TabsTrigger>
+          <TabsTrigger value="extreme" className="flex items-center gap-2">
+            <Target className="h-4 w-4" />
+            Extreme Transform
+          </TabsTrigger>
           <TabsTrigger value="transform" className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
             Transform & Export
@@ -680,6 +685,7 @@ export function ExcelFileViewerEditor({
         <TabsContent value="upload">{renderUploadTab()}</TabsContent>
         <TabsContent value="analysis">{renderAnalysisTab()}</TabsContent>
         <TabsContent value="patterns"><PatternParserInterface /></TabsContent>
+        <TabsContent value="extreme"><ExtremeTransformerInterface /></TabsContent>
         <TabsContent value="transform">{renderTransformTab()}</TabsContent>
       </Tabs>
     </div>
