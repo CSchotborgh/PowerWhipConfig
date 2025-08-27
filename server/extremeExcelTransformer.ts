@@ -163,21 +163,21 @@ export class ExtremeExcelTransformer {
         }
       },
       orderEntryColumns: [
-        "Line",
-        "Receptacle",
-        "conduit type",
-        "Conduit Length", 
-        "Tail length",
-        "Cabinet #",
-        "Cage",
-        "PDU",
-        "Panel", 
-        "Breaker position",
+        "", // Empty first column for line numbers
+        "Order QTY",
+        "Choose receptacle", 
+        "Cable/Conduit Type",
+        "Brand Preference",
+        "Whip Length (ft)",
+        "Tail Length (ft)",
+        "Conduit Color",
         "Label Color (Background/Text)",
-        "PRD reference",
-        "Quantity",
-        "Unit Price",
-        "Extended Price"
+        "building",
+        "PDU",
+        "Panel",
+        "First Circuit",
+        "Second Circuit", 
+        "Third Circuit"
       ],
       expressionRules: {
         receptacle: "IF(Requirements!B4='Yes', EXTRACT_RECEPTACLE_FROM_DCN(), '')",
@@ -287,23 +287,18 @@ export class ExtremeExcelTransformer {
   }
 
   /**
-   * Generate output Excel file in SAL-0y Configurator format with Requirements and Order Entry sheets
+   * Generate output Excel file as OrderEntryResult matching template structure
    */
   private async generateOutputFile(orderEntryData: any[][], targetStructure: any): Promise<string> {
-    const outputFileName = `SAL-0y_Configurator_${Date.now()}.xlsx`;
+    const outputFileName = `OrderEntryResult_${Date.now()}.xlsx`;
     const outputPath = path.join('./tmp', outputFileName);
     
-    // Create workbook with SAL-0y structure
+    // Create workbook matching template structure
     const workbook = XLSX.utils.book_new();
     
-    // Requirements Sheet
-    const requirementsData = this.createRequirementsSheet(targetStructure);
-    const requirementsSheet = XLSX.utils.aoa_to_sheet(requirementsData);
-    this.applyRequirementsFormatting(requirementsSheet);
-    XLSX.utils.book_append_sheet(workbook, requirementsSheet, 'Requirements');
-    
-    // Order Entry Sheet
-    const orderEntrySheet = XLSX.utils.aoa_to_sheet(orderEntryData);
+    // Order Entry Sheet with template structure
+    const templateOrderEntryData = this.createOrderEntryTemplateStructure(orderEntryData);
+    const orderEntrySheet = XLSX.utils.aoa_to_sheet(templateOrderEntryData);
     this.applyOrderEntryFormatting(orderEntrySheet, targetStructure);
     XLSX.utils.book_append_sheet(workbook, orderEntrySheet, 'Order Entry');
     
@@ -313,7 +308,7 @@ export class ExtremeExcelTransformer {
     // Write file
     XLSX.writeFile(workbook, outputPath);
     
-    this.log(`SAL-0y Configurator file generated: ${outputFileName}`);
+    this.log(`OrderEntryResult file generated: ${outputFileName}`);
     return outputFileName;
   }
 
@@ -493,42 +488,50 @@ export class ExtremeExcelTransformer {
   }
 
   /**
-   * Apply expression rules to create order entry row
+   * Apply expression rules to create order entry row matching template
    */
   private applyExpressionRules(pattern: any, rules: any, lineNumber: number): any[] {
-    const row = new Array(15).fill(''); // 15 columns for order entry
+    const row = new Array(15).fill(''); // 15 columns to match template
     
-    row[0] = lineNumber.toString(); // Line
-    row[1] = pattern.receptacle || '5-15R'; // Receptacle
-    row[2] = pattern.conduitType || 'EMT'; // conduit type
-    row[3] = pattern.conduitLength || '50'; // Conduit Length
-    row[4] = pattern.tailLength || '10'; // Tail length
-    row[5] = ''; // Cabinet # (No per requirements)
-    row[6] = ''; // Cage (No per requirements)
-    row[7] = ''; // PDU (No per requirements)
-    row[8] = ''; // Panel (No per requirements)
-    row[9] = ''; // Breaker position (No first per requirements)
-    row[10] = 'Black (conduit)'; // Label Color (No per requirements)
-    row[11] = `PRD${pattern.orderNumber}`; // PRD reference
-    row[12] = '1'; // Quantity
-    row[13] = '$0.00'; // Unit Price
-    row[14] = '$0.00'; // Extended Price
+    row[0] = lineNumber; // Line number (first column)
+    row[1] = 1; // Order QTY
+    row[2] = pattern.receptacle || 'L21-30R'; // Choose receptacle (extracted from DCN)
+    row[3] = pattern.conduitType || 'LFMC'; // Cable/Conduit Type (extracted from DCN)
+    row[4] = 'Best Value'; // Brand Preference (default)
+    row[5] = pattern.conduitLength || '50'; // Whip Length (ft) (extracted from DCN)
+    row[6] = pattern.tailLength || 6; // Tail Length (ft) (extracted from DCN)
+    row[7] = 'Grey (conduit)'; // Conduit Color (default)
+    row[8] = 'White/Black (UL)'; // Label Color (Background/Text)
+    row[9] = ''; // building (empty per template pattern)
+    row[10] = ''; // PDU (empty per template pattern)
+    row[11] = ''; // Panel (empty per template pattern)
+    row[12] = ''; // First Circuit (empty per template pattern)
+    row[13] = ''; // Second Circuit (empty per template pattern)
+    row[14] = ''; // Third Circuit (empty per template pattern)
     
     return row;
   }
 
   /**
-   * Create Requirements sheet data
+   * Create Order Entry sheet matching exact template structure
    */
-  private createRequirementsSheet(targetStructure: any): any[][] {
-    return [
-      ['', '', '', '', 'Equation Cells'],
-      ['Line', 'Yes', 'Yes', 'Yes', 'Yes', 'No', 'No', 'No', 'No', 'No first', 'No'],
-      ['', 'Receptacle', 'conduit type', 'Conduit Length', 'Tail length', 'Cabinet #', 'Cage', 'PDU', 'Panel', 'Breaker position', 'Label Color (Background/Text)'],
-      ['PRD reference', 'PRD230503'],
-      ['Project plan', ''],
-      ['PDS', '']
-    ];
+  private createOrderEntryTemplateStructure(orderEntryData: any[][]): any[][] {
+    const templateData = [];
+    
+    // Header rows matching the template structure exactly
+    templateData.push(['', '', '', 'Project Name', '', '', '', '', '', '', '', '', '', '', '', '', 'Contractor Requestor  ', '', '', '', '', 'SAL number:  SAL-0', '????']);
+    templateData.push(['', '', '', 'Location', '', '', '', '', '', '', '', '', '', '', '', '', 'Phone Number', '', '', 'Customer:', 'Centersquare', '', 'Self populated fields, but can be changed to meet your requirements']);
+    templateData.push(['', '', '', 'Contractor  Name', '', '', '', '', '', '', '', '', '', '', '', '', 'Date Needed for Install ', '', '', 'Engineer', 'Victor Elias', '', 'Number of lines', orderEntryData.length - 1]);
+    templateData.push(['', '', '', '', '', '', '', '', 'Information for Label']); // Row 4
+    
+    // Add column headers (Row 5 in template)
+    templateData.push(['', 'Order QTY', 'Choose receptacle', 'Cable/Conduit Type', 'Brand Preference', 'Whip Length (ft)', 'Tail Length (ft)', 'Conduit Color', 'Label Color (Background/Text)', 'building', 'PDU', 'Panel', 'First Circuit', 'Second Circuit', 'Third Circuit']);
+    
+    // Add data rows (starting from Row 6 in template)
+    const dataRows = orderEntryData.slice(1); // Skip our header row
+    templateData.push(...dataRows);
+    
+    return templateData;
   }
 
   /**

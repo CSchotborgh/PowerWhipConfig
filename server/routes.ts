@@ -591,7 +591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const fileStream = fs.createReadStream(outputPath);
         fileStream.pipe(res);
         
-        console.log(`Extreme transformation completed: ${result.outputFileName}`);
+        console.log(`OrderEntryResult transformation completed: ${result.outputFileName}`);
       } else {
         res.status(500).json({ error: 'Output file not found' });
       }
