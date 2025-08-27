@@ -12,6 +12,7 @@ import {
   Settings
 } from 'lucide-react';
 import { ExcelFileViewerEditor } from './excel/ExcelFileViewerEditor';
+import PatternParserInterface from './PatternParserInterface';
 
 interface FloatingExcelViewerPanelProps {
   isOpen: boolean;

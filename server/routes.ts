@@ -555,6 +555,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Natural language pattern parser endpoint
+  app.post('/api/excel/parse-patterns', async (req, res) => {
+    try {
+      const { input } = req.body;
+      
+      if (!input || typeof input !== 'string') {
+        return res.status(400).json({ error: 'Input text is required' });
+      }
+
+      const { ReceptaclePatternParser } = await import('./receptaclePatternParser');
+      const parser = new ReceptaclePatternParser();
+      
+      // Parse the input patterns
+      const patterns = parser.parseMultiplePatterns(input);
+      
+      if (patterns.length === 0) {
+        return res.status(400).json({ 
+          error: 'No valid patterns found in input', 
+          suggestion: 'Try format: "460R9W, Metal Conduit, 50ft, Pigtail 10"' 
+        });
+      }
+
+      // Convert to PreSal format
+      const preSalData = parser.convertToPreSal(patterns);
+      
+      // Create Excel workbook
+      const worksheet = XLSX.utils.aoa_to_sheet(preSalData);
+      
+      // Set column widths
+      const columnWidths = [
+        {wch: 10}, {wch: 15}, {wch: 18}, {wch: 12}, {wch: 12}, 
+        {wch: 10}, {wch: 10}, {wch: 12}, {wch: 12}, {wch: 25},
+        {wch: 20}, {wch: 15}, {wch: 15}, {wch: 10}, {wch: 12},
+        {wch: 30}, {wch: 12}, {wch: 30}
+      ];
+      worksheet['!cols'] = columnWidths;
+      
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Parsed PreSal Output');
+      
+      const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      // Set headers for file download
+      const fileName = `ParsedPreSal_${Date.now()}.xlsx`;
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.setHeader('Content-Length', excelBuffer.length);
+      
+      console.log(`Generated parsed PreSal output: ${fileName}, ${patterns.length} patterns`);
+      
+      // Send the file
+      res.send(excelBuffer);
+    } catch (error: unknown) {
+      console.error('Pattern parsing error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ error: `Failed to parse patterns: ${errorMessage}` });
+    }
+  });
+
   app.post('/api/excel/transform-presal', async (req, res) => {
     try {
       const { fileId, transformationRules } = req.body;

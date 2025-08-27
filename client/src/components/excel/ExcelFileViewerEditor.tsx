@@ -25,6 +25,7 @@ import {
   Calculator
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import PatternParserInterface from '../PatternParserInterface';
 
 interface ExcelAnalysis {
   fileId: string;
@@ -657,7 +658,7 @@ export function ExcelFileViewerEditor({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="upload" className="flex items-center gap-2">
             <Upload className="h-4 w-4" />
             Upload & Analyze
@@ -665,6 +666,10 @@ export function ExcelFileViewerEditor({
           <TabsTrigger value="analysis" className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
             Analysis Results
+          </TabsTrigger>
+          <TabsTrigger value="patterns" className="flex items-center gap-2">
+            <Brain className="h-4 w-4" />
+            Pattern Parser
           </TabsTrigger>
           <TabsTrigger value="transform" className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
@@ -674,6 +679,7 @@ export function ExcelFileViewerEditor({
 
         <TabsContent value="upload">{renderUploadTab()}</TabsContent>
         <TabsContent value="analysis">{renderAnalysisTab()}</TabsContent>
+        <TabsContent value="patterns"><PatternParserInterface /></TabsContent>
         <TabsContent value="transform">{renderTransformTab()}</TabsContent>
       </Tabs>
     </div>
