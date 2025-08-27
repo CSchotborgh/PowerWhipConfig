@@ -583,12 +583,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create Excel workbook
       const worksheet = XLSX.utils.aoa_to_sheet(preSalData);
       
-      // Set column widths
+      // Set column widths for simplified format
       const columnWidths = [
-        {wch: 10}, {wch: 15}, {wch: 18}, {wch: 12}, {wch: 12}, 
-        {wch: 10}, {wch: 10}, {wch: 12}, {wch: 12}, {wch: 25},
-        {wch: 20}, {wch: 15}, {wch: 15}, {wch: 10}, {wch: 12},
-        {wch: 30}, {wch: 12}, {wch: 30}
+        {wch: 8},  // ID
+        {wch: 12}, // Order QTY
+        {wch: 18}, // Choose receptacle
+        {wch: 22}, // Select Cable/Conduit Type
+        {wch: 15}, // Whip Length (ft)
+        {wch: 15}, // Tail Length (ft)
+        {wch: 25}  // Label Color
       ];
       worksheet['!cols'] = columnWidths;
       

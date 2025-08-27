@@ -41,7 +41,9 @@ export class ReceptaclePatternParser {
 
   // Conduit type standardization
   private conduitMappings = {
-    'metal conduit': 'EMT',
+    'metal': 'MCC',
+    'metal conduit': 'MCC',
+    'mcc': 'MCC',
     'emt': 'EMT',
     'electrical metallic tubing': 'EMT',
     'fmc': 'FMC',
@@ -67,8 +69,8 @@ export class ReceptaclePatternParser {
 
   // Tail/pigtail length extraction
   private tailPatterns = [
-    { pattern: /(?:pigtail|pig tail|tail length|tail whip|whip tail)\s*(\d+)/i, type: 'tail' },
-    { pattern: /(?:tail|pigtail)\s*(\d+)/i, type: 'tail' }
+    { pattern: /(?:pigtail|pig tail|tail length|tail whip|whip tail)\s*,?\s*(\d+)/i, type: 'tail' },
+    { pattern: /(?:tail|pigtail)\s*,?\s*(\d+)/i, type: 'tail' }
   ];
 
   /**
@@ -99,20 +101,24 @@ export class ReceptaclePatternParser {
       // Extract whip length (third part)
       const whipLength = this.extractLength(parts[2], 'whip');
 
-      // Extract tail length (fourth part or from other parts)
+      // Extract tail length from all parts
       let tailLength = 0;
-      if (parts.length > 3) {
-        tailLength = this.extractLength(parts[3], 'tail');
+      
+      // Search in all parts for tail length patterns
+      for (const part of parts) {
+        const foundTail = this.extractTailLength(part);
+        if (foundTail > 0) {
+          tailLength = foundTail;
+          break;
+        }
       }
       
-      // If no tail length found, search in all parts
-      if (tailLength === 0) {
-        for (const part of parts) {
-          const foundTail = this.extractTailLength(part);
-          if (foundTail > 0) {
-            tailLength = foundTail;
-            break;
-          }
+      // If no specific tail pattern found, check for numbers after commas in later parts
+      if (tailLength === 0 && parts.length > 3) {
+        const tailPart = parts.slice(3).join(' ');
+        const numberMatch = tailPart.match(/(\d+)/);
+        if (numberMatch) {
+          tailLength = parseFloat(numberMatch[1]);
         }
       }
 
@@ -260,40 +266,31 @@ export class ReceptaclePatternParser {
   }
 
   /**
-   * Convert parsed patterns to PreSal format
+   * Convert parsed patterns to PreSal format (simplified format matching user requirements)
    */
   public convertToPreSal(patterns: ParsedReceptaclePattern[]): any[][] {
     const preSalData = [
-      // Header row
+      // Header row - simplified format
       [
-        'Row ID', 'Receptacle Type', 'Cable/Conduit Type', 'Whip Length (ft)', 
-        'Tail Length (ft)', 'Voltage (V)', 'Current (A)', 'Wire Gauge (AWG)',
-        'Label Color', 'Installation Notes', 'NEC Compliance', 'Part Number',
-        'Manufacturer', 'Cost', 'Lead Time', 'Specifications',
-        'Parse Confidence', 'Original Input'
+        'ID', 
+        'Order QTY', 
+        'Choose receptacle', 
+        'Select Cable/Conduit Type', 
+        'Whip Length (ft)', 
+        'Tail Length (ft)', 
+        'Label Color'
       ]
     ];
 
     patterns.forEach((pattern, index) => {
       preSalData.push([
-        `PWC-${(index + 1).toString().padStart(3, '0')}`,
+        (index + 1).toString(),
+        '1',
         pattern.receptacleType,
         pattern.conduitType,
         pattern.whipLength.toString(),
         pattern.tailLength.toString(),
-        pattern.voltage,
-        pattern.current,
-        pattern.wireGauge,
-        'Blue', // Default color
-        `${pattern.receptacleType} with ${pattern.conduitType} conduit`,
-        'NEC 2020 Article 400 Compliant',
-        `PN-${pattern.receptacleType}-${index + 1}`,
-        'PowerWhip Industries',
-        `$${(125 + index * 10).toFixed(2)}`,
-        '2-3 weeks',
-        pattern.specifications,
-        `${Math.round(pattern.confidence * 100)}%`,
-        `${pattern.receptacleType}, ${pattern.conduitType}, ${pattern.whipLength}ft, Tail ${pattern.tailLength}ft`
+        'Black (conduit)'
       ]);
     });
 
