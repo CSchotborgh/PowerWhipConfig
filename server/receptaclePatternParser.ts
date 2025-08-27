@@ -20,7 +20,7 @@ export class ReceptaclePatternParser {
   // Receptacle type mappings and specifications
   private receptacleDatabase = {
     // NEMA straight blade receptacles
-    '460R9W': { standard: '5-15R', voltage: '125V', current: '15A', wireGauge: '14', specs: 'NEMA 5-15R, 15A, 125V, White' },
+    '460R9W': { standard: '460R9W', voltage: '480V', current: '60A', wireGauge: '6', specs: 'California Standard 460R9W, 60A, 480V' },
     '5-15R': { standard: '5-15R', voltage: '125V', current: '15A', wireGauge: '14', specs: 'NEMA 5-15R, 15A, 125V' },
     '5-20R': { standard: '5-20R', voltage: '125V', current: '20A', wireGauge: '12', specs: 'NEMA 5-20R, 20A, 125V' },
     
@@ -122,6 +122,14 @@ export class ReceptaclePatternParser {
         }
       }
 
+      // Log transformation process
+      const transformedPattern = `${receptacleInfo.standard}, ${conduitType}, ${whipLength}, ${tailLength || 10}`;
+      console.log(`\n*${input}`);
+      console.log(`Transform pattern to: ${transformedPattern}`);
+      console.log(`Status: Using defaults`);
+      console.log(`Pattern "${input}" not found in MasterBubbleUpLookup data`);
+      console.log(`Parse result to output file as: ${receptacleInfo.standard}, ${conduitType}, ${whipLength}, ${tailLength || 10}`);
+
       const parsed: ParsedReceptaclePattern = {
         receptacleType: receptacleInfo.standard,
         conduitType: conduitType,
@@ -147,18 +155,21 @@ export class ReceptaclePatternParser {
   private findReceptacleType(input: string): any {
     const upperInput = input.toUpperCase();
     
-    // Direct match
+    // Direct exact match first
     if (this.receptacleDatabase[upperInput]) {
       return this.receptacleDatabase[upperInput];
     }
 
-    // Partial matches and variations
+    // Try exact match without spaces/dashes
+    const cleanInput = upperInput.replace(/[-\s]/g, '');
     for (const [key, value] of Object.entries(this.receptacleDatabase)) {
-      if (upperInput.includes(key) || key.includes(upperInput)) {
+      const cleanKey = key.replace(/[-\s]/g, '');
+      if (cleanInput === cleanKey) {
         return value;
       }
     }
 
+    // No partial matches for safety - return null if not found
     return null;
   }
 
@@ -168,6 +179,12 @@ export class ReceptaclePatternParser {
   private standardizeConduitType(input: string): string {
     const lowerInput = input.toLowerCase().trim();
     
+    // Direct exact match first
+    if (this.conduitMappings[lowerInput]) {
+      return this.conduitMappings[lowerInput];
+    }
+    
+    // Then partial matches
     for (const [pattern, standard] of Object.entries(this.conduitMappings)) {
       if (lowerInput.includes(pattern) || pattern.includes(lowerInput)) {
         return standard;
