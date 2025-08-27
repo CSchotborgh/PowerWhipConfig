@@ -563,10 +563,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
+      console.log('File uploaded:', {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        bufferSize: req.file.buffer?.length
+      });
+
       const { ExtremeExcelTransformer } = await import('./extremeExcelTransformer');
       const transformer = new ExtremeExcelTransformer();
       
-      const result = await transformer.transformToSALConfigurator(req.file.path);
+      const result = await transformer.transformToSALConfiguratorFromBuffer(req.file.buffer, req.file.originalname);
       
       if (!result.success) {
         return res.status(500).json({ 
