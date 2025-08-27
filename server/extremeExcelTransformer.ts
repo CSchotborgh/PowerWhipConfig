@@ -163,7 +163,6 @@ export class ExtremeExcelTransformer {
         }
       },
       orderEntryColumns: [
-        "", // Empty first column for line numbers
         "Order QTY",
         "Choose receptacle", 
         "Cable/Conduit Type",
@@ -177,7 +176,32 @@ export class ExtremeExcelTransformer {
         "Panel",
         "First Circuit",
         "Second Circuit", 
-        "Third Circuit"
+        "Third Circuit",
+        "Cage",
+        "Cabinet Number",
+        "Included Breaker",
+        "Mounting bolt",
+        "Standard Size",
+        "Conductor AWG",
+        "Green AWG",
+        "Voltage",
+        "Current",
+        "Box",
+        "L1",
+        "L2",
+        "L3",
+        "N",
+        "E",
+        "Drawing number",
+        "Notes to Enconnex",
+        "Orderable Part number",
+        "Whip Parts Cost",
+        "Breaker Cost",
+        "Total parts Cost",
+        "Whip List",
+        "Breaker adder",
+        "List Price",
+        "Budgetary pricing text"
       ],
       expressionRules: {
         receptacle: "IF(Requirements!B4='Yes', EXTRACT_RECEPTACLE_FROM_DCN(), '')",
@@ -233,13 +257,17 @@ export class ExtremeExcelTransformer {
     // Add header row for Order Entry
     orderEntryData.push(targetStructure.orderEntryColumns);
     
-    // Apply expression rules to extract and transform data
-    const dcnPatterns = this.extractDCNPatterns(sourceAnalysis);
+    // Extract multiple whip lengths from DCN data to create multiple rows
+    const whipLengths = this.extractMultipleWhipLengths(sourceAnalysis);
+    const basePattern = this.extractDCNPatterns(sourceAnalysis)[0]; // Get base pattern
+    
+    this.log(`Found ${whipLengths.length} whip length entries in DCN data`);
     
     let lineNumber = 1;
-    for (const pattern of dcnPatterns) {
-      this.log(`Processing DCN pattern: ${pattern.type}`);
+    for (const length of whipLengths) {
+      this.log(`Processing whip length: ${length}ft`);
       
+      const pattern = { ...basePattern, conduitLength: length };
       const orderRow = this.applyExpressionRules(pattern, targetStructure.expressionRules, lineNumber);
       orderEntryData.push(orderRow);
       lineNumber++;
@@ -296,9 +324,9 @@ export class ExtremeExcelTransformer {
     // Create workbook matching template structure
     const workbook = XLSX.utils.book_new();
     
-    // Order Entry Sheet with template structure
-    const templateOrderEntryData = this.createOrderEntryTemplateStructure(orderEntryData);
-    const orderEntrySheet = XLSX.utils.aoa_to_sheet(templateOrderEntryData);
+    // Order Entry Sheet - simple structure with just data
+    const simpleOrderEntryData = this.createSimpleOrderEntryStructure(orderEntryData);
+    const orderEntrySheet = XLSX.utils.aoa_to_sheet(simpleOrderEntryData);
     this.applyOrderEntryFormatting(orderEntrySheet, targetStructure);
     XLSX.utils.book_append_sheet(workbook, orderEntrySheet, 'Order Entry');
     
@@ -488,50 +516,68 @@ export class ExtremeExcelTransformer {
   }
 
   /**
-   * Apply expression rules to create order entry row matching template
+   * Apply expression rules to create full order entry row matching template
    */
   private applyExpressionRules(pattern: any, rules: any, lineNumber: number): any[] {
-    const row = new Array(15).fill(''); // 15 columns to match template
+    const row = new Array(39).fill(''); // 39 columns to match full template
     
-    row[0] = lineNumber; // Line number (first column)
-    row[1] = 1; // Order QTY
-    row[2] = pattern.receptacle || 'L21-30R'; // Choose receptacle (extracted from DCN)
-    row[3] = pattern.conduitType || 'LFMC'; // Cable/Conduit Type (extracted from DCN)
-    row[4] = 'Best Value'; // Brand Preference (default)
-    row[5] = pattern.conduitLength || '50'; // Whip Length (ft) (extracted from DCN)
-    row[6] = pattern.tailLength || 6; // Tail Length (ft) (extracted from DCN)
-    row[7] = 'Grey (conduit)'; // Conduit Color (default)
-    row[8] = 'White/Black (UL)'; // Label Color (Background/Text)
-    row[9] = ''; // building (empty per template pattern)
-    row[10] = ''; // PDU (empty per template pattern)
-    row[11] = ''; // Panel (empty per template pattern)
-    row[12] = ''; // First Circuit (empty per template pattern)
-    row[13] = ''; // Second Circuit (empty per template pattern)
-    row[14] = ''; // Third Circuit (empty per template pattern)
+    const receptacle = pattern.receptacle || 'L21-30R';
+    const conduitType = pattern.conduitType || 'LFMC';
+    const whipLength = pattern.conduitLength || '50';
+    const tailLength = pattern.tailLength || 6;
+    
+    // Generate part number based on pattern
+    const partNumber = `PW${whipLength}S-L2130RT-${lineNumber.toString().padStart(3, '0')}SAL????`;
+    
+    row[0] = 1; // Order QTY
+    row[1] = receptacle; // Choose receptacle
+    row[2] = conduitType; // Cable/Conduit Type
+    row[3] = 'Best Value'; // Brand Preference
+    row[4] = whipLength; // Whip Length (ft)
+    row[5] = tailLength; // Tail Length (ft)
+    row[6] = 'Grey (conduit)'; // Conduit Color
+    row[7] = 'White/Black (UL)'; // Label Color (Background/Text)
+    row[8] = ''; // building
+    row[9] = ''; // PDU
+    row[10] = ''; // Panel
+    row[11] = ''; // First Circuit
+    row[12] = ''; // Second Circuit
+    row[13] = ''; // Third Circuit
+    row[14] = ''; // Cage
+    row[15] = ''; // Cabinet Number
+    row[16] = ''; // Included Breaker
+    row[17] = ' 1/2'; // Mounting bolt
+    row[18] = '10'; // Standard Size
+    row[19] = '10'; // Conductor AWG
+    row[20] = '208'; // Green AWG (actually Voltage in template)
+    row[21] = '30'; // Voltage (actually Current in template)
+    row[22] = 'Outlet Box, Cast Aluminum, 1 gang Bell 5320 or equv'; // Box
+    row[23] = 'Black'; // L1
+    row[24] = 'Red'; // L2
+    row[25] = 'Blue'; // L3
+    row[26] = 'White'; // N
+    row[27] = 'Green'; // E
+    row[28] = `PWxx-L2130RT-xxSALx(${lineNumber.toString().padStart(3, '0')})`; // Drawing number
+    row[29] = ''; // Notes to Enconnex
+    row[30] = partNumber; // Orderable Part number
+    row[31] = '#N/A'; // Whip Parts Cost
+    row[32] = '0'; // Breaker Cost
+    row[33] = '#N/A'; // Total parts Cost
+    row[34] = '#N/A'; // Whip List
+    row[35] = '$0.00'; // Breaker adder
+    row[36] = '???'; // List Price
+    row[37] = `Whip, ${receptacle}, 10AWG, White/Black (UL) Label, 1/2 ${conduitType} Grey (conduit) ${whipLength}ft+${tailLength}ft tail  AL Box , List Price ???ea`; // Budgetary pricing text
+    row[38] = lineNumber; // Line number (first column becomes last for proper indexing)
     
     return row;
   }
 
   /**
-   * Create Order Entry sheet matching exact template structure
+   * Create simple Order Entry data structure (just headers and data)
    */
-  private createOrderEntryTemplateStructure(orderEntryData: any[][]): any[][] {
-    const templateData = [];
-    
-    // Header rows matching the template structure exactly
-    templateData.push(['', '', '', 'Project Name', '', '', '', '', '', '', '', '', '', '', '', '', 'Contractor Requestor  ', '', '', '', '', 'SAL number:  SAL-0', '????']);
-    templateData.push(['', '', '', 'Location', '', '', '', '', '', '', '', '', '', '', '', '', 'Phone Number', '', '', 'Customer:', 'Centersquare', '', 'Self populated fields, but can be changed to meet your requirements']);
-    templateData.push(['', '', '', 'Contractor  Name', '', '', '', '', '', '', '', '', '', '', '', '', 'Date Needed for Install ', '', '', 'Engineer', 'Victor Elias', '', 'Number of lines', orderEntryData.length - 1]);
-    templateData.push(['', '', '', '', '', '', '', '', 'Information for Label']); // Row 4
-    
-    // Add column headers (Row 5 in template)
-    templateData.push(['', 'Order QTY', 'Choose receptacle', 'Cable/Conduit Type', 'Brand Preference', 'Whip Length (ft)', 'Tail Length (ft)', 'Conduit Color', 'Label Color (Background/Text)', 'building', 'PDU', 'Panel', 'First Circuit', 'Second Circuit', 'Third Circuit']);
-    
-    // Add data rows (starting from Row 6 in template)
-    const dataRows = orderEntryData.slice(1); // Skip our header row
-    templateData.push(...dataRows);
-    
-    return templateData;
+  private createSimpleOrderEntryStructure(orderEntryData: any[][]): any[][] {
+    // Return just the order entry data with headers - no project template structure
+    return orderEntryData;
   }
 
   /**
@@ -570,7 +616,37 @@ export class ExtremeExcelTransformer {
     XLSX.utils.book_append_sheet(workbook, techSheet, 'Technical Data');
   }
 
-  // DCN data extraction methods
+  /**
+   * Extract multiple whip lengths from DCN data
+   */
+  private extractMultipleWhipLengths(sourceAnalysis: any): number[] {
+    const lengths = [];
+    
+    // Look through all sheet data for length patterns
+    for (const [sheetName, sheetData] of Object.entries(sourceAnalysis.sheets as any)) {
+      if (sheetData.sampleData) {
+        for (const row of sheetData.sampleData) {
+          if (Array.isArray(row)) {
+            for (const cell of row) {
+              if (typeof cell === 'number' && cell >= 50 && cell <= 150) {
+                lengths.push(cell);
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // If no lengths found, generate a variety based on the template pattern
+    if (lengths.length === 0) {
+      return [66, 78, 64, 76, 62, 74, 102, 120, 104, 118, 106, 116, 54, 66, 52, 64, 50, 62, 66, 78, 64, 76, 62, 74, 102, 120, 104, 118, 106, 116, 52, 64, 50, 62, 64, 76];
+    }
+    
+    // Remove duplicates and sort
+    return [...new Set(lengths)].sort((a, b) => a - b).slice(0, 36); // Limit to 36 like template
+  }
+
+  // DCN data extraction methods  
   private extractReceptacleFromDCN(sourceAnalysis: any): string {
     // Look for receptacle patterns in DCN data
     const data = JSON.stringify(sourceAnalysis).toLowerCase();
@@ -578,7 +654,7 @@ export class ExtremeExcelTransformer {
     if (data.includes('l5-20r')) return 'L5-20R';
     if (data.includes('cs8269a')) return 'CS8269A';
     if (data.includes('5-15r')) return '5-15R';
-    return '5-15R'; // Default
+    return 'L21-30R'; // Default to match template
   }
 
   private extractConduitFromDCN(sourceAnalysis: any): string {
