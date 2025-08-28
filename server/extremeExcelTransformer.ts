@@ -282,20 +282,16 @@ export class ExtremeExcelTransformer {
     // Add header row for Order Entry
     orderEntryData.push(targetStructure.orderEntryColumns);
     
-    // Extract multiple whip lengths from DCN data to create multiple rows
-    const whipLengths = this.extractMultipleWhipLengths(sourceAnalysis);
-    const basePattern = this.extractDCNPatterns(sourceAnalysis)[0]; // Get base pattern
+    // Extract actual order entries from DCN data - dynamic count
+    const dcnEntries = this.extractDCNOrderEntries(sourceAnalysis);
     
-    this.log(`Found ${whipLengths.length} whip length entries in DCN data`);
+    this.log(`Found ${dcnEntries.length} order entries in DCN data`);
     
-    let lineNumber = 1;
-    for (const length of whipLengths) {
-      this.log(`Processing whip length: ${length}ft`);
+    for (const entry of dcnEntries) {
+      this.log(`Processing entry ${entry.lineNumber}: ${entry.receptacle}, ${entry.conduitType}, ${entry.conduitLength}ft (from ${entry.source})`);
       
-      const pattern = { ...basePattern, conduitLength: length };
-      const orderRow = this.applyExpressionRules(pattern, targetStructure.expressionRules, lineNumber);
+      const orderRow = this.applyExpressionRules(entry, targetStructure.expressionRules, entry.lineNumber);
       orderEntryData.push(orderRow);
-      lineNumber++;
     }
     
     this.log(`Expression-based transformation complete: ${orderEntryData.length - 1} order entries generated`);
@@ -643,39 +639,264 @@ export class ExtremeExcelTransformer {
   }
 
   /**
-   * Extract multiple whip lengths from DCN data
+   * Extract actual row patterns from DCN data - dynamic count based on content
    */
-  private extractMultipleWhipLengths(sourceAnalysis: any): number[] {
-    const lengths = [];
+  private extractDCNOrderEntries(sourceAnalysis: any): any[] {
+    const entries = [];
+    this.log(`Analyzing DCN file structure for actual order entries...`);
     
-    // Look through all sheet data for length patterns
-    for (const [sheetName, sheetData] of Object.entries(sourceAnalysis.sheets as any)) {
-      if (sheetData.sampleData) {
-        for (const row of sheetData.sampleData) {
-          if (Array.isArray(row)) {
-            for (const cell of row) {
-              if (typeof cell === 'number' && cell >= 50 && cell <= 150) {
-                lengths.push(cell);
-              }
-            }
+    // Strategy 1: Look for structured order data in Master sheet
+    const masterSheet = sourceAnalysis.sheets['Master'];
+    if (masterSheet && masterSheet.sampleData) {
+      this.log(`Scanning Master sheet for order patterns...`);
+      entries.push(...this.extractOrdersFromMasterSheet(masterSheet.sampleData));
+    }
+    
+    // Strategy 2: Look for packing slip entries
+    const packingSheet = sourceAnalysis.sheets['Packing Slip'];
+    if (packingSheet && packingSheet.sampleData) {
+      this.log(`Scanning Packing Slip for order entries...`);
+      entries.push(...this.extractOrdersFromPackingSlip(packingSheet.sampleData));
+    }
+    
+    // Strategy 3: Look for breaker pick list entries
+    const breakerSheet = sourceAnalysis.sheets['Breaker Pick List'];
+    if (breakerSheet && breakerSheet.sampleData) {
+      this.log(`Scanning Breaker Pick List for entries...`);
+      entries.push(...this.extractOrdersFromBreakerList(breakerSheet.sampleData));
+    }
+    
+    // If we found actual entries, use them
+    if (entries.length > 0) {
+      this.log(`Found ${entries.length} actual order entries in DCN data`);
+      return entries;
+    }
+    
+    // Fallback: minimal entries if no data found
+    this.log(`No structured order data found, creating minimal entries`);
+    return this.createMinimalEntries(sourceAnalysis);
+  }
+
+  /**
+   * Extract orders from Master sheet data
+   */
+  private extractOrdersFromMasterSheet(masterData: any[][]): any[] {
+    const orders = [];
+    
+    // Look for rows with electrical specifications
+    for (let i = 0; i < Math.min(masterData.length, 100); i++) {
+      const row = masterData[i];
+      if (Array.isArray(row) && row.length > 3) {
+        // Check if row contains electrical data patterns
+        const hasElectricalData = this.isElectricalDataRow(row);
+        if (hasElectricalData) {
+          const order = this.parseElectricalDataRow(row, orders.length + 1);
+          if (order) {
+            orders.push(order);
           }
         }
       }
     }
     
-    // If no lengths found, generate the exact pattern from the template
-    if (lengths.length === 0) {
-      return [66, 78, 64, 76, 62, 74, 102, 120, 104, 118, 106, 116, 54, 66, 52, 64, 50, 62, 66, 78, 64, 76, 62, 74, 102, 120, 104, 118, 106, 116, 52, 64, 50, 62, 64, 76];
+    return orders;
+  }
+
+  /**
+   * Extract orders from Packing Slip data
+   */
+  private extractOrdersFromPackingSlip(packingData: any[][]): any[] {
+    const orders = [];
+    
+    for (let i = 0; i < packingData.length; i++) {
+      const row = packingData[i];
+      if (Array.isArray(row) && row.length > 2) {
+        // Look for quantity and description patterns
+        const order = this.parsePackingSlipRow(row, orders.length + 1);
+        if (order) {
+          orders.push(order);
+        }
+      }
     }
     
-    // If we found some lengths, extend them to match the 36 entries from template
-    if (lengths.length < 36) {
-      const templateLengths = [66, 78, 64, 76, 62, 74, 102, 120, 104, 118, 106, 116, 54, 66, 52, 64, 50, 62, 66, 78, 64, 76, 62, 74, 102, 120, 104, 118, 106, 116, 52, 64, 50, 62, 64, 76];
-      return templateLengths;
+    return orders;
+  }
+
+  /**
+   * Extract orders from Breaker Pick List
+   */
+  private extractOrdersFromBreakerList(breakerData: any[][]): any[] {
+    const orders = [];
+    
+    for (let i = 0; i < breakerData.length; i++) {
+      const row = breakerData[i];
+      if (Array.isArray(row) && row.length > 3) {
+        const order = this.parseBreakerListRow(row, orders.length + 1);
+        if (order) {
+          orders.push(order);
+        }
+      }
     }
     
-    // Remove duplicates and limit to 36 entries
-    return [...new Set(lengths)].slice(0, 36);
+    return orders;
+  }
+
+  /**
+   * Check if a row contains electrical data
+   */
+  private isElectricalDataRow(row: any[]): boolean {
+    const rowStr = row.join('|').toLowerCase();
+    
+    // Look for electrical indicators
+    const hasReceptacle = /l\d+-\d+r|cs\d+|460[rc]\d*w?|nema|iec/.test(rowStr);
+    const hasConduit = /lfmc|emt|conduit|flexible|metal/.test(rowStr);
+    const hasLength = row.some(cell => typeof cell === 'number' && cell >= 20 && cell <= 200);
+    const hasVoltage = /\d+v|\d+\s*volt/.test(rowStr);
+    
+    return hasReceptacle || hasConduit || (hasLength && hasVoltage);
+  }
+
+  /**
+   * Parse electrical data row into order entry
+   */
+  private parseElectricalDataRow(row: any[], lineNumber: number): any | null {
+    const rowStr = row.join('|').toLowerCase();
+    
+    // Extract receptacle type
+    let receptacle = 'L21-30R'; // default
+    if (/l21-30r/.test(rowStr)) receptacle = 'L21-30R';
+    else if (/l6-30r/.test(rowStr)) receptacle = 'L6-30R';
+    else if (/l5-20r/.test(rowStr)) receptacle = 'L5-20R';
+    else if (/cs8269/.test(rowStr)) receptacle = 'CS8269A';
+    else if (/460[rc]\d*w?/.test(rowStr)) receptacle = '460R9W';
+    
+    // Extract conduit type
+    let conduitType = 'LFMC'; // default
+    if (/lfmc/.test(rowStr)) conduitType = 'LFMC';
+    else if (/emt/.test(rowStr)) conduitType = 'EMT';
+    else if (/metal.*conduit/.test(rowStr)) conduitType = 'Metal Conduit';
+    
+    // Extract length from numbers in row
+    let whipLength = 50; // default
+    for (const cell of row) {
+      if (typeof cell === 'number' && cell >= 40 && cell <= 200) {
+        whipLength = cell;
+        break;
+      }
+    }
+    
+    return {
+      lineNumber,
+      receptacle,
+      conduitType,
+      conduitLength: whipLength,
+      tailLength: 6,
+      source: 'Master'
+    };
+  }
+
+  /**
+   * Parse packing slip row
+   */
+  private parsePackingSlipRow(row: any[], lineNumber: number): any | null {
+    // Extract quantity, description, and specifications
+    const rowStr = row.join('|').toLowerCase();
+    
+    if (rowStr.includes('whip') || rowStr.includes('cord') || rowStr.includes('cable')) {
+      return {
+        lineNumber,
+        receptacle: this.extractReceptacleFromText(rowStr),
+        conduitType: this.extractConduitFromText(rowStr),
+        conduitLength: this.extractLengthFromRow(row),
+        tailLength: 6,
+        source: 'Packing Slip'
+      };
+    }
+    
+    return null;
+  }
+
+  /**
+   * Parse breaker list row
+   */
+  private parseBreakerListRow(row: any[], lineNumber: number): any | null {
+    // Breaker list might contain associated whip specifications
+    const rowStr = row.join('|').toLowerCase();
+    
+    if (this.isElectricalDataRow(row)) {
+      return {
+        lineNumber,
+        receptacle: this.extractReceptacleFromText(rowStr),
+        conduitType: this.extractConduitFromText(rowStr), 
+        conduitLength: this.extractLengthFromRow(row),
+        tailLength: 6,
+        source: 'Breaker List'
+      };
+    }
+    
+    return null;
+  }
+
+  /**
+   * Create minimal entries when no structured data found
+   */
+  private createMinimalEntries(sourceAnalysis: any): any[] {
+    this.log(`Creating minimal entries based on basic DCN analysis`);
+    
+    // Determine entry count from file size/complexity
+    const totalRows = Object.values(sourceAnalysis.sheets as any)
+      .reduce((sum: number, sheet: any) => sum + (sheet.rowCount || 0), 0);
+    
+    // Create 2-10 entries based on file complexity
+    let entryCount = 2; // minimum
+    if (totalRows > 1000) entryCount = Math.min(10, Math.floor(totalRows / 1000));
+    else if (totalRows > 100) entryCount = Math.min(6, Math.floor(totalRows / 200));
+    
+    this.log(`Generating ${entryCount} entries based on ${totalRows} total rows`);
+    
+    const entries = [];
+    const baseLengths = [50, 60, 75, 100, 66, 78]; // reasonable defaults
+    
+    for (let i = 0; i < entryCount; i++) {
+      entries.push({
+        lineNumber: i + 1,
+        receptacle: 'L21-30R',
+        conduitType: 'LFMC',
+        conduitLength: baseLengths[i % baseLengths.length],
+        tailLength: 6,
+        source: 'Generated'
+      });
+    }
+    
+    return entries;
+  }
+
+  /**
+   * Helper methods for text extraction
+   */
+  private extractReceptacleFromText(text: string): string {
+    if (/l21-30r/.test(text)) return 'L21-30R';
+    if (/l6-30r/.test(text)) return 'L6-30R';
+    if (/l5-20r/.test(text)) return 'L5-20R';
+    if (/cs8269/.test(text)) return 'CS8269A';
+    if (/460[rc]\d*w?/.test(text)) return '460R9W';
+    return 'L21-30R'; // default
+  }
+
+  private extractConduitFromText(text: string): string {
+    if (/lfmc/.test(text)) return 'LFMC';
+    if (/emt/.test(text)) return 'EMT';
+    if (/metal.*conduit/.test(text)) return 'Metal Conduit';
+    if (/flexible/.test(text)) return 'LFMC';
+    return 'LFMC'; // default
+  }
+
+  private extractLengthFromRow(row: any[]): number {
+    for (const cell of row) {
+      if (typeof cell === 'number' && cell >= 20 && cell <= 200) {
+        return cell;
+      }
+    }
+    return 50; // default
   }
 
   // DCN data extraction methods  
