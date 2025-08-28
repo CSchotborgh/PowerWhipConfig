@@ -648,22 +648,36 @@ export class ExtremeExcelTransformer {
    * Extract DCN order entries based on file type detection
    */
   private extractDCNOrderEntries(sourceAnalysis: any): any[] {
+    this.log(`==== STARTING DCN ORDER ENTRIES EXTRACTION ====`);
     this.log(`Analyzing DCN file structure for order entries...`);
+    this.log(`Source file: ${sourceAnalysis.fileName || sourceAnalysis.filename || 'Unknown'}`);
+    this.log(`Available sheets: ${Object.keys(sourceAnalysis.sheets || {}).join(', ')}`);
     
     // Detect DCN file type from filename or content
     const dcnType = this.detectDCNFileType(sourceAnalysis);
     this.log(`Detected DCN file type: ${dcnType}`);
     
+    let extractedEntries = [];
+    
     if (dcnType === 'HORNETSECURITY') {
       // Hornetsecurity files: Use template pattern for 36 rows
-      return this.generateHornetsecurityEntries(sourceAnalysis);
+      this.log(`Processing as HORNETSECURITY file - generating 36-row template`);
+      extractedEntries = this.generateHornetsecurityEntries(sourceAnalysis);
     } else if (dcnType === 'CERTUSOFT') {
-      // CERTUSOFT files: Extract actual data (typically 2 rows)
-      return this.extractCertusoftActualData(sourceAnalysis);
+      // CERTUSOFT files: Extract actual data with enhanced detection
+      this.log(`Processing as CERTUSOFT file - extracting actual electrical data`);
+      extractedEntries = this.extractCertusoftActualData(sourceAnalysis);
     } else {
       // Unknown type: Try to detect actual entries
-      return this.extractGenericDCNEntries(sourceAnalysis);
+      this.log(`Processing as GENERIC DCN file - attempting generic extraction`);
+      extractedEntries = this.extractGenericDCNEntries(sourceAnalysis);
     }
+    
+    this.log(`==== DCN EXTRACTION COMPLETE ====`);
+    this.log(`Total entries extracted: ${extractedEntries.length}`);
+    this.log(`Entry sources: ${extractedEntries.map(e => e.source).join(', ')}`);
+    
+    return extractedEntries;
   }
 
   /**
@@ -673,12 +687,24 @@ export class ExtremeExcelTransformer {
     const dcnFileName = sourceAnalysis.fileName || sourceAnalysis.filename || '';
     const filenameLC = dcnFileName.toLowerCase();
     
+    this.log(`>>> FILE TYPE DETECTION <<<`);
+    this.log(`Filename: ${dcnFileName}`);
+    this.log(`Lowercase: ${filenameLC}`);
+    
     // Enhanced filename pattern detection
     if (filenameLC.includes('hornetsecurity') || filenameLC.includes('q-40824')) {
+      this.log(`Detected HORNETSECURITY from filename patterns`);
       return 'HORNETSECURITY';
     }
     
     if (filenameLC.includes('certusoft') || filenameLC.includes('32275')) {
+      this.log(`Detected CERTUSOFT from filename patterns`);
+      return 'CERTUSOFT';
+    }
+    
+    // FORCE CERTUSOFT for test files to debug extraction
+    if (filenameLC.includes('test') && filenameLC.includes('dcn') && filenameLC.includes('certusoft')) {
+      this.log(`🔧 FORCE DETECTED: CERTUSOFT for test file`);
       return 'CERTUSOFT';
     }
     
@@ -745,50 +771,50 @@ export class ExtremeExcelTransformer {
    * Extract actual data entries from CERTUSOFT files
    */
   private extractCertusoftActualData(sourceAnalysis: any): any[] {
-    this.log(`Extracting actual CERTUSOFT data entries`);
+    this.log(`>>> CERTUSOFT EXTRACTION START <<<`);
+    this.log(`Extracting actual CERTUSOFT data entries with enhanced detection`);
     
     const entries = [];
     
-    // Enhanced Strategy 1: Deep scan Master sheet for multiple electrical entries
-    const masterSheet = sourceAnalysis.sheets['Master'];
-    if (masterSheet && masterSheet.sampleData) {
-      const masterEntries = this.extractCertusoftMasterEntries(masterSheet.sampleData);
-      entries.push(...masterEntries);
-    }
-    
-    // Strategy 2: Check Packing Slip for actual order items
-    const packingSheet = sourceAnalysis.sheets['Packing Slip'];
-    if (packingSheet && packingSheet.sampleData) {
-      const packingEntries = this.extractCertusoftPackingEntries(packingSheet.sampleData);
-      entries.push(...packingEntries);
-    }
-    
-    // Strategy 3: Check Breaker Pick List for actual specifications
-    const breakerSheet = sourceAnalysis.sheets['Breaker Pick List'];
-    if (breakerSheet && breakerSheet.sampleData) {
-      const breakerEntries = this.extractCertusoftBreakerEntries(breakerSheet.sampleData);
-      entries.push(...breakerEntries);
-    }
-    
-    // If we found actual data, ensure at least 2 entries for CERTUSOFT
-    if (entries.length > 0) {
-      this.log(`Found ${entries.length} actual CERTUSOFT entries`);
+    // Enhanced Strategy: Use new advanced extraction on all sheets
+    if (sourceAnalysis.sheets) {
+      this.log(`Found ${Object.keys(sourceAnalysis.sheets).length} sheets to scan`);
       
-      // If only 1 entry found, duplicate with slight variation
-      if (entries.length === 1) {
-        const secondEntry = { ...entries[0] };
-        secondEntry.lineNumber = 2;
-        secondEntry.conduitLength = entries[0].conduitLength + 10; // Add variation
-        secondEntry.source = entries[0].source + ' (Variant)';
-        entries.push(secondEntry);
-        this.log(`Duplicated single entry to create 2 CERTUSOFT rows`);
+      for (const [sheetName, sheetData] of Object.entries(sourceAnalysis.sheets)) {
+        if (sheetData && (sheetData as any).sampleData) {
+          this.log(`Deep scanning ${sheetName} sheet for actual electrical data...`);
+          this.log(`Sheet ${sheetName} has ${(sheetData as any).sampleData.length} rows`);
+          
+          const sheetEntries = this.extractElectricalEntriesFromSheet((sheetData as any).sampleData, sheetName);
+          if (sheetEntries.length > 0) {
+            entries.push(...sheetEntries);
+            this.log(`✓ Found ${sheetEntries.length} actual electrical entries in ${sheetName}`);
+            
+            // Log first few entries for debugging
+            sheetEntries.slice(0, 3).forEach((entry, idx) => {
+              this.log(`  Entry ${idx + 1}: ${entry.receptacle}, ${entry.conduitType}, ${entry.conduitLength}ft`);
+            });
+          } else {
+            this.log(`✗ No electrical entries found in ${sheetName}`);
+          }
+        } else {
+          this.log(`⚠ Sheet ${sheetName} has no sample data or is invalid`);
+        }
       }
+    } else {
+      this.log(`⚠ No sheets found in source analysis`);
+    }
+    
+    // If we found actual electrical data, use it
+    if (entries.length > 0) {
+      this.log(`>>> CERTUSOFT SUCCESS: ${entries.length} actual electrical entries extracted <<<`);
       
-      return entries.slice(0, 2); // Limit to 2 entries for CERTUSOFT
+      // For CERTUSOFT files, return all found entries (can be 1-999 based on actual content)
+      return entries;
     }
     
     // Generate entries based on Requirements expressions with enhanced scaling if no actual data found
-    this.log(`No actual data found, generating entries based on Requirements expressions with enhanced scaling`);
+    this.log(`>>> CERTUSOFT FALLBACK: No actual electrical data found - using Requirements generation <<<`);
     return this.generateEntriesFromRequirements(sourceAnalysis);
   }
 
@@ -962,6 +988,126 @@ export class ExtremeExcelTransformer {
       conduitLength: this.extractLengthFromRow(row) || 50,
       tailLength: 6,
       source: 'CERTUSOFT Packing'
+    };
+  }
+
+  /**
+   * Enhanced electrical entry extraction from any sheet
+   */
+  private extractElectricalEntriesFromSheet(sheetData: any[][], sheetName: string): any[] {
+    const entries = [];
+    
+    this.log(`Scanning ${sheetName} for electrical specifications...`);
+    
+    for (let i = 0; i < Math.min(sheetData.length, 200); i++) {
+      const row = sheetData[i];
+      if (Array.isArray(row) && row.length > 2) {
+        const rowStr = row.join('|').toLowerCase();
+        
+        // Enhanced electrical pattern detection
+        const hasElectricalContent = this.hasAdvancedElectricalContent(row, rowStr);
+        
+        if (hasElectricalContent) {
+          const entry = this.parseAdvancedElectricalRow(row, entries.length + 1, sheetName);
+          if (entry) {
+            entries.push(entry);
+            this.log(`Found electrical entry ${entries.length}: ${entry.receptacle}, ${entry.conduitType}, ${entry.conduitLength}ft from ${sheetName}`);
+          }
+        }
+      }
+    }
+    
+    return entries;
+  }
+
+  /**
+   * Advanced electrical content detection
+   */
+  private hasAdvancedElectricalContent(row: any[], rowStr: string): boolean {
+    // Enhanced receptacle patterns
+    const hasReceptacle = /l\d+-\d+r|cs\d+|460[rc]\d*w?|nema|iec|twist.*lock|straight.*blade/.test(rowStr);
+    
+    // Enhanced conduit patterns  
+    const hasConduit = /lfmc|emt|conduit|flexible|metal|liquid.*tight|electrical.*metallic/.test(rowStr);
+    
+    // Enhanced length detection (numbers 20-300)
+    const hasLength = row.some(cell => 
+      (typeof cell === 'number' && cell >= 20 && cell <= 300) ||
+      (typeof cell === 'string' && /\b\d{2,3}\s*(?:ft|feet|foot|')\b/.test(cell.toLowerCase()))
+    );
+    
+    // Enhanced electrical indicators
+    const hasElectricalTerms = /whip|cord|cable|plug|outlet|receptacle|assembly|power|electrical/.test(rowStr);
+    const hasVoltage = /\b\d+\s*(?:v|volt|voltage)\b|\b208\b|\b240\b|\b480\b/.test(rowStr);
+    const hasAmperage = /\b\d+\s*(?:a|amp|ampere)\b|\b20\b|\b30\b|\b50\b/.test(rowStr);
+    
+    // Must have at least 2 electrical indicators
+    const indicators = [hasReceptacle, hasConduit, hasLength, hasElectricalTerms, hasVoltage, hasAmperage];
+    const indicatorCount = indicators.filter(Boolean).length;
+    
+    return indicatorCount >= 2;
+  }
+
+  /**
+   * Parse advanced electrical data row
+   */
+  private parseAdvancedElectricalRow(row: any[], lineNumber: number, source: string): any | null {
+    const rowStr = row.join('|').toLowerCase();
+    
+    // Enhanced receptacle extraction
+    let receptacle = 'L21-30R'; // default
+    if (/l21-30r/.test(rowStr)) receptacle = 'L21-30R';
+    else if (/l6-30r/.test(rowStr)) receptacle = 'L6-30R'; 
+    else if (/l5-20r/.test(rowStr)) receptacle = 'L5-20R';
+    else if (/cs8269/.test(rowStr)) receptacle = 'CS8269A';
+    else if (/460[rc]\d*w?/.test(rowStr)) receptacle = '460R9W';
+    else if (/nema.*5.*15/.test(rowStr)) receptacle = 'NEMA 5-15R';
+    else if (/twist.*lock/.test(rowStr)) receptacle = 'L21-30R';
+    
+    // Enhanced conduit extraction  
+    let conduitType = 'LFMC'; // default for CERTUSOFT
+    if (/liquid.*tight|lfmc/.test(rowStr)) conduitType = 'LFMC';
+    else if (/emt|electrical.*metallic/.test(rowStr)) conduitType = 'EMT';
+    else if (/metal.*conduit|mcc/.test(rowStr)) conduitType = 'Metal Conduit';
+    else if (/flexible/.test(rowStr)) conduitType = 'Flexible Conduit';
+    
+    // Enhanced length extraction
+    let conduitLength = 50; // default
+    
+    // Check numeric cells first
+    for (const cell of row) {
+      if (typeof cell === 'number' && cell >= 30 && cell <= 300) {
+        conduitLength = cell;
+        break;
+      }
+    }
+    
+    // Check text patterns
+    const lengthMatches = [
+      /\b(\d{2,3})\s*(?:ft|feet|foot)\b/g,
+      /\b(\d{2,3})\s*'/g,
+      /length.*?(\d{2,3})/g,
+      /(\d{2,3})\s*(?:ft|')/g
+    ];
+    
+    for (const pattern of lengthMatches) {
+      const match = pattern.exec(rowStr);
+      if (match) {
+        const extractedLength = parseInt(match[1]);
+        if (extractedLength >= 30 && extractedLength <= 300) {
+          conduitLength = extractedLength;
+          break;
+        }
+      }
+    }
+    
+    return {
+      lineNumber,
+      receptacle,
+      conduitType,
+      conduitLength,
+      tailLength: 6,
+      source: `${source} (Actual Data)`
     };
   }
 
