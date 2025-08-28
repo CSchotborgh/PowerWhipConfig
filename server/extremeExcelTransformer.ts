@@ -81,7 +81,7 @@ export class ExtremeExcelTransformer {
         success: false,
         outputFileName: '',
         transformedData: [],
-        sourceAnalysis: { fileName: inputFilePath, sheetCount: 0, identifiedPatterns: [], dataStructure: {} },
+        sourceAnalysis: { fileName: originalFileName, sheetCount: 0, identifiedPatterns: [], dataStructure: {} },
         targetStructure: { templateName: '', requiredColumns: [], formatSpecifications: {} },
         transformationLog: this.transformationLog
       };
@@ -699,7 +699,7 @@ export class ExtremeExcelTransformer {
     
     // Extract base specifications from file
     const baseReceptacle = this.extractReceptacleFromDCN(sourceAnalysis);
-    const baseConduit = this.extractConduitTypeFromDCN(sourceAnalysis);
+    const baseConduit = this.extractConduitFromDCN(sourceAnalysis);
     
     for (let i = 0; i < templateLengths.length; i++) {
       entries.push({
@@ -747,7 +747,7 @@ export class ExtremeExcelTransformer {
       {
         lineNumber: 1,
         receptacle: this.extractReceptacleFromDCN(sourceAnalysis),
-        conduitType: this.extractConduitTypeFromDCN(sourceAnalysis),
+        conduitType: this.extractConduitFromDCN(sourceAnalysis),
         conduitLength: 50,
         tailLength: 6,
         source: 'CERTUSOFT Default'
@@ -755,7 +755,7 @@ export class ExtremeExcelTransformer {
       {
         lineNumber: 2,
         receptacle: this.extractReceptacleFromDCN(sourceAnalysis),
-        conduitType: this.extractConduitTypeFromDCN(sourceAnalysis),
+        conduitType: this.extractConduitFromDCN(sourceAnalysis),
         conduitLength: 60,
         tailLength: 6,
         source: 'CERTUSOFT Default'
