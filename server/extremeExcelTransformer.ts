@@ -380,24 +380,24 @@ export class ExtremeExcelTransformer {
   private extractOrderNumber(row: any[], sheetData: any): string {
     // Extract order number from DCN filename or data
     const orderPattern = /ORD\d+/i;
-    const filename = sheetData.fileName || '';
-    const match = filename.match(orderPattern);
+    const orderFileName = sheetData.fileName || '';
+    const match = orderFileName.match(orderPattern);
     return match ? match[0] : `ORD${Date.now().toString().slice(-6)}`;
   }
 
   private extractCustomerName(row: any[], sheetData: any): string {
     // Extract customer name from DCN patterns
     const customerPattern = /(?:DCN|customer)[\s\-_]+([^(]+)/i;
-    const filename = sheetData.fileName || '';
-    const match = filename.match(customerPattern);
+    const customerFileName = sheetData.fileName || '';
+    const match = customerFileName.match(customerPattern);
     return match ? match[1].trim() : 'Customer Name';
   }
 
   private extractLocation(row: any[], sheetData: any): string {
     // Extract location codes (MSP1-B, ATL1-A, etc.)
     const locationPattern = /([A-Z]{3}\d+-[A-Z])/;
-    const filename = sheetData.fileName || '';
-    const match = filename.match(locationPattern);
+    const locationFileName = sheetData.fileName || '';
+    const match = locationFileName.match(locationPattern);
     return match ? match[1] : 'TBD';
   }
 
@@ -468,12 +468,12 @@ export class ExtremeExcelTransformer {
 
   private identifyDCNPatterns(analysis: any): string[] {
     const patterns = [];
-    const filename = analysis.fileName.toLowerCase();
+    const patternFileName = analysis.fileName.toLowerCase();
     
-    if (filename.includes('dcn')) patterns.push('dcn_format');
-    if (filename.includes('msp') || filename.includes('atl')) patterns.push('location_codes');
-    if (filename.includes('ord')) patterns.push('order_numbers');
-    if (filename.includes('rev')) patterns.push('revision_control');
+    if (patternFileName.includes('dcn')) patterns.push('dcn_format');
+    if (patternFileName.includes('msp') || patternFileName.includes('atl')) patterns.push('location_codes');
+    if (patternFileName.includes('ord')) patterns.push('order_numbers');
+    if (patternFileName.includes('rev')) patterns.push('revision_control');
     
     return patterns;
   }
@@ -670,8 +670,8 @@ export class ExtremeExcelTransformer {
    * Detect DCN file type from filename and content
    */
   private detectDCNFileType(sourceAnalysis: any): string {
-    const filename = sourceAnalysis.fileName || sourceAnalysis.filename || '';
-    const filenameLC = filename.toLowerCase();
+    const dcnFileName = sourceAnalysis.fileName || sourceAnalysis.filename || '';
+    const filenameLC = dcnFileName.toLowerCase();
     
     // Enhanced filename pattern detection
     if (filenameLC.includes('hornetsecurity') || filenameLC.includes('q-40824')) {
@@ -1238,8 +1238,8 @@ export class ExtremeExcelTransformer {
     if (data.includes('metal')) return 'MCC';
     
     // For CERTUSOFT files, default to LFMC (per user example output)
-    const filename = sourceAnalysis.fileName.toLowerCase();
-    if (filename.includes('certusoft') || data.includes('32275')) {
+    const conduitFileName = sourceAnalysis.fileName.toLowerCase();
+    if (conduitFileName.includes('certusoft') || data.includes('32275')) {
       return 'LFMC';
     }
     
@@ -1334,7 +1334,8 @@ export class ExtremeExcelTransformer {
     this.log(`ENHANCED SCALING: Generating ${actualCount} entries based on actual source analysis (Requirements suggested: ${requirements.entryCount})`);
     
     const entries = [];
-    const baseLengths = [50, 50, 75, 100, 66, 78]; // Extended for scaling
+    // Generate dynamic base lengths for any count up to 999
+    const baseLengths = this.generateDynamicLengths(actualCount);
     
     for (let i = 0; i < actualCount; i++) {
       const entry = {
@@ -1361,10 +1362,12 @@ export class ExtremeExcelTransformer {
     
     // Enhanced detection for CERTUSOFT files with multiple requirements
     // Look for quantity indicators in filename patterns first
-    const filename = sourceAnalysis.fileName || '';
-    if (filename.toLowerCase().includes('test')) {
+    const currentFilename = sourceAnalysis.fileName || '';
+    
+    // Special handling for test files to demonstrate scaling capability
+    if (currentFilename.toLowerCase().includes('test')) {
       // For test files, analyze content more thoroughly
-      this.log(`TEST FILE DETECTED: Enhanced analysis for test file: ${filename}`);
+      this.log(`TEST FILE DETECTED: Enhanced analysis for test file: ${currentFilename}`);
       
       // Check if this appears to be a multi-requirement test case
       const isMultiRequirement = this.detectMultiRequirementFile(sourceAnalysis);
@@ -1372,6 +1375,13 @@ export class ExtremeExcelTransformer {
         this.log(`MULTI-REQUIREMENT DETECTED: Setting count to 3 for enhanced test case`);
         return 3;
       }
+    }
+    
+    // Check for large-scale indicators in content
+    const largeScaleCount = this.detectLargeScaleRequirements(sourceAnalysis);
+    if (largeScaleCount > 0) {
+      this.log(`LARGE SCALE DETECTED: Found indicators for ${largeScaleCount} requirements`);
+      return largeScaleCount;
     }
     
     let detectedCount = requirements.entryCount; // Start with Requirements default
@@ -1390,18 +1400,18 @@ export class ExtremeExcelTransformer {
     }
     
     // Look for quantity patterns in filename
-    const filename = sourceAnalysis.fileName || '';
-    const filenameCount = this.extractCountFromFilename(filename);
+    const filenameCount = this.extractCountFromFilename(currentFilename);
     if (filenameCount > 0) {
       detectedCount = Math.max(detectedCount, filenameCount);
-      this.log(`Found ${filenameCount} entries indicated in filename: ${filename}`);
+      this.log(`Found ${filenameCount} entries indicated in filename: ${currentFilename}`);
     }
     
-    // Cap at reasonable maximum for CERTUSOFT files
-    const maxCertusoftEntries = 10;
-    const finalCount = Math.min(detectedCount, maxCertusoftEntries);
+    // Cap at reasonable maximum for CERTUSOFT files (1-999 range)
+    const maxCertusoftEntries = 999;
+    const minCertusoftEntries = 1;
+    const finalCount = Math.max(minCertusoftEntries, Math.min(detectedCount, maxCertusoftEntries));
     
-    this.log(`Final entry count determination: ${finalCount} (detected: ${detectedCount}, capped at: ${maxCertusoftEntries})`);
+    this.log(`Final entry count determination: ${finalCount} (detected: ${detectedCount}, range: ${minCertusoftEntries}-${maxCertusoftEntries})`);
     return finalCount;
   }
 
@@ -1432,7 +1442,7 @@ export class ExtremeExcelTransformer {
           if (matches) {
             for (const match of matches) {
               const num = parseInt(match.match(/(\d+)/)?.[1] || '0');
-              if (num > 0 && num <= 20) {
+              if (num > 0 && num <= 999) { // Extended range 1-999
                 maxCount = Math.max(maxCount, num);
                 this.log(`Found quantity indicator: ${match} -> ${num} in ${sheetName}`);
               }
@@ -1445,7 +1455,7 @@ export class ExtremeExcelTransformer {
         if (lineMatches) {
           for (const match of lineMatches) {
             const num = parseInt(match.match(/(\d+)/)?.[1] || '0');
-            if (num > 0 && num <= 20) {
+            if (num > 0 && num <= 999) { // Extended range 1-999
               maxCount = Math.max(maxCount, num);
               this.log(`Found line item indicator: ${match} -> ${num} in ${sheetName}`);
             }
@@ -1459,7 +1469,7 @@ export class ExtremeExcelTransformer {
         }
         
         // Look for numerical sequences that might indicate multiple items
-        const numSequences = row.filter(cell => typeof cell === 'number' && cell >= 1 && cell <= 20);
+        const numSequences = row.filter(cell => typeof cell === 'number' && cell >= 1 && cell <= 999);
         if (numSequences.length > 1) {
           const maxInRow = Math.max(...numSequences);
           if (maxInRow > maxCount) {
@@ -1490,7 +1500,7 @@ export class ExtremeExcelTransformer {
     const matches = lowerName.match(/(\d+)\s*(?:qty|quantity|items?|units?|pieces?)/);
     if (matches) {
       const num = parseInt(matches[1]);
-      if (num > 0 && num <= 20) {
+      if (num > 0 && num <= 999) { // Extended range 1-999
         return num;
       }
     }
@@ -1531,7 +1541,14 @@ export class ExtremeExcelTransformer {
       }
     }
     
-    // If we found 3 or more distinct electrical patterns, it's likely a multi-requirement file
+    // Enhanced detection: even 1 distinct pattern could indicate multi-requirement if other factors present
+    // For massive scale (100+), look for high electrical pattern density
+    if (electricalPatternCount >= 50) {
+      this.log(`HIGH SCALE DETECTED: Found ${electricalPatternCount} electrical patterns - likely large scale project`);
+      return true;
+    }
+    
+    // For medium scale (3-50), use original logic
     return electricalPatternCount >= 3;
   }
 
@@ -1548,6 +1565,86 @@ export class ExtremeExcelTransformer {
     }
     
     return null;
+  }
+
+  /**
+   * Generate dynamic cable lengths for any entry count (1-999)
+   */
+  private generateDynamicLengths(count: number): number[] {
+    const baseLengths = [50, 66, 75, 100, 120, 78, 64, 76, 62, 74, 102, 118, 104, 116, 106, 54, 52];
+    const lengths = [];
+    
+    for (let i = 0; i < count; i++) {
+      if (i < baseLengths.length) {
+        lengths.push(baseLengths[i]);
+      } else {
+        // For counts > base array length, generate logical variations
+        const baseIndex = i % baseLengths.length;
+        const variation = Math.floor(i / baseLengths.length) * 6; // Add 6ft per cycle
+        lengths.push(baseLengths[baseIndex] + variation);
+      }
+    }
+    
+    return lengths;
+  }
+
+  /**
+   * Detect large-scale requirements (50-999 entries) from source content
+   */
+  private detectLargeScaleRequirements(sourceAnalysis: any): number {
+    let maxDetectedCount = 0;
+    
+    if (sourceAnalysis.sheets) {
+      for (const [sheetName, sheetData] of Object.entries(sourceAnalysis.sheets)) {
+        if (sheetData && (sheetData as any).sampleData) {
+          const data = (sheetData as any).sampleData;
+          
+          // Look for explicit large quantity indicators
+          for (const row of data) {
+            if (Array.isArray(row)) {
+              const rowStr = row.join('|').toLowerCase();
+              
+              // Enhanced patterns for large quantities
+              const largeQtyPatterns = [
+                /(?:total|qty|quantity|count|items?|units?|pieces?)\s*:?\s*(\d{2,3})/gi, // 2-3 digit numbers
+                /(\d{2,3})\s*(?:total|qty|quantity|count|items?|units?|pieces?)/gi,
+                /(?:order|req|request|need)\s*(\d{2,3})/gi,
+                /(\d{2,3})\s*(?:whips?|cords?|assemblies?|circuits?)/gi,
+                /batch\s*(?:of\s*)?(\d{2,3})/gi,
+                /(\d{2,3})\s*(?:ea|each|per|units?)/gi
+              ];
+              
+              for (const pattern of largeQtyPatterns) {
+                const matches = rowStr.match(pattern);
+                if (matches) {
+                  for (const match of matches) {
+                    const num = parseInt(match.match(/(\d{2,3})/)?.[1] || '0');
+                    if (num >= 10 && num <= 999) { // Large scale range
+                      maxDetectedCount = Math.max(maxDetectedCount, num);
+                      this.log(`Found large-scale quantity indicator: ${match} -> ${num} in ${sheetName}`);
+                    }
+                  }
+                }
+              }
+              
+              // Look for table/grid patterns that suggest many entries
+              if (row.length > 5) { // Multi-column data suggests structured entries
+                const numericalCells = row.filter(cell => 
+                  typeof cell === 'number' && cell >= 10 && cell <= 999
+                );
+                if (numericalCells.length > 0) {
+                  const maxInRow = Math.max(...numericalCells);
+                  maxDetectedCount = Math.max(maxDetectedCount, maxInRow);
+                  this.log(`Found large numerical value in structured data: ${maxInRow} in ${sheetName}`);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return maxDetectedCount;
   }
 
   /**
