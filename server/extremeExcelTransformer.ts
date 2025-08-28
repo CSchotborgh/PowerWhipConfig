@@ -670,26 +670,47 @@ export class ExtremeExcelTransformer {
    * Detect DCN file type from filename and content
    */
   private detectDCNFileType(sourceAnalysis: any): string {
-    const filename = sourceAnalysis.filename || '';
+    const filename = sourceAnalysis.fileName || sourceAnalysis.filename || '';
     const filenameLC = filename.toLowerCase();
     
-    // Check filename patterns
-    if (filenameLC.includes('hornetsecurity')) {
+    // Enhanced filename pattern detection
+    if (filenameLC.includes('hornetsecurity') || filenameLC.includes('q-40824')) {
       return 'HORNETSECURITY';
-    } else if (filenameLC.includes('certusoft')) {
+    }
+    
+    if (filenameLC.includes('certusoft') || filenameLC.includes('32275')) {
       return 'CERTUSOFT';
     }
     
-    // Check content patterns for additional detection
+    // Content-based pattern detection with more robustness
     const allData = JSON.stringify(sourceAnalysis).toLowerCase();
     
     if (allData.includes('hornetsecurity') || allData.includes('q-40824')) {
       return 'HORNETSECURITY';
-    } else if (allData.includes('certusoft') || allData.includes('32275')) {
+    }
+    
+    if (allData.includes('certusoft') || allData.includes('32275')) {
       return 'CERTUSOFT';
     }
     
-    // Default fallback
+    // Enhanced fallback logic - if it has DCN structure, assume CERTUSOFT for 2-row output
+    if (sourceAnalysis.sheets && (
+        sourceAnalysis.sheets['Master'] || 
+        sourceAnalysis.sheets['Packing Slip'] || 
+        sourceAnalysis.sheets['Breaker Pick List'] ||
+        sourceAnalysis.sheets['Breaker Data']
+    )) {
+      // Standard DCN structure detected, default to CERTUSOFT
+      if (filenameLC.includes('dcn')) {
+        return 'CERTUSOFT';
+      }
+    }
+    
+    // Final fallback for any DCN file
+    if (filenameLC.includes('dcn')) {
+      return 'CERTUSOFT';
+    }
+    
     return 'GENERIC';
   }
 
@@ -792,29 +813,46 @@ export class ExtremeExcelTransformer {
   }
 
   /**
-   * Enhanced CERTUSOFT Master sheet extraction
+   * Enhanced CERTUSOFT Master sheet extraction with flexible pattern recognition
    */
   private extractCertusoftMasterEntries(masterData: any[][]): any[] {
     const entries = [];
     
-    // Scan more thoroughly for CERTUSOFT patterns
-    for (let i = 0; i < Math.min(masterData.length, 200); i++) {
+    // Scan more thoroughly for CERTUSOFT patterns with increased flexibility
+    for (let i = 0; i < Math.min(masterData.length, 500); i++) {
       const row = masterData[i];
       if (Array.isArray(row) && row.length > 2) {
         const rowStr = row.join('|').toLowerCase();
         
-        // Look for CERTUSOFT-specific patterns
-        if (this.isCertusoftDataRow(row, rowStr)) {
+        // Flexible pattern matching for various CERTUSOFT formats
+        if (this.isCertusoftDataRow(row, rowStr) || this.hasElectricalComponents(row, rowStr)) {
           const entry = this.parseCertusoftDataRow(row, entries.length + 1);
           if (entry) {
             entries.push(entry);
             this.log(`Found CERTUSOFT Master entry ${entries.length}: ${entry.receptacle}, ${entry.conduitLength}ft`);
+            
+            // Limit to reasonable number of actual entries
+            if (entries.length >= 5) break;
           }
         }
       }
     }
     
     return entries;
+  }
+
+  /**
+   * Check for electrical components in any format
+   */
+  private hasElectricalComponents(row: any[], rowStr: string): boolean {
+    // More flexible electrical component detection
+    const hasElectricalTerms = /power|electrical|whip|cord|cable|receptacle|outlet|plug|connector/.test(rowStr);
+    const hasLength = row.some(cell => typeof cell === 'number' && cell >= 10 && cell <= 300);
+    const hasVoltage = /\d+v|\d+\s*volt|120|208|240|277|480/.test(rowStr);
+    const hasAmperage = /\d+a|\d+\s*amp|15|20|30|50|60/.test(rowStr);
+    
+    return (hasElectricalTerms && hasLength) || (hasVoltage && hasAmperage) || 
+           (hasElectricalTerms && (hasVoltage || hasAmperage));
   }
 
   /**
