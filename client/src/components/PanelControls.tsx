@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -30,6 +31,62 @@ import { ExcelFileViewerEditor } from './excel/ExcelFileViewerEditor';
 
 export function PanelControls() {
   const { panels, openPanel, closePanel } = usePanelManager();
+  
+  // Quick access panel definitions for drag-and-drop ordering
+  const quickAccessPanels = [
+    { id: 'component-library', index: 0, title: 'Component Library', icon: Package },
+    { id: 'configuration-details', index: 1, title: 'Configuration Details', icon: Settings },
+    { id: 'excel-transformer', index: 2, title: 'Excel Transformer', icon: FileSpreadsheet },
+    { id: 'excel-file-viewer', index: 5, title: 'Excel File Viewer & Editor', icon: Database },
+    { id: 'order-entry', index: 6, title: 'Order Entry', icon: ShoppingCart },
+  ];
+
+  // State for managing icon order
+  const [iconOrder, setIconOrder] = useState<string[]>(() => {
+    const savedOrder = localStorage.getItem('panelIconOrder');
+    return savedOrder ? JSON.parse(savedOrder) : quickAccessPanels.map(p => p.id);
+  });
+
+  const [draggedItem, setDraggedItem] = useState<string | null>(null);
+
+  // Save icon order to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('panelIconOrder', JSON.stringify(iconOrder));
+  }, [iconOrder]);
+
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, panelId: string) => {
+    setDraggedItem(panelId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', panelId);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetPanelId: string) => {
+    e.preventDefault();
+    const draggedPanelId = e.dataTransfer.getData('text/plain');
+    
+    if (draggedPanelId !== targetPanelId) {
+      const newOrder = [...iconOrder];
+      const draggedIndex = newOrder.indexOf(draggedPanelId);
+      const targetIndex = newOrder.indexOf(targetPanelId);
+      
+      // Remove dragged item and insert at target position
+      newOrder.splice(draggedIndex, 1);
+      newOrder.splice(targetIndex, 0, draggedPanelId);
+      
+      setIconOrder(newOrder);
+    }
+    setDraggedItem(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+  };
 
   const availablePanels = [
     {
@@ -202,56 +259,50 @@ export function PanelControls() {
         </Badge>
       )}
 
-      {/* Quick Access Icon Buttons for Key Panels */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleOpenPanel(availablePanels[0])}
-        title="Component Library"
-        className="h-8 w-8 p-0"
-      >
-        <Package className="h-4 w-4" />
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleOpenPanel(availablePanels[1])}
-        title="Configuration Details"
-        className="h-8 w-8 p-0"
-      >
-        <Settings className="h-4 w-4" />
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleOpenPanel(availablePanels[2])}
-        title="Excel Transformer"
-        className="h-8 w-8 p-0"
-      >
-        <FileSpreadsheet className="h-4 w-4" />
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleOpenPanel(availablePanels[5])}
-        title="Excel File Viewer & Editor"
-        className="h-8 w-8 p-0"
-      >
-        <Database className="h-4 w-4" />
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleOpenPanel(availablePanels[6])}
-        title="Order Entry"
-        className="h-8 w-8 p-0"
-      >
-        <ShoppingCart className="h-4 w-4" />
-      </Button>
+      {/* Draggable Quick Access Icon Buttons */}
+      <div className="flex items-center gap-1">
+        {iconOrder.map((panelId, index) => {
+          const panelDef = quickAccessPanels.find(p => p.id === panelId);
+          const availablePanel = availablePanels[panelDef?.index || 0];
+          const Icon = panelDef?.icon || Package;
+          
+          if (!panelDef || !availablePanel) return null;
+          
+          return (
+            <div key={panelId} className="flex items-center">
+              {/* Drop indicator before first item */}
+              {index === 0 && draggedItem && draggedItem !== panelId && (
+                <div className="w-0.5 h-6 bg-primary/50 rounded mx-1 transition-all duration-200" />
+              )}
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                draggable
+                onClick={() => handleOpenPanel(availablePanel)}
+                onDragStart={(e) => handleDragStart(e, panelId)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, panelId)}
+                onDragEnd={handleDragEnd}
+                title={`${panelDef.title} (drag to reorder)`}
+                className={`h-8 w-8 p-0 transition-all duration-200 cursor-move ${
+                  draggedItem === panelId 
+                    ? 'opacity-50 scale-95 ring-2 ring-primary/30' 
+                    : 'hover:scale-105 hover:bg-primary/10'
+                } ${draggedItem && draggedItem !== panelId ? 'hover:ring-1 hover:ring-primary/50' : ''}`}
+                data-testid={`panel-icon-${panelId}`}
+              >
+                <Icon className="h-4 w-4" />
+              </Button>
+              
+              {/* Drop indicator after each item */}
+              {draggedItem && draggedItem !== panelId && (
+                <div className="w-0.5 h-6 bg-primary/50 rounded mx-1 transition-all duration-200" />
+              )}
+            </div>
+          );
+        })}
+      </div>
 
       {/* All Panels Dropdown - Icon Only */}
       <DropdownMenu>
