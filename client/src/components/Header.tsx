@@ -128,16 +128,28 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
 
   const handleDropZoneDragOver = (e: React.DragEvent, zone: 'left' | 'center' | 'right') => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverZone(zone);
+    
+    // Only handle panel control drops, ignore tab drops
+    if (isDraggingPanel && !isDraggingTab) {
+      e.dataTransfer.dropEffect = 'move';
+      setDragOverZone(zone);
+    }
   };
 
-  const handleDropZoneDragLeave = () => {
-    setDragOverZone(null);
+  const handleDropZoneDragLeave = (e: React.DragEvent) => {
+    // Only clear if we're actually leaving the drop zone and not entering a child element
+    const rect = (e.currentTarget as Element).getBoundingClientRect();
+    const isStillInside = e.clientX >= rect.left && e.clientX <= rect.right && 
+                         e.clientY >= rect.top && e.clientY <= rect.bottom;
+    
+    if (!isStillInside) {
+      setDragOverZone(null);
+    }
   };
 
   const handleDropZoneDrop = (e: React.DragEvent, zone: 'left' | 'center' | 'right') => {
     e.preventDefault();
+    e.stopPropagation();
     const draggedData = e.dataTransfer.getData('text/plain');
     
     if (draggedData === 'panel-controls' && zone !== panelPosition) {
@@ -297,9 +309,25 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
                     draggable
                     onDragStart={(e) => handleTabDragStart(e, tab.id, index)}
                     onDragEnd={handleTabDragEnd}
-                    onDragOver={(e) => handleTabDragOver(e, index)}
-                    onDragLeave={handleTabDragLeave}
-                    onDrop={(e) => handleTabDrop(e, index)}
+                    onDragOver={(e) => {
+                      // Only handle tab drops, ignore panel control drops
+                      if (isDraggingTab && !isDraggingPanel) {
+                        handleTabDragOver(e, index);
+                      }
+                    }}
+                    onDragLeave={() => {
+                      // Only handle if we're dragging tabs
+                      if (isDraggingTab && !isDraggingPanel) {
+                        handleTabDragLeave();
+                      }
+                    }}
+                    onDrop={(e) => {
+                      const draggedData = e.dataTransfer.getData('text/plain');
+                      // Only handle tab drops, ignore panel control drops
+                      if (draggedData.startsWith('tab-') && isDraggingTab && !isDraggingPanel) {
+                        handleTabDrop(e, index);
+                      }
+                    }}
                     onClick={() => onTabChange(tab.id)}
                     className={cn(
                       "flex-1 px-6 py-3 text-sm font-medium border-b-3 transition-all duration-200 relative group flex items-center justify-center cursor-move",
