@@ -25,10 +25,94 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
   const [isDraggingPanel, setIsDraggingPanel] = useState(false);
   const [dragOverZone, setDragOverZone] = useState<'left' | 'center' | 'right' | null>(null);
 
-  // Save panel position to localStorage
+  // Main navigation tabs ordering state
+  const defaultTabs = [
+    {
+      id: "configuration" as const,
+      label: "Configuration",
+      icon: Settings,
+    },
+    {
+      id: "visual" as const,
+      label: "Visual Design", 
+      icon: Eye,
+    },
+    {
+      id: "documentation" as const,
+      label: "Documentation",
+      icon: FileText,
+    },
+  ];
+
+  const [tabs, setTabs] = useState(() => {
+    const savedOrder = localStorage.getItem('navigationTabsOrder');
+    if (savedOrder) {
+      try {
+        const orderIds = JSON.parse(savedOrder);
+        return orderIds.map((id: string) => defaultTabs.find(tab => tab.id === id)).filter(Boolean);
+      } catch {
+        return defaultTabs;
+      }
+    }
+    return defaultTabs;
+  });
+
+  const [isDraggingTab, setIsDraggingTab] = useState(false);
+  const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
+  const [dragOverTabIndex, setDragOverTabIndex] = useState<number | null>(null);
+
+  // Save panel position and tab order to localStorage
   useEffect(() => {
     localStorage.setItem('panelControlsPosition', panelPosition);
   }, [panelPosition]);
+
+  useEffect(() => {
+    localStorage.setItem('navigationTabsOrder', JSON.stringify(tabs.map((tab: any) => tab.id)));
+  }, [tabs]);
+
+  // Tab drag handlers
+  const handleTabDragStart = (e: React.DragEvent, tabId: string, index: number) => {
+    setIsDraggingTab(true);
+    setDraggedTabId(tabId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', `tab-${tabId}-${index}`);
+  };
+
+  const handleTabDragEnd = () => {
+    setIsDraggingTab(false);
+    setDraggedTabId(null);
+    setDragOverTabIndex(null);
+  };
+
+  const handleTabDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverTabIndex(index);
+  };
+
+  const handleTabDragLeave = () => {
+    setDragOverTabIndex(null);
+  };
+
+  const handleTabDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    const draggedData = e.dataTransfer.getData('text/plain');
+    
+    if (draggedData.startsWith('tab-') && draggedTabId) {
+      const draggedIndex = tabs.findIndex((tab: any) => tab.id === draggedTabId);
+      
+      if (draggedIndex !== -1 && draggedIndex !== dropIndex) {
+        const newTabs = [...tabs];
+        const draggedTab = newTabs.splice(draggedIndex, 1)[0];
+        newTabs.splice(dropIndex, 0, draggedTab);
+        setTabs(newTabs);
+      }
+    }
+    
+    setIsDraggingTab(false);
+    setDraggedTabId(null);
+    setDragOverTabIndex(null);
+  };
 
   // Panel drag handlers
   const handlePanelDragStart = (e: React.DragEvent) => {
@@ -64,24 +148,6 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
     setDragOverZone(null);
   };
 
-
-  const tabs = [
-    {
-      id: "configuration" as const,
-      label: "Configuration",
-      icon: Settings,
-    },
-    {
-      id: "visual" as const,
-      label: "Visual Design", 
-      icon: Eye,
-    },
-    {
-      id: "documentation" as const,
-      label: "Documentation",
-      icon: FileText,
-    },
-  ];
 
   const handleExportXLSX = async () => {
     try {
@@ -211,21 +277,41 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
 
           {/* Main Navigation Tabs */}
           <div className="flex flex-1">
-            {tabs.map((tab, index) => {
+            {tabs.map((tab: any, index: number) => {
               const Icon = tab.icon;
               const showCenterDropZone = index === Math.floor(tabs.length / 2) && panelPosition === 'center';
+              const isBeingDragged = isDraggingTab && draggedTabId === tab.id;
+              const showDropIndicator = isDraggingTab && dragOverTabIndex === index;
               
               return (
-                <div key={tab.id} className="flex flex-1 items-center">
+                <div key={tab.id} className={cn(
+                  "flex flex-1 items-center relative",
+                  showDropIndicator ? 'bg-primary/10 ring-2 ring-primary/30' : ''
+                )}>
+                  {/* Drop indicator line */}
+                  {showDropIndicator && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full z-10" />
+                  )}
+                  
                   <button
+                    draggable
+                    onDragStart={(e) => handleTabDragStart(e, tab.id, index)}
+                    onDragEnd={handleTabDragEnd}
+                    onDragOver={(e) => handleTabDragOver(e, index)}
+                    onDragLeave={handleTabDragLeave}
+                    onDrop={(e) => handleTabDrop(e, index)}
                     onClick={() => onTabChange(tab.id)}
                     className={cn(
-                      "flex-1 px-6 py-3 text-sm font-medium border-b-3 transition-all duration-200 relative group flex items-center justify-center",
+                      "flex-1 px-6 py-3 text-sm font-medium border-b-3 transition-all duration-200 relative group flex items-center justify-center cursor-move",
                       activeTab === tab.id
                         ? "border-primary text-primary bg-primary/10 shadow-inner"
-                        : "border-transparent text-technical-600 dark:text-technical-400 hover:text-primary hover:bg-primary/5 hover:border-primary/30"
+                        : "border-transparent text-technical-600 dark:text-technical-400 hover:text-primary hover:bg-primary/5 hover:border-primary/30",
+                      isBeingDragged ? 'opacity-50 scale-95 z-50' : '',
+                      isDraggingTab && !isBeingDragged ? 'hover:bg-primary/15' : ''
                     )}
+                    title={`Drag to reorder ${tab.label} tab`}
                   >
+                    <GripVertical className="w-3 h-3 text-technical-400 mr-1 opacity-60" />
                     <Icon className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
                     <span className="font-semibold tracking-wide">{tab.label}</span>
                     {activeTab === tab.id && (
