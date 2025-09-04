@@ -48,6 +48,7 @@ export function PanelControls() {
   });
 
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const [dragOverItem, setDragOverItem] = useState<string | null>(null);
 
   // Save icon order to localStorage whenever it changes
   useEffect(() => {
@@ -61,16 +62,25 @@ export function PanelControls() {
     e.dataTransfer.setData('text/plain', panelId);
   };
 
+  const handleDragEnter = (e: React.DragEvent, panelId: string) => {
+    e.preventDefault();
+    setDragOverItem(panelId);
+  };
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDragLeave = () => {
+    setDragOverItem(null);
   };
 
   const handleDrop = (e: React.DragEvent, targetPanelId: string) => {
     e.preventDefault();
     const draggedPanelId = e.dataTransfer.getData('text/plain');
     
-    if (draggedPanelId !== targetPanelId) {
+    if (draggedPanelId && draggedPanelId !== targetPanelId) {
       const newOrder = [...iconOrder];
       const draggedIndex = newOrder.indexOf(draggedPanelId);
       const targetIndex = newOrder.indexOf(targetPanelId);
@@ -81,11 +91,14 @@ export function PanelControls() {
       
       setIconOrder(newOrder);
     }
+    
     setDraggedItem(null);
+    setDragOverItem(null);
   };
 
   const handleDragEnd = () => {
     setDraggedItem(null);
+    setDragOverItem(null);
   };
 
   const availablePanels = [
@@ -261,45 +274,44 @@ export function PanelControls() {
 
       {/* Draggable Quick Access Icon Buttons */}
       <div className="flex items-center gap-1">
-        {iconOrder.map((panelId, index) => {
+        {iconOrder.map((panelId) => {
           const panelDef = quickAccessPanels.find(p => p.id === panelId);
           const availablePanel = availablePanels[panelDef?.index || 0];
           const Icon = panelDef?.icon || Package;
           
           if (!panelDef || !availablePanel) return null;
           
+          const isDragging = draggedItem === panelId;
+          const isDragTarget = dragOverItem === panelId && draggedItem !== panelId;
+          
           return (
-            <div key={panelId} className="flex items-center">
-              {/* Drop indicator before first item */}
-              {index === 0 && draggedItem && draggedItem !== panelId && (
-                <div className="w-0.5 h-6 bg-primary/50 rounded mx-1 transition-all duration-200" />
-              )}
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                draggable
-                onClick={() => handleOpenPanel(availablePanel)}
-                onDragStart={(e) => handleDragStart(e, panelId)}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, panelId)}
-                onDragEnd={handleDragEnd}
-                title={`${panelDef.title} (drag to reorder)`}
-                className={`h-8 w-8 p-0 transition-all duration-200 cursor-move ${
-                  draggedItem === panelId 
-                    ? 'opacity-50 scale-95 ring-2 ring-primary/30' 
-                    : 'hover:scale-105 hover:bg-primary/10'
-                } ${draggedItem && draggedItem !== panelId ? 'hover:ring-1 hover:ring-primary/50' : ''}`}
-                data-testid={`panel-icon-${panelId}`}
-              >
-                <Icon className="h-4 w-4" />
-              </Button>
-              
-              {/* Drop indicator after each item */}
-              {draggedItem && draggedItem !== panelId && (
-                <div className="w-0.5 h-6 bg-primary/50 rounded mx-1 transition-all duration-200" />
-              )}
-            </div>
+            <Button
+              key={panelId}
+              variant="ghost"
+              size="sm"
+              draggable
+              onClick={() => handleOpenPanel(availablePanel)}
+              onDragStart={(e) => handleDragStart(e, panelId)}
+              onDragEnter={(e) => handleDragEnter(e, panelId)}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, panelId)}
+              onDragEnd={handleDragEnd}
+              title={`${panelDef.title} (drag to reorder)`}
+              className={`h-8 w-8 p-0 transition-all duration-200 cursor-move ${
+                isDragging 
+                  ? 'opacity-30 scale-90 rotate-3 z-10' 
+                  : isDragTarget
+                  ? 'scale-110 bg-primary/20 ring-2 ring-primary/50 shadow-lg'
+                  : 'hover:scale-105 hover:bg-primary/10'
+              }`}
+              style={{
+                transform: isDragging ? 'rotate(5deg) scale(0.9)' : isDragTarget ? 'scale(1.1)' : ''
+              }}
+              data-testid={`panel-icon-${panelId}`}
+            >
+              <Icon className="h-4 w-4" />
+            </Button>
           );
         })}
       </div>
