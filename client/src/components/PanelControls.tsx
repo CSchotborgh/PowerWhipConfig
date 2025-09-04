@@ -194,24 +194,74 @@ export function PanelControls() {
   };
 
   return (
-    <div className="flex items-center gap-2">
-      {/* Panel Count Badge */}
+    <div className="flex items-center gap-1">
+      {/* Panel Count Badge - more compact */}
       {panels.length > 0 && (
-        <Badge variant="secondary" className="mr-2">
-          {panels.length} panel{panels.length !== 1 ? 's' : ''} open
+        <Badge variant="secondary" className="h-6 px-2 text-xs mr-1">
+          {panels.length}
         </Badge>
       )}
 
-      {/* Open Panels Dropdown */}
+      {/* Quick Access Icon Buttons for Key Panels */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleOpenPanel(availablePanels[0])}
+        title="Component Library"
+        className="h-8 w-8 p-0"
+      >
+        <Package className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleOpenPanel(availablePanels[1])}
+        title="Configuration Details"
+        className="h-8 w-8 p-0"
+      >
+        <Settings className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleOpenPanel(availablePanels[2])}
+        title="Excel Transformer"
+        className="h-8 w-8 p-0"
+      >
+        <FileSpreadsheet className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleOpenPanel(availablePanels[5])}
+        title="Excel File Viewer & Editor"
+        className="h-8 w-8 p-0"
+      >
+        <Database className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleOpenPanel(availablePanels[6])}
+        title="Order Entry"
+        className="h-8 w-8 p-0"
+      >
+        <ShoppingCart className="h-4 w-4" />
+      </Button>
+
+      {/* All Panels Dropdown - Icon Only */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Layers className="h-4 w-4 mr-2" />
-            Panels
+          <Button variant="ghost" size="sm" title="All Panels" className="h-8 w-8 p-0">
+            <Layers className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          <div className="px-2 py-1.5 text-sm font-semibold">Open Panels</div>
+          <div className="px-2 py-1.5 text-sm font-semibold">All Panels</div>
           
           {availablePanels.map(panel => {
             const isOpen = panels.some(p => p.title === panel.title);
@@ -248,25 +298,6 @@ export function PanelControls() {
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-
-      {/* Quick Access Buttons */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleOpenPanel(availablePanels[0])}
-        title="Open Component Library"
-      >
-        <Package className="h-4 w-4" />
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleOpenPanel(availablePanels[1])}
-        title="Open Configuration Details"
-      >
-        <Settings className="h-4 w-4" />
-      </Button>
     </div>
   );
 }

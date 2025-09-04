@@ -111,10 +111,8 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
             </p>
           </div>
           
-          {/* Panel Controls and Export Actions */}
+          {/* Export Actions */}
           <div className="flex items-center space-x-3">
-            <PanelControls />
-            <div className="w-px h-6 bg-technical-200 dark:bg-technical-600"></div>
             <DesignCanvasExportButton />
             <Button 
               onClick={handleExportPDF}
@@ -128,30 +126,38 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
         </div>
       </div>
       
-      {/* Navigation Tabs */}
+      {/* Navigation Tabs with Panel Controls */}
       <div className="border-t border-technical-200/30 dark:border-technical-600/30 bg-gradient-to-r from-technical-50 to-white dark:from-technical-700 dark:to-technical-800">
-        <nav className="flex">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => onTabChange(tab.id)}
-                className={cn(
-                  "flex-1 px-6 py-3 text-sm font-medium border-b-3 transition-all duration-200 relative group flex items-center justify-center",
-                  activeTab === tab.id
-                    ? "border-primary text-primary bg-primary/10 shadow-inner"
-                    : "border-transparent text-technical-600 dark:text-technical-400 hover:text-primary hover:bg-primary/5 hover:border-primary/30"
-                )}
-              >
-                <Icon className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
-                <span className="font-semibold tracking-wide">{tab.label}</span>
-                {activeTab === tab.id && (
-                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-primary rounded-t-full" />
-                )}
-              </button>
-            );
-          })}
+        <nav className="flex items-center">
+          {/* Main Navigation Tabs */}
+          <div className="flex flex-1">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => onTabChange(tab.id)}
+                  className={cn(
+                    "flex-1 px-6 py-3 text-sm font-medium border-b-3 transition-all duration-200 relative group flex items-center justify-center",
+                    activeTab === tab.id
+                      ? "border-primary text-primary bg-primary/10 shadow-inner"
+                      : "border-transparent text-technical-600 dark:text-technical-400 hover:text-primary hover:bg-primary/5 hover:border-primary/30"
+                  )}
+                >
+                  <Icon className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
+                  <span className="font-semibold tracking-wide">{tab.label}</span>
+                  {activeTab === tab.id && (
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-primary rounded-t-full" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          
+          {/* Panel Controls in Breadcrumb Area */}
+          <div className="flex items-center px-4 py-2 border-l border-technical-200/30 dark:border-technical-600/30">
+            <PanelControls />
+          </div>
         </nav>
       </div>
     </header>
