@@ -16,14 +16,15 @@ interface HeaderProps {
 export default function Header({ activeTab, onTabChange }: HeaderProps) {
   const { toast } = useToast();
 
-  // Panel controls positioning state
-  const [panelPosition, setPanelPosition] = useState<'left' | 'center' | 'right'>(() => {
-    const saved = localStorage.getItem('panelControlsPosition');
-    return (saved as 'left' | 'center' | 'right') || 'right';
+  // Layout positioning state - simplified to just left/right
+  const [layoutOrder, setLayoutOrder] = useState<'nav-left' | 'panels-left'>(() => {
+    const saved = localStorage.getItem('breadcrumbLayoutOrder');
+    return (saved as 'nav-left' | 'panels-left') || 'nav-left'; // nav tabs on left by default
   });
 
-  const [isDraggingPanel, setIsDraggingPanel] = useState(false);
-  const [dragOverZone, setDragOverZone] = useState<'left' | 'center' | 'right' | null>(null);
+  const [isDraggingNavGroup, setIsDraggingNavGroup] = useState(false);
+  const [isDraggingPanelGroup, setIsDraggingPanelGroup] = useState(false);
+  const [dragOverZone, setDragOverZone] = useState<'left' | 'right' | null>(null);
 
   // Main navigation tabs ordering state
   const defaultTabs = [
@@ -61,16 +62,16 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
   const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
   const [dragOverTabIndex, setDragOverTabIndex] = useState<number | null>(null);
 
-  // Save panel position and tab order to localStorage
+  // Save layout order and tab order to localStorage
   useEffect(() => {
-    localStorage.setItem('panelControlsPosition', panelPosition);
-  }, [panelPosition]);
+    localStorage.setItem('breadcrumbLayoutOrder', layoutOrder);
+  }, [layoutOrder]);
 
   useEffect(() => {
     localStorage.setItem('navigationTabsOrder', JSON.stringify(tabs.map((tab: any) => tab.id)));
   }, [tabs]);
 
-  // Tab drag handlers
+  // Tab drag handlers (for reordering within navigation group)
   const handleTabDragStart = (e: React.DragEvent, tabId: string, index: number) => {
     setIsDraggingTab(true);
     setDraggedTabId(tabId);
@@ -114,50 +115,60 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
     setDragOverTabIndex(null);
   };
 
-  // Panel drag handlers
-  const handlePanelDragStart = (e: React.DragEvent) => {
-    setIsDraggingPanel(true);
+  // Navigation group drag handlers
+  const handleNavGroupDragStart = (e: React.DragEvent) => {
+    setIsDraggingNavGroup(true);
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', 'panel-controls');
+    e.dataTransfer.setData('text/plain', 'nav-group');
   };
 
-  const handlePanelDragEnd = () => {
-    setIsDraggingPanel(false);
+  const handleNavGroupDragEnd = () => {
+    setIsDraggingNavGroup(false);
     setDragOverZone(null);
   };
 
-  const handleDropZoneDragOver = (e: React.DragEvent, zone: 'left' | 'center' | 'right') => {
+  // Panel group drag handlers
+  const handlePanelGroupDragStart = (e: React.DragEvent) => {
+    setIsDraggingPanelGroup(true);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', 'panel-group');
+  };
+
+  const handlePanelGroupDragEnd = () => {
+    setIsDraggingPanelGroup(false);
+    setDragOverZone(null);
+  };
+
+  // Drop zone handlers (simplified for left/right only)
+  const handleDropZoneDragOver = (e: React.DragEvent, zone: 'left' | 'right') => {
     e.preventDefault();
-    
-    // Only handle panel control drops, ignore tab drops
-    if (isDraggingPanel && !isDraggingTab) {
-      e.dataTransfer.dropEffect = 'move';
-      setDragOverZone(zone);
-    }
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverZone(zone);
   };
 
-  const handleDropZoneDragLeave = (e: React.DragEvent) => {
-    // Only handle panel control drags
-    if (!isDraggingPanel || isDraggingTab) return;
-    
-    // Use a timeout to allow for moving between drop zones
+  const handleDropZoneDragLeave = () => {
     setTimeout(() => {
-      if (isDraggingPanel && !isDraggingTab) {
-        setDragOverZone(null);
-      }
-    }, 50);
+      setDragOverZone(null);
+    }, 100);
   };
 
-  const handleDropZoneDrop = (e: React.DragEvent, zone: 'left' | 'center' | 'right') => {
+  const handleDropZoneDrop = (e: React.DragEvent, zone: 'left' | 'right') => {
     e.preventDefault();
     e.stopPropagation();
     const draggedData = e.dataTransfer.getData('text/plain');
     
-    if (draggedData === 'panel-controls' && zone !== panelPosition) {
-      setPanelPosition(zone);
+    if (draggedData === 'nav-group' && zone === 'left' && layoutOrder !== 'nav-left') {
+      setLayoutOrder('nav-left');
+    } else if (draggedData === 'nav-group' && zone === 'right' && layoutOrder !== 'panels-left') {
+      setLayoutOrder('panels-left'); // panels left means nav goes right
+    } else if (draggedData === 'panel-group' && zone === 'left' && layoutOrder !== 'panels-left') {
+      setLayoutOrder('panels-left');
+    } else if (draggedData === 'panel-group' && zone === 'right' && layoutOrder !== 'nav-left') {
+      setLayoutOrder('nav-left'); // nav left means panels go right
     }
     
-    setIsDraggingPanel(false);
+    setIsDraggingNavGroup(false);
+    setIsDraggingPanelGroup(false);
     setDragOverZone(null);
   };
 
@@ -254,214 +265,235 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
         </div>
       </div>
       
-      {/* Navigation Tabs with Panel Controls */}
+      {/* Simplified Two-Group Layout */}
       <div className="border-t border-technical-200/30 dark:border-technical-600/30 bg-gradient-to-r from-technical-50 to-white dark:from-technical-700 dark:to-technical-800">
         <nav className="flex items-center relative">
           {/* Left Drop Zone */}
           <div
             className={cn(
-              "flex items-center transition-all duration-200",
-              dragOverZone === 'left' ? 'bg-primary/20 ring-2 ring-primary/50' : '',
-              panelPosition === 'left' ? 'px-4 py-2 border-r border-technical-200/30 dark:border-technical-600/30' : 'w-2'
+              "flex items-center transition-all duration-200 min-w-[20px]",
+              dragOverZone === 'left' ? 'bg-primary/20 ring-2 ring-primary/50 px-4' : 'w-5',
+              (isDraggingNavGroup || isDraggingPanelGroup) && dragOverZone !== 'left' ? 'bg-technical-100/50 dark:bg-technical-700/50' : ''
             )}
             onDragOver={(e) => handleDropZoneDragOver(e, 'left')}
             onDragLeave={handleDropZoneDragLeave}
             onDrop={(e) => handleDropZoneDrop(e, 'left')}
           >
-            {panelPosition === 'left' && (
-              <div
-                draggable
-                onDragStart={handlePanelDragStart}
-                onDragEnd={handlePanelDragEnd}
-                className={cn(
-                  "flex items-center cursor-move transition-all duration-200",
-                  isDraggingPanel ? 'opacity-50 scale-95' : 'hover:bg-primary/10 rounded'
-                )}
-                title="Drag to reposition panel controls"
-              >
-                <GripVertical className="w-3 h-3 text-technical-400 mr-2" />
-                <PanelControls />
-              </div>
-            )}
-            {panelPosition !== 'left' && isDraggingPanel && (
-              <div className="text-xs text-technical-500 px-2">Left</div>
+            {(isDraggingNavGroup || isDraggingPanelGroup) && dragOverZone === 'left' && (
+              <div className="text-xs text-technical-500 font-medium">Drop Left</div>
             )}
           </div>
 
-          {/* Main Navigation Tabs */}
-          <div 
-            className="flex flex-1"
-            onDragOver={(e) => {
-              // Allow panel controls to be dragged over the tabs area
-              if (isDraggingPanel && !isDraggingTab) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-            }}
-            onDrop={(e) => {
-              // Prevent tabs container from capturing panel control drops
-              if (isDraggingPanel && !isDraggingTab) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-            }}
-          >
-            {tabs.map((tab: any, index: number) => {
-              const Icon = tab.icon;
-              const showCenterDropZone = index === Math.floor(tabs.length / 2) && panelPosition === 'center';
-              const isBeingDragged = isDraggingTab && draggedTabId === tab.id;
-              const showDropIndicator = isDraggingTab && dragOverTabIndex === index;
-              
-              return (
-                <div key={tab.id} className={cn(
-                  "flex flex-1 items-center relative",
-                  showDropIndicator ? 'bg-primary/10 ring-2 ring-primary/30' : ''
-                )}>
-                  {/* Drop indicator line */}
-                  {showDropIndicator && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full z-10" />
-                  )}
-                  
-                  <button
-                    draggable
-                    onDragStart={(e) => {
-                      // Only start tab drag if not dragging panels
-                      if (!isDraggingPanel) {
-                        handleTabDragStart(e, tab.id, index);
-                      } else {
-                        e.preventDefault();
-                      }
-                    }}
-                    onDragEnd={handleTabDragEnd}
-                    onDragOver={(e) => {
-                      if (isDraggingPanel && !isDraggingTab) {
-                        // Allow panel controls to pass through
-                        e.preventDefault();
-                        e.stopPropagation();
-                        return;
-                      }
-                      
-                      // Only handle tab drops
-                      if (isDraggingTab && !isDraggingPanel) {
-                        handleTabDragOver(e, index);
-                      }
-                    }}
-                    onDragLeave={(e) => {
-                      // Only handle if we're dragging tabs
-                      if (isDraggingTab && !isDraggingPanel) {
-                        handleTabDragLeave();
-                      }
-                    }}
-                    onDrop={(e) => {
-                      if (isDraggingPanel && !isDraggingTab) {
-                        // Allow panel controls to pass through to drop zones
-                        e.preventDefault();
-                        e.stopPropagation();
-                        return;
-                      }
-                      
-                      const draggedData = e.dataTransfer.getData('text/plain');
-                      // Only handle tab drops
-                      if (draggedData.startsWith('tab-') && isDraggingTab && !isDraggingPanel) {
-                        handleTabDrop(e, index);
-                      }
-                    }}
-                    onClick={() => onTabChange(tab.id)}
-                    className={cn(
-                      "flex-1 px-6 py-3 text-sm font-medium border-b-3 transition-all duration-200 relative group flex items-center justify-center cursor-move",
-                      activeTab === tab.id
-                        ? "border-primary text-primary bg-primary/10 shadow-inner"
-                        : "border-transparent text-technical-600 dark:text-technical-400 hover:text-primary hover:bg-primary/5 hover:border-primary/30",
-                      isBeingDragged ? 'opacity-50 scale-95 z-50' : '',
-                      isDraggingTab && !isBeingDragged ? 'hover:bg-primary/15' : ''
-                    )}
-                    title={`Drag to reorder ${tab.label} tab`}
-                  >
-                    <GripVertical className="w-3 h-3 text-technical-400 mr-1 opacity-60" />
-                    <Icon className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
-                    <span className="font-semibold tracking-wide">{tab.label}</span>
-                    {activeTab === tab.id && (
-                      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-primary rounded-t-full" />
-                    )}
-                  </button>
-                  
-                  {/* Center Drop Zone (after middle tab) */}
-                  {showCenterDropZone && (
-                    <div
-                      className={cn(
-                        "flex items-center px-4 py-2 transition-all duration-200",
-                        dragOverZone === 'center' ? 'bg-primary/20 ring-2 ring-primary/50' : ''
-                      )}
-                      onDragOver={(e) => handleDropZoneDragOver(e, 'center')}
-                      onDragLeave={handleDropZoneDragLeave}
-                      onDrop={(e) => handleDropZoneDrop(e, 'center')}
-                    >
-                      <div
-                        draggable
-                        onDragStart={handlePanelDragStart}
-                        onDragEnd={handlePanelDragEnd}
-                        className={cn(
-                          "flex items-center cursor-move transition-all duration-200",
-                          isDraggingPanel ? 'opacity-50 scale-95' : 'hover:bg-primary/10 rounded'
-                        )}
-                        title="Drag to reposition panel controls"
-                      >
-                        <GripVertical className="w-3 h-3 text-technical-400 mr-2" />
-                        <PanelControls />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            
-            {/* Center Drop Zone (when panels not in center) */}
-            {panelPosition !== 'center' && (
-              <div
-                className={cn(
-                  "flex items-center justify-center transition-all duration-200",
-                  dragOverZone === 'center' ? 'bg-primary/20 ring-2 ring-primary/50 px-4' : 'w-2',
-                  isDraggingPanel ? 'min-w-[60px]' : ''
-                )}
-                onDragOver={(e) => handleDropZoneDragOver(e, 'center')}
-                onDragLeave={handleDropZoneDragLeave}
-                onDrop={(e) => handleDropZoneDrop(e, 'center')}
-              >
-                {isDraggingPanel && (
-                  <div className="text-xs text-technical-500">Center</div>
-                )}
+          {/* Navigation Tabs Group */}
+          {layoutOrder === 'nav-left' && (
+            <div
+              draggable
+              onDragStart={handleNavGroupDragStart}
+              onDragEnd={handleNavGroupDragEnd}
+              className={cn(
+                "flex items-center transition-all duration-200 border-r border-technical-200/30 dark:border-technical-600/30",
+                isDraggingNavGroup ? 'opacity-50 scale-95' : 'hover:bg-primary/5 cursor-move'
+              )}
+              title="Drag to reposition navigation tabs"
+            >
+              <div className="flex items-center px-2">
+                <GripVertical className="w-3 h-3 text-technical-400 mr-2" />
               </div>
-            )}
-          </div>
+              <div className="flex">
+                {tabs.map((tab: any, index: number) => {
+                  const Icon = tab.icon;
+                  const isBeingDragged = isDraggingTab && draggedTabId === tab.id;
+                  const showDropIndicator = isDraggingTab && dragOverTabIndex === index;
+                  
+                  return (
+                    <div key={tab.id} className={cn(
+                      "flex items-center relative",
+                      showDropIndicator ? 'bg-primary/10 ring-1 ring-primary/30' : ''
+                    )}>
+                      {showDropIndicator && (
+                        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-primary rounded-r-full z-10" />
+                      )}
+                      
+                      <button
+                        draggable
+                        onDragStart={(e) => {
+                          e.stopPropagation(); // Prevent nav group drag
+                          handleTabDragStart(e, tab.id, index);
+                        }}
+                        onDragEnd={handleTabDragEnd}
+                        onDragOver={(e) => {
+                          if (isDraggingTab) {
+                            e.stopPropagation();
+                            handleTabDragOver(e, index);
+                          }
+                        }}
+                        onDragLeave={() => {
+                          if (isDraggingTab) {
+                            handleTabDragLeave();
+                          }
+                        }}
+                        onDrop={(e) => {
+                          const draggedData = e.dataTransfer.getData('text/plain');
+                          if (draggedData.startsWith('tab-') && isDraggingTab) {
+                            e.stopPropagation();
+                            handleTabDrop(e, index);
+                          }
+                        }}
+                        onClick={() => onTabChange(tab.id)}
+                        className={cn(
+                          "px-4 py-3 text-sm font-medium border-b-3 transition-all duration-200 relative group flex items-center justify-center",
+                          activeTab === tab.id
+                            ? "border-primary text-primary bg-primary/10 shadow-inner"
+                            : "border-transparent text-technical-600 dark:text-technical-400 hover:text-primary hover:bg-primary/5 hover:border-primary/30",
+                          isBeingDragged ? 'opacity-50 scale-95 z-50' : '',
+                          isDraggingTab && !isBeingDragged ? 'hover:bg-primary/15' : ''
+                        )}
+                        title={`${tab.label} tab - Drag to reorder`}
+                      >
+                        <GripVertical className="w-2 h-2 text-technical-400/60 mr-1" />
+                        <Icon className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
+                        <span className="font-semibold tracking-wide">{tab.label}</span>
+                        {activeTab === tab.id && (
+                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-1 bg-primary rounded-t-full" />
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Panel Controls Group */}
+          {layoutOrder === 'panels-left' && (
+            <div
+              draggable
+              onDragStart={handlePanelGroupDragStart}
+              onDragEnd={handlePanelGroupDragEnd}
+              className={cn(
+                "flex items-center px-4 py-2 transition-all duration-200 border-r border-technical-200/30 dark:border-technical-600/30",
+                isDraggingPanelGroup ? 'opacity-50 scale-95' : 'hover:bg-primary/5 cursor-move'
+              )}
+              title="Drag to reposition panel controls"
+            >
+              <GripVertical className="w-3 h-3 text-technical-400 mr-2" />
+              <PanelControls />
+            </div>
+          )}
+
+          {/* Middle Spacer */}
+          <div className="flex-1" />
+
+          {/* Panel Controls Group (Right Position) */}
+          {layoutOrder === 'nav-left' && (
+            <div
+              draggable
+              onDragStart={handlePanelGroupDragStart}
+              onDragEnd={handlePanelGroupDragEnd}
+              className={cn(
+                "flex items-center px-4 py-2 transition-all duration-200 border-l border-technical-200/30 dark:border-technical-600/30",
+                isDraggingPanelGroup ? 'opacity-50 scale-95' : 'hover:bg-primary/5 cursor-move'
+              )}
+              title="Drag to reposition panel controls"
+            >
+              <GripVertical className="w-3 h-3 text-technical-400 mr-2" />
+              <PanelControls />
+            </div>
+          )}
+
+          {/* Navigation Tabs Group (Right Position) */}
+          {layoutOrder === 'panels-left' && (
+            <div
+              draggable
+              onDragStart={handleNavGroupDragStart}
+              onDragEnd={handleNavGroupDragEnd}
+              className={cn(
+                "flex items-center transition-all duration-200 border-l border-technical-200/30 dark:border-technical-600/30",
+                isDraggingNavGroup ? 'opacity-50 scale-95' : 'hover:bg-primary/5 cursor-move'
+              )}
+              title="Drag to reposition navigation tabs"
+            >
+              <div className="flex items-center px-2">
+                <GripVertical className="w-3 h-3 text-technical-400 mr-2" />
+              </div>
+              <div className="flex">
+                {tabs.map((tab: any, index: number) => {
+                  const Icon = tab.icon;
+                  const isBeingDragged = isDraggingTab && draggedTabId === tab.id;
+                  const showDropIndicator = isDraggingTab && dragOverTabIndex === index;
+                  
+                  return (
+                    <div key={tab.id} className={cn(
+                      "flex items-center relative",
+                      showDropIndicator ? 'bg-primary/10 ring-1 ring-primary/30' : ''
+                    )}>
+                      {showDropIndicator && (
+                        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-primary rounded-r-full z-10" />
+                      )}
+                      
+                      <button
+                        draggable
+                        onDragStart={(e) => {
+                          e.stopPropagation(); // Prevent nav group drag
+                          handleTabDragStart(e, tab.id, index);
+                        }}
+                        onDragEnd={handleTabDragEnd}
+                        onDragOver={(e) => {
+                          if (isDraggingTab) {
+                            e.stopPropagation();
+                            handleTabDragOver(e, index);
+                          }
+                        }}
+                        onDragLeave={() => {
+                          if (isDraggingTab) {
+                            handleTabDragLeave();
+                          }
+                        }}
+                        onDrop={(e) => {
+                          const draggedData = e.dataTransfer.getData('text/plain');
+                          if (draggedData.startsWith('tab-') && isDraggingTab) {
+                            e.stopPropagation();
+                            handleTabDrop(e, index);
+                          }
+                        }}
+                        onClick={() => onTabChange(tab.id)}
+                        className={cn(
+                          "px-4 py-3 text-sm font-medium border-b-3 transition-all duration-200 relative group flex items-center justify-center",
+                          activeTab === tab.id
+                            ? "border-primary text-primary bg-primary/10 shadow-inner"
+                            : "border-transparent text-technical-600 dark:text-technical-400 hover:text-primary hover:bg-primary/5 hover:border-primary/30",
+                          isBeingDragged ? 'opacity-50 scale-95 z-50' : '',
+                          isDraggingTab && !isBeingDragged ? 'hover:bg-primary/15' : ''
+                        )}
+                        title={`${tab.label} tab - Drag to reorder`}
+                      >
+                        <GripVertical className="w-2 h-2 text-technical-400/60 mr-1" />
+                        <Icon className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
+                        <span className="font-semibold tracking-wide">{tab.label}</span>
+                        {activeTab === tab.id && (
+                          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-1 bg-primary rounded-t-full" />
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Right Drop Zone */}
           <div
             className={cn(
-              "flex items-center transition-all duration-200",
-              dragOverZone === 'right' ? 'bg-primary/20 ring-2 ring-primary/50' : '',
-              panelPosition === 'right' ? 'px-4 py-2 border-l border-technical-200/30 dark:border-technical-600/30' : 'w-2'
+              "flex items-center transition-all duration-200 min-w-[20px]",
+              dragOverZone === 'right' ? 'bg-primary/20 ring-2 ring-primary/50 px-4' : 'w-5',
+              (isDraggingNavGroup || isDraggingPanelGroup) && dragOverZone !== 'right' ? 'bg-technical-100/50 dark:bg-technical-700/50' : ''
             )}
             onDragOver={(e) => handleDropZoneDragOver(e, 'right')}
             onDragLeave={handleDropZoneDragLeave}
             onDrop={(e) => handleDropZoneDrop(e, 'right')}
           >
-            {panelPosition === 'right' && (
-              <div
-                draggable
-                onDragStart={handlePanelDragStart}
-                onDragEnd={handlePanelDragEnd}
-                className={cn(
-                  "flex items-center cursor-move transition-all duration-200",
-                  isDraggingPanel ? 'opacity-50 scale-95' : 'hover:bg-primary/10 rounded'
-                )}
-                title="Drag to reposition panel controls"
-              >
-                <GripVertical className="w-3 h-3 text-technical-400 mr-2" />
-                <PanelControls />
-              </div>
-            )}
-            {panelPosition !== 'right' && isDraggingPanel && (
-              <div className="text-xs text-technical-500 px-2">Right</div>
+            {(isDraggingNavGroup || isDraggingPanelGroup) && dragOverZone === 'right' && (
+              <div className="text-xs text-technical-500 font-medium">Drop Right</div>
             )}
           </div>
         </nav>
