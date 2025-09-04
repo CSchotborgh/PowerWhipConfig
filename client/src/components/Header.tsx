@@ -137,14 +137,15 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
   };
 
   const handleDropZoneDragLeave = (e: React.DragEvent) => {
-    // Only clear if we're actually leaving the drop zone and not entering a child element
-    const rect = (e.currentTarget as Element).getBoundingClientRect();
-    const isStillInside = e.clientX >= rect.left && e.clientX <= rect.right && 
-                         e.clientY >= rect.top && e.clientY <= rect.bottom;
+    // Only handle panel control drags
+    if (!isDraggingPanel || isDraggingTab) return;
     
-    if (!isStillInside) {
-      setDragOverZone(null);
-    }
+    // Use a timeout to allow for moving between drop zones
+    setTimeout(() => {
+      if (isDraggingPanel && !isDraggingTab) {
+        setDragOverZone(null);
+      }
+    }, 50);
   };
 
   const handleDropZoneDrop = (e: React.DragEvent, zone: 'left' | 'center' | 'right') => {
@@ -288,7 +289,23 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
           </div>
 
           {/* Main Navigation Tabs */}
-          <div className="flex flex-1">
+          <div 
+            className="flex flex-1"
+            onDragOver={(e) => {
+              // Allow panel controls to be dragged over the tabs area
+              if (isDraggingPanel && !isDraggingTab) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
+            onDrop={(e) => {
+              // Prevent tabs container from capturing panel control drops
+              if (isDraggingPanel && !isDraggingTab) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
+          >
             {tabs.map((tab: any, index: number) => {
               const Icon = tab.icon;
               const showCenterDropZone = index === Math.floor(tabs.length / 2) && panelPosition === 'center';
@@ -307,23 +324,44 @@ export default function Header({ activeTab, onTabChange }: HeaderProps) {
                   
                   <button
                     draggable
-                    onDragStart={(e) => handleTabDragStart(e, tab.id, index)}
+                    onDragStart={(e) => {
+                      // Only start tab drag if not dragging panels
+                      if (!isDraggingPanel) {
+                        handleTabDragStart(e, tab.id, index);
+                      } else {
+                        e.preventDefault();
+                      }
+                    }}
                     onDragEnd={handleTabDragEnd}
                     onDragOver={(e) => {
-                      // Only handle tab drops, ignore panel control drops
+                      if (isDraggingPanel && !isDraggingTab) {
+                        // Allow panel controls to pass through
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                      }
+                      
+                      // Only handle tab drops
                       if (isDraggingTab && !isDraggingPanel) {
                         handleTabDragOver(e, index);
                       }
                     }}
-                    onDragLeave={() => {
+                    onDragLeave={(e) => {
                       // Only handle if we're dragging tabs
                       if (isDraggingTab && !isDraggingPanel) {
                         handleTabDragLeave();
                       }
                     }}
                     onDrop={(e) => {
+                      if (isDraggingPanel && !isDraggingTab) {
+                        // Allow panel controls to pass through to drop zones
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                      }
+                      
                       const draggedData = e.dataTransfer.getData('text/plain');
-                      // Only handle tab drops, ignore panel control drops
+                      // Only handle tab drops
                       if (draggedData.startsWith('tab-') && isDraggingTab && !isDraggingPanel) {
                         handleTabDrop(e, index);
                       }
