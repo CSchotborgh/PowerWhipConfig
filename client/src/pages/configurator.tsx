@@ -1,7 +1,6 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 import DesignCanvas from "@/components/DesignCanvas";
-import { NavigationPanel } from "@/components/NavigationPanel";
 import { PanelControlsFloating } from "@/components/PanelControlsFloating";
 import ConfigurationTab from "@/components/ConfigurationTab";
 import VisualDesignTab from "@/components/VisualDesignTab";
@@ -72,12 +71,11 @@ export default function Configurator() {
           {/* Header Navbar - Simplified */}
           <Header />
           
-          {/* Floating Navigation Panels */}
-          <NavigationPanel 
-            activeTab={activeTab} 
+          {/* Unified Floating Panel - Navigation & Quick Access */}
+          <PanelControlsFloating 
+            activeTab={activeTab}
             onTabChange={(tabId) => setActiveTab(tabId as "configuration" | "visual" | "documentation")} 
           />
-          <PanelControlsFloating />
         
         {/* Main Body Container - Enhanced Mobile Layout */}
         <div className="flex flex-1 overflow-hidden bg-gradient-to-br from-technical-50 to-technical-100 dark:from-technical-900 dark:to-technical-800 relative">
