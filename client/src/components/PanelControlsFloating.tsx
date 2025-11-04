@@ -37,8 +37,8 @@ export function PanelControlsFloating({ activeTab, onTabChange, defaultPosition 
       scalable={true}
     >
       <div className="flex flex-col gap-3 p-2">
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-1">
+        {/* Navigation Tabs - Icon Only */}
+        <div className="flex items-center gap-2 justify-center">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -48,18 +48,17 @@ export function PanelControlsFloating({ activeTab, onTabChange, defaultPosition 
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
                 className={cn(
-                  "flex-1 px-3 py-1.5 text-xs font-medium border-b-2 transition-all duration-200 relative group flex items-center justify-center rounded-t-lg",
+                  "p-2.5 rounded-lg transition-all duration-200 relative group",
                   isActive
-                    ? "border-primary text-primary bg-primary/10 shadow-inner"
-                    : "border-transparent text-technical-600 dark:text-technical-400 hover:text-primary hover:bg-primary/5 hover:border-primary/30"
+                    ? "bg-primary text-white shadow-lg scale-110"
+                    : "bg-technical-100 dark:bg-technical-700 text-technical-600 dark:text-technical-400 hover:bg-primary/20 hover:text-primary hover:scale-105"
                 )}
                 title={tab.label}
                 data-testid={`nav-tab-${tab.id}`}
               >
-                <Icon className="w-3.5 h-3.5 mr-1.5 transition-transform group-hover:scale-110" />
-                <span className="font-semibold tracking-wide">{tab.label}</span>
+                <Icon className="w-5 h-5 transition-transform group-hover:scale-110" />
                 {isActive && (
-                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-0.5 bg-primary rounded-t-full" />
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
                 )}
               </button>
             );
