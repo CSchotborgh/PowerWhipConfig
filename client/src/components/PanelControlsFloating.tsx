@@ -36,7 +36,7 @@ export function PanelControlsFloating({ activeTab, onTabChange, defaultPosition 
       className="bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm"
       scalable={true}
     >
-      <div className="flex items-center gap-6 p-3 w-full">
+      <div className="flex items-center gap-3 p-3">
         {/* Navigation Tabs - Icon Only */}
         <div className="flex items-center gap-2">
           {tabs.map((tab) => {
@@ -69,7 +69,7 @@ export function PanelControlsFloating({ activeTab, onTabChange, defaultPosition 
         <div className="h-10 w-px bg-technical-200 dark:bg-technical-600" />
 
         {/* Quick Access Icons */}
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex items-center">
           <PanelControls />
         </div>
       </div>
