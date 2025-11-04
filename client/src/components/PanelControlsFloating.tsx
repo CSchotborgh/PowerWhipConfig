@@ -30,11 +30,11 @@ export function PanelControlsFloating({ activeTab, onTabChange, defaultPosition 
     <DraggablePanel
       title="Navigation & Quick Access"
       defaultPosition={position}
-      defaultSize={{ width: 600, height: 150 }}
-      minSize={{ width: 450, height: 120 }}
-      maxSize={{ width: 900, height: 200 }}
+      defaultSize={{ width: 650, height: 180 }}
+      minSize={{ width: 400, height: 140 }}
+      maxSize={{ width: 1200, height: 300 }}
       className="bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm"
-      scalable={false}
+      scalable={true}
     >
       <div className="flex flex-col gap-3 p-2">
         {/* Navigation Tabs */}
