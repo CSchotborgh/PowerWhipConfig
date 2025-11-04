@@ -29,9 +29,9 @@ export function NavigationPanel({ activeTab, onTabChange, defaultPosition = { x:
     <DraggablePanel
       title="Navigation"
       defaultPosition={position}
-      defaultSize={{ width: 400, height: 80 }}
-      minSize={{ width: 300, height: 60 }}
-      maxSize={{ width: 600, height: 120 }}
+      defaultSize={{ width: 450, height: 120 }}
+      minSize={{ width: 350, height: 100 }}
+      maxSize={{ width: 700, height: 150 }}
       className="bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm"
       scalable={false}
     >

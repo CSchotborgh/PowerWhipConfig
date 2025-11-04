@@ -20,9 +20,9 @@ export function PanelControlsFloating({ defaultPosition = { x: window.innerWidth
     <DraggablePanel
       title="Quick Access"
       defaultPosition={position}
-      defaultSize={{ width: 300, height: 80 }}
-      minSize={{ width: 200, height: 60 }}
-      maxSize={{ width: 400, height: 120 }}
+      defaultSize={{ width: 350, height: 120 }}
+      minSize={{ width: 250, height: 100 }}
+      maxSize={{ width: 500, height: 150 }}
       className="bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm"
       scalable={false}
     >
