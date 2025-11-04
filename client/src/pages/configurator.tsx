@@ -73,7 +73,10 @@ export default function Configurator() {
           <Header />
           
           {/* Floating Navigation Panels */}
-          <NavigationPanel activeTab={activeTab} onTabChange={setActiveTab} />
+          <NavigationPanel 
+            activeTab={activeTab} 
+            onTabChange={(tabId) => setActiveTab(tabId as "configuration" | "visual" | "documentation")} 
+          />
           <PanelControlsFloating />
         
         {/* Main Body Container - Enhanced Mobile Layout */}
