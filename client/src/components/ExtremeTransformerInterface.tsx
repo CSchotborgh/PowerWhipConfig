@@ -217,12 +217,15 @@ export default function ExtremeTransformerInterface() {
               className="hidden"
               id="file-upload"
             />
-            <label htmlFor="file-upload">
-              <Button variant="outline" className="cursor-pointer">
-                <Upload className="h-4 w-4 mr-2" />
-                Browse Files
-              </Button>
-            </label>
+            <Button 
+              variant="outline" 
+              className="cursor-pointer"
+              onClick={() => document.getElementById('file-upload')?.click()}
+              data-testid="button-browse-files"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Browse Files
+            </Button>
           </div>
 
           {selectedFile && (
