@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { GripVertical, Minimize2, Maximize2, X } from 'lucide-react';
 
+type DockPosition = 'none' | 'top' | 'right' | 'bottom' | 'left' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
 interface DraggablePanelProps {
   title: string;
   children: ReactNode;
@@ -13,6 +15,7 @@ interface DraggablePanelProps {
   onClose?: () => void;
   className?: string;
   scalable?: boolean;
+  enableDocking?: boolean;
 }
 
 export function DraggablePanel({
@@ -24,7 +27,8 @@ export function DraggablePanel({
   maxSize = { width: 1200, height: 800 },
   onClose,
   className = '',
-  scalable = true
+  scalable = true,
+  enableDocking = true
 }: DraggablePanelProps) {
   const [position, setPosition] = useState(defaultPosition);
   const [size, setSize] = useState(defaultSize);
@@ -33,6 +37,8 @@ export function DraggablePanel({
   const [isMinimized, setIsMinimized] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
+  const [dockPosition, setDockPosition] = useState<DockPosition>('none');
+  const [showDockZones, setShowDockZones] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -46,24 +52,94 @@ export function DraggablePanel({
     setIsDragging(true);
   };
 
+  const detectDockZone = (x: number, y: number): DockPosition => {
+    if (!enableDocking) return 'none';
+    
+    const dockThreshold = 50; // pixels from edge to trigger docking
+    const cornerThreshold = 150; // pixels for corner detection
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    
+    // Corner zones
+    if (x < cornerThreshold && y < cornerThreshold) return 'top-left';
+    if (x > vw - cornerThreshold && y < cornerThreshold) return 'top-right';
+    if (x < cornerThreshold && y > vh - cornerThreshold) return 'bottom-left';
+    if (x > vw - cornerThreshold && y > vh - cornerThreshold) return 'bottom-right';
+    
+    // Edge zones
+    if (x < dockThreshold) return 'left';
+    if (x > vw - dockThreshold) return 'right';
+    if (y < dockThreshold) return 'top';
+    if (y > vh - dockThreshold) return 'bottom';
+    
+    return 'none';
+  };
+
+  const snapToDock = (dock: DockPosition) => {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const dockOffset = 20; // pixels from edge when docked
+    
+    switch (dock) {
+      case 'top':
+        setPosition({ x: (vw - size.width) / 2, y: dockOffset });
+        break;
+      case 'right':
+        setPosition({ x: vw - size.width - dockOffset, y: (vh - size.height) / 2 });
+        break;
+      case 'bottom':
+        setPosition({ x: (vw - size.width) / 2, y: vh - size.height - dockOffset });
+        break;
+      case 'left':
+        setPosition({ x: dockOffset, y: (vh - size.height) / 2 });
+        break;
+      case 'top-left':
+        setPosition({ x: dockOffset, y: dockOffset });
+        break;
+      case 'top-right':
+        setPosition({ x: vw - size.width - dockOffset, y: dockOffset });
+        break;
+      case 'bottom-left':
+        setPosition({ x: dockOffset, y: vh - size.height - dockOffset });
+        break;
+      case 'bottom-right':
+        setPosition({ x: vw - size.width - dockOffset, y: vh - size.height - dockOffset });
+        break;
+      default:
+        break;
+    }
+  };
+
   const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging) return;
     
     const newX = e.clientX - dragOffset.x;
     const newY = e.clientY - dragOffset.y;
     
-    // Boundary constraints
-    const maxX = window.innerWidth - size.width;
-    const maxY = window.innerHeight - size.height;
+    // Detect dock zone
+    const dock = detectDockZone(e.clientX, e.clientY);
+    setDockPosition(dock);
+    
+    // Allow free positioning - remove strict boundary constraints
+    // Only prevent complete off-screen (keep 50px visible)
+    const minVisible = 50;
+    const maxX = window.innerWidth - minVisible;
+    const maxY = window.innerHeight - minVisible;
     
     setPosition({
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY))
+      x: Math.max(-size.width + minVisible, Math.min(newX, maxX)),
+      y: Math.max(-size.height + minVisible, Math.min(newY, maxY))
     });
   };
 
   const handleMouseUp = () => {
+    // Snap to dock if in a dock zone
+    if (dockPosition !== 'none') {
+      snapToDock(dockPosition);
+    }
     setIsDragging(false);
+    setShowDockZones(false);
+    setDockPosition('none');
   };
 
   // Global mouse event listeners
@@ -112,21 +188,61 @@ export function DraggablePanel({
   };
 
   return (
-    <Card
-      ref={panelRef}
-      className={`fixed shadow-2xl border-2 z-50 ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''} ${className}`}
-      style={{
-        left: position.x,
-        top: position.y,
-        width: size.width * scale,
-        height: isMinimized ? 'auto' : size.height * scale,
-        minWidth: minSize.width,
-        minHeight: isMinimized ? 'auto' : minSize.height,
-        transform: scalable ? `scale(${scale})` : 'none',
-        transformOrigin: 'top left'
-      }}
-      onWheel={scalable ? handleWheel : undefined}
-    >
+    <>
+      {/* Dock Zone Indicators */}
+      {showDockZones && enableDocking && (
+        <div className="fixed inset-0 z-40 pointer-events-none">
+          {/* Top */}
+          <div className={`absolute top-0 left-1/4 w-1/2 h-16 border-2 border-dashed transition-all ${
+            dockPosition === 'top' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
+          }`} />
+          
+          {/* Right */}
+          <div className={`absolute top-1/4 right-0 w-16 h-1/2 border-2 border-dashed transition-all ${
+            dockPosition === 'right' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
+          }`} />
+          
+          {/* Bottom */}
+          <div className={`absolute bottom-0 left-1/4 w-1/2 h-16 border-2 border-dashed transition-all ${
+            dockPosition === 'bottom' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
+          }`} />
+          
+          {/* Left */}
+          <div className={`absolute top-1/4 left-0 w-16 h-1/2 border-2 border-dashed transition-all ${
+            dockPosition === 'left' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
+          }`} />
+          
+          {/* Corners */}
+          <div className={`absolute top-0 left-0 w-32 h-32 border-2 border-dashed transition-all ${
+            dockPosition === 'top-left' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
+          }`} />
+          <div className={`absolute top-0 right-0 w-32 h-32 border-2 border-dashed transition-all ${
+            dockPosition === 'top-right' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
+          }`} />
+          <div className={`absolute bottom-0 left-0 w-32 h-32 border-2 border-dashed transition-all ${
+            dockPosition === 'bottom-left' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
+          }`} />
+          <div className={`absolute bottom-0 right-0 w-32 h-32 border-2 border-dashed transition-all ${
+            dockPosition === 'bottom-right' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
+          }`} />
+        </div>
+      )}
+      
+      <Card
+        ref={panelRef}
+        className={`fixed shadow-2xl border-2 z-50 ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''} ${className}`}
+        style={{
+          left: position.x,
+          top: position.y,
+          width: size.width * scale,
+          height: isMinimized ? 'auto' : size.height * scale,
+          minWidth: minSize.width,
+          minHeight: isMinimized ? 'auto' : minSize.height,
+          transform: scalable ? `scale(${scale})` : 'none',
+          transformOrigin: 'top left'
+        }}
+        onWheel={scalable ? handleWheel : undefined}
+      >
       <CardHeader 
         className="flex flex-row items-center justify-between p-3 bg-muted/50 cursor-grab active:cursor-grabbing"
         onMouseDown={handleMouseDown}
@@ -291,6 +407,7 @@ export function DraggablePanel({
           )}
         </CardContent>
       )}
-    </Card>
+      </Card>
+    </>
   );
 }
