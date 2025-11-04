@@ -19,7 +19,8 @@ import {
   Eye,
   EyeOff,
   FileSpreadsheet,
-  ShoppingCart
+  ShoppingCart,
+  LayoutGrid
 } from 'lucide-react';
 import { usePanelManager } from './PanelManager';
 import { FloatingComponentLibrary } from './FloatingComponentLibrary';
@@ -321,7 +322,7 @@ export function PanelControls() {
             title="All Panels" 
             className="p-3 rounded-xl transition-all duration-200 flex items-center justify-center border-2 bg-white dark:bg-technical-800 text-technical-600 dark:text-technical-400 border-technical-200 dark:border-technical-600 hover:bg-primary/10 hover:text-primary hover:border-primary/50 hover:scale-105 hover:shadow-lg"
           >
-            <Layers className="h-5 w-5 flex-shrink-0" />
+            <LayoutGrid className="h-5 w-5 flex-shrink-0" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
