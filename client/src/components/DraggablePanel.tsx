@@ -1,9 +1,7 @@
 import React, { useState, useRef, ReactNode } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { GripVertical, Minimize2, Maximize2, X } from 'lucide-react';
-
-type DockPosition = 'none' | 'top' | 'right' | 'bottom' | 'left' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+import { GripVertical, Minimize2, Maximize2, X, Pin, PinOff } from 'lucide-react';
 
 interface DraggablePanelProps {
   title: string;
@@ -15,7 +13,7 @@ interface DraggablePanelProps {
   onClose?: () => void;
   className?: string;
   scalable?: boolean;
-  enableDocking?: boolean;
+  enableGridSnap?: boolean;
 }
 
 export function DraggablePanel({
@@ -28,7 +26,7 @@ export function DraggablePanel({
   onClose,
   className = '',
   scalable = true,
-  enableDocking = true
+  enableGridSnap = true
 }: DraggablePanelProps) {
   const [position, setPosition] = useState(defaultPosition);
   const [size, setSize] = useState(defaultSize);
@@ -37,12 +35,15 @@ export function DraggablePanel({
   const [isMinimized, setIsMinimized] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
-  const [dockPosition, setDockPosition] = useState<DockPosition>('none');
-  const [showDockZones, setShowDockZones] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
+  const [showGrid, setShowGrid] = useState(false);
+  const [snapToGrid, setSnapToGrid] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  
+  const gridSize = 20; // pixels
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (!panelRef.current) return;
+    if (!panelRef.current || isPinned) return;
     
     const rect = panelRef.current.getBoundingClientRect();
     setDragOffset({
@@ -50,77 +51,46 @@ export function DraggablePanel({
       y: e.clientY - rect.top
     });
     setIsDragging(true);
-  };
-
-  const detectDockZone = (x: number, y: number): DockPosition => {
-    if (!enableDocking) return 'none';
     
-    const dockThreshold = 50; // pixels from edge to trigger docking
-    const cornerThreshold = 150; // pixels for corner detection
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    
-    // Corner zones
-    if (x < cornerThreshold && y < cornerThreshold) return 'top-left';
-    if (x > vw - cornerThreshold && y < cornerThreshold) return 'top-right';
-    if (x < cornerThreshold && y > vh - cornerThreshold) return 'bottom-left';
-    if (x > vw - cornerThreshold && y > vh - cornerThreshold) return 'bottom-right';
-    
-    // Edge zones
-    if (x < dockThreshold) return 'left';
-    if (x > vw - dockThreshold) return 'right';
-    if (y < dockThreshold) return 'top';
-    if (y > vh - dockThreshold) return 'bottom';
-    
-    return 'none';
-  };
-
-  const snapToDock = (dock: DockPosition) => {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const dockOffset = 20; // pixels from edge when docked
-    
-    switch (dock) {
-      case 'top':
-        setPosition({ x: (vw - size.width) / 2, y: dockOffset });
-        break;
-      case 'right':
-        setPosition({ x: vw - size.width - dockOffset, y: (vh - size.height) / 2 });
-        break;
-      case 'bottom':
-        setPosition({ x: (vw - size.width) / 2, y: vh - size.height - dockOffset });
-        break;
-      case 'left':
-        setPosition({ x: dockOffset, y: (vh - size.height) / 2 });
-        break;
-      case 'top-left':
-        setPosition({ x: dockOffset, y: dockOffset });
-        break;
-      case 'top-right':
-        setPosition({ x: vw - size.width - dockOffset, y: dockOffset });
-        break;
-      case 'bottom-left':
-        setPosition({ x: dockOffset, y: vh - size.height - dockOffset });
-        break;
-      case 'bottom-right':
-        setPosition({ x: vw - size.width - dockOffset, y: vh - size.height - dockOffset });
-        break;
-      default:
-        break;
+    // Show grid when holding Ctrl/Cmd key
+    if (enableGridSnap && (e.ctrlKey || e.metaKey)) {
+      setShowGrid(true);
+      setSnapToGrid(true);
     }
+  };
+
+  const snapToGridPosition = (x: number, y: number) => {
+    if (!snapToGrid) return { x, y };
+    
+    return {
+      x: Math.round(x / gridSize) * gridSize,
+      y: Math.round(y / gridSize) * gridSize
+    };
   };
 
   const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging) return;
     
-    const newX = e.clientX - dragOffset.x;
-    const newY = e.clientY - dragOffset.y;
+    let newX = e.clientX - dragOffset.x;
+    let newY = e.clientY - dragOffset.y;
     
-    // Detect dock zone
-    const dock = detectDockZone(e.clientX, e.clientY);
-    setDockPosition(dock);
+    // Apply grid snapping if Ctrl/Cmd is held
+    if (e.ctrlKey || e.metaKey) {
+      if (!snapToGrid) {
+        setSnapToGrid(true);
+        setShowGrid(true);
+      }
+      const snapped = snapToGridPosition(newX, newY);
+      newX = snapped.x;
+      newY = snapped.y;
+    } else {
+      if (snapToGrid) {
+        setSnapToGrid(false);
+        setShowGrid(false);
+      }
+    }
     
-    // Allow free positioning - remove strict boundary constraints
+    // Allow free positioning anywhere - minimal constraints
     // Only prevent complete off-screen (keep 50px visible)
     const minVisible = 50;
     const maxX = window.innerWidth - minVisible;
@@ -133,13 +103,9 @@ export function DraggablePanel({
   };
 
   const handleMouseUp = () => {
-    // Snap to dock if in a dock zone
-    if (dockPosition !== 'none') {
-      snapToDock(dockPosition);
-    }
     setIsDragging(false);
-    setShowDockZones(false);
-    setDockPosition('none');
+    setShowGrid(false);
+    setSnapToGrid(false);
   };
 
   // Global mouse event listeners
@@ -189,43 +155,18 @@ export function DraggablePanel({
 
   return (
     <>
-      {/* Dock Zone Indicators */}
-      {showDockZones && enableDocking && (
-        <div className="fixed inset-0 z-40 pointer-events-none">
-          {/* Top */}
-          <div className={`absolute top-0 left-1/4 w-1/2 h-16 border-2 border-dashed transition-all ${
-            dockPosition === 'top' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
-          }`} />
-          
-          {/* Right */}
-          <div className={`absolute top-1/4 right-0 w-16 h-1/2 border-2 border-dashed transition-all ${
-            dockPosition === 'right' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
-          }`} />
-          
-          {/* Bottom */}
-          <div className={`absolute bottom-0 left-1/4 w-1/2 h-16 border-2 border-dashed transition-all ${
-            dockPosition === 'bottom' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
-          }`} />
-          
-          {/* Left */}
-          <div className={`absolute top-1/4 left-0 w-16 h-1/2 border-2 border-dashed transition-all ${
-            dockPosition === 'left' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
-          }`} />
-          
-          {/* Corners */}
-          <div className={`absolute top-0 left-0 w-32 h-32 border-2 border-dashed transition-all ${
-            dockPosition === 'top-left' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
-          }`} />
-          <div className={`absolute top-0 right-0 w-32 h-32 border-2 border-dashed transition-all ${
-            dockPosition === 'top-right' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
-          }`} />
-          <div className={`absolute bottom-0 left-0 w-32 h-32 border-2 border-dashed transition-all ${
-            dockPosition === 'bottom-left' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
-          }`} />
-          <div className={`absolute bottom-0 right-0 w-32 h-32 border-2 border-dashed transition-all ${
-            dockPosition === 'bottom-right' ? 'bg-primary/20 border-primary' : 'bg-muted/10 border-muted-foreground/30'
-          }`} />
-        </div>
+      {/* Grid Overlay - Shows when dragging with Ctrl/Cmd */}
+      {showGrid && (
+        <div 
+          className="fixed inset-0 z-40 pointer-events-none"
+          style={{
+            backgroundImage: `
+              repeating-linear-gradient(0deg, transparent, transparent ${gridSize-1}px, rgba(59, 130, 246, 0.2) ${gridSize-1}px, rgba(59, 130, 246, 0.2) ${gridSize}px),
+              repeating-linear-gradient(90deg, transparent, transparent ${gridSize-1}px, rgba(59, 130, 246, 0.2) ${gridSize-1}px, rgba(59, 130, 246, 0.2) ${gridSize}px)
+            `,
+            backgroundColor: 'rgba(59, 130, 246, 0.05)'
+          }}
+        />
       )}
       
       <Card
@@ -244,7 +185,7 @@ export function DraggablePanel({
         onWheel={scalable ? handleWheel : undefined}
       >
       <CardHeader 
-        className="flex flex-row items-center justify-between p-3 bg-muted/50 cursor-grab active:cursor-grabbing"
+        className={`flex flex-row items-center justify-between p-3 bg-muted/50 ${isPinned ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}`}
         onMouseDown={handleMouseDown}
       >
         <div className="flex items-center gap-2">
@@ -253,6 +194,17 @@ export function DraggablePanel({
         </div>
         
         <div className="flex items-center gap-1">
+          {/* Pin Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsPinned(!isPinned)}
+            className={`h-6 w-6 p-0 ${isPinned ? 'text-primary' : ''}`}
+            title={isPinned ? "Unpin panel (allow dragging)" : "Pin panel in place"}
+          >
+            {isPinned ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
+          </Button>
+          
           {scalable && (
             <div className="flex items-center gap-1 mr-2">
               <Button
