@@ -285,10 +285,8 @@ export function PanelControls() {
           const isDragTarget = dragOverItem === panelId && draggedItem !== panelId;
           
           return (
-            <Button
+            <button
               key={panelId}
-              variant="ghost"
-              size="sm"
               draggable
               onClick={() => handleOpenPanel(availablePanel)}
               onDragStart={(e) => handleDragStart(e, panelId)}
@@ -298,12 +296,12 @@ export function PanelControls() {
               onDrop={(e) => handleDrop(e, panelId)}
               onDragEnd={handleDragEnd}
               title={`${panelDef.title} (drag to reorder)`}
-              className={`h-10 w-10 p-0 transition-all duration-200 cursor-move flex items-center justify-center ${
+              className={`p-3 rounded-xl transition-all duration-200 cursor-move flex items-center justify-center border-2 bg-white dark:bg-technical-800 text-technical-600 dark:text-technical-400 border-technical-200 dark:border-technical-600 hover:bg-primary/10 hover:text-primary hover:border-primary/50 hover:scale-105 hover:shadow-lg ${
                 isDragging 
                   ? 'opacity-30 scale-90 rotate-3 z-10' 
                   : isDragTarget
                   ? 'scale-110 bg-primary/20 ring-2 ring-primary/50 shadow-lg'
-                  : 'hover:scale-105 hover:bg-primary/10'
+                  : ''
               }`}
               style={{
                 transform: isDragging ? 'rotate(5deg) scale(0.9)' : isDragTarget ? 'scale(1.1)' : ''
@@ -311,7 +309,7 @@ export function PanelControls() {
               data-testid={`panel-icon-${panelId}`}
             >
               <Icon className="h-5 w-5 flex-shrink-0" />
-            </Button>
+            </button>
           );
         })}
       </div>
@@ -319,9 +317,12 @@ export function PanelControls() {
       {/* All Panels Dropdown - Icon Only */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" title="All Panels" className="h-10 w-10 p-0 flex items-center justify-center">
+          <button 
+            title="All Panels" 
+            className="p-3 rounded-xl transition-all duration-200 flex items-center justify-center border-2 bg-white dark:bg-technical-800 text-technical-600 dark:text-technical-400 border-technical-200 dark:border-technical-600 hover:bg-primary/10 hover:text-primary hover:border-primary/50 hover:scale-105 hover:shadow-lg"
+          >
             <Layers className="h-5 w-5 flex-shrink-0" />
-          </Button>
+          </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
           <div className="px-2 py-1.5 text-sm font-semibold">All Panels</div>
