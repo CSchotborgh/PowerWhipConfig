@@ -298,7 +298,7 @@ export function PanelControls() {
               onDrop={(e) => handleDrop(e, panelId)}
               onDragEnd={handleDragEnd}
               title={`${panelDef.title} (drag to reorder)`}
-              className={`h-8 w-8 p-0 transition-all duration-200 cursor-move ${
+              className={`h-10 w-10 p-0 transition-all duration-200 cursor-move flex items-center justify-center ${
                 isDragging 
                   ? 'opacity-30 scale-90 rotate-3 z-10' 
                   : isDragTarget
@@ -310,7 +310,7 @@ export function PanelControls() {
               }}
               data-testid={`panel-icon-${panelId}`}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-5 w-5 flex-shrink-0" />
             </Button>
           );
         })}
@@ -319,8 +319,8 @@ export function PanelControls() {
       {/* All Panels Dropdown - Icon Only */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" title="All Panels" className="h-8 w-8 p-0">
-            <Layers className="h-4 w-4" />
+          <Button variant="ghost" size="sm" title="All Panels" className="h-10 w-10 p-0 flex items-center justify-center">
+            <Layers className="h-5 w-5 flex-shrink-0" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
