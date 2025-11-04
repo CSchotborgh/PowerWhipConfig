@@ -1,10 +1,10 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 import DesignCanvas from "@/components/DesignCanvas";
-
+import { NavigationPanel } from "@/components/NavigationPanel";
+import { PanelControlsFloating } from "@/components/PanelControlsFloating";
 import ConfigurationTab from "@/components/ConfigurationTab";
 import VisualDesignTab from "@/components/VisualDesignTab";
-
 import DocumentationTab from "@/components/DocumentationTab";
 import ExpandedComponentLibrary from "@/components/ExpandedComponentLibrary";
 import { DraggablePanel } from "@/components/DraggablePanel";
@@ -69,8 +69,12 @@ export default function Configurator() {
     <ConfigurationProvider>
       <DesignCanvasProvider>
         <div className="h-screen flex flex-col bg-technical-50 dark:bg-technical-900 text-technical-900 dark:text-technical-50">
-          {/* Header Navbar with Navigation */}
-          <Header activeTab={activeTab} onTabChange={setActiveTab} />
+          {/* Header Navbar - Simplified */}
+          <Header />
+          
+          {/* Floating Navigation Panels */}
+          <NavigationPanel activeTab={activeTab} onTabChange={setActiveTab} />
+          <PanelControlsFloating />
         
         {/* Main Body Container - Enhanced Mobile Layout */}
         <div className="flex flex-1 overflow-hidden bg-gradient-to-br from-technical-50 to-technical-100 dark:from-technical-900 dark:to-technical-800 relative">

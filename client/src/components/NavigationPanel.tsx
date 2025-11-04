@@ -11,9 +11,9 @@ interface NavigationPanelProps {
 
 export function NavigationPanel({ activeTab, onTabChange, defaultPosition = { x: 20, y: 100 } }: NavigationPanelProps) {
   const [tabs] = useState([
-    { id: 'documentation', label: 'Documentation', icon: FileText },
-    { id: 'visual-design', label: 'Visual Design', icon: Palette },
-    { id: 'configuration', label: 'Configuration', icon: Layers }
+    { id: 'configuration', label: 'Configuration', icon: Layers },
+    { id: 'visual', label: 'Visual Design', icon: Palette },
+    { id: 'documentation', label: 'Documentation', icon: FileText }
   ]);
 
   const [position, setPosition] = useState(() => {
