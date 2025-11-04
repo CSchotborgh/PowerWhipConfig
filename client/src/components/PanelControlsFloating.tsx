@@ -28,7 +28,7 @@ export function PanelControlsFloating({ activeTab, onTabChange, defaultPosition 
 
   return (
     <DraggablePanel
-      title="Navigation & Quick Access"
+      title="All Features"
       defaultPosition={position}
       defaultSize={{ width: 700, height: 160 }}
       minSize={{ width: 500, height: 120 }}
