@@ -33,7 +33,7 @@ export function DraggablePanel({
   enableGridSnap = true,
   enableDocking = true
 }: DraggablePanelProps) {
-  const { setActiveDockZone, activeDockZone, dockPanel, undockPanel, dockedPanels } = useDesignCanvas();
+  const { setActiveDockZone, activeDockZone, dockPanel, undockPanel, dockedPanels, setIsDraggingPanel } = useDesignCanvas();
   const [position, setPosition] = useState(defaultPosition);
   const [size, setSize] = useState(defaultSize);
   const [isDragging, setIsDragging] = useState(false);
@@ -67,6 +67,7 @@ export function DraggablePanel({
       y: e.clientY - rect.top
     });
     setIsDragging(true);
+    setIsDraggingPanel(true); // Notify context that a panel is being dragged
     
     // Show grid when holding Ctrl/Cmd key
     if (enableGridSnap && (e.ctrlKey || e.metaKey)) {
@@ -157,6 +158,7 @@ export function DraggablePanel({
     // Handle docking if panel is in a dock zone
     if (enableDocking && dockedPosition && activeDockZone) {
       const dockSize = dockedPosition === 'top' || dockedPosition === 'bottom' ? size.height : size.width;
+      console.log('Docking panel:', { id, title, position: dockedPosition, size: dockSize });
       dockPanel({
         id,
         title,
@@ -167,6 +169,7 @@ export function DraggablePanel({
     }
     
     setIsDragging(false);
+    setIsDraggingPanel(false); // Clear global dragging state
     setShowGrid(false);
     setSnapToGrid(false);
     setActiveDockZone(null);

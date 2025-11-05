@@ -9,8 +9,7 @@ import { DockZones } from "@/components/DockZones";
 
 function ConfiguratorContent() {
   const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation">("configuration");
-  const { setActiveDockZone, dockedPanels, undockPanel } = useDesignCanvas();
-  const [isDraggingPanel, setIsDraggingPanel] = useState(false);
+  const { setActiveDockZone, dockedPanels, undockPanel, isDraggingPanel } = useDesignCanvas();
 
   const handleDockZoneHover = (zone: 'top' | 'bottom' | 'left' | 'right' | null) => {
     setActiveDockZone(zone);

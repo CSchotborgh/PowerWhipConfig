@@ -38,6 +38,8 @@ interface DesignCanvasContextType {
   setDockHints: React.Dispatch<React.SetStateAction<DockHint[]>>;
   activeDockZone: 'top' | 'bottom' | 'left' | 'right' | null;
   setActiveDockZone: React.Dispatch<React.SetStateAction<'top' | 'bottom' | 'left' | 'right' | null>>;
+  isDraggingPanel: boolean;
+  setIsDraggingPanel: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const DesignCanvasContext = createContext<DesignCanvasContextType | undefined>(undefined);
@@ -60,6 +62,7 @@ export const DesignCanvasProvider: React.FC<{ children: ReactNode }> = ({ childr
     { position: 'right', active: false },
   ]);
   const [activeDockZone, setActiveDockZone] = useState<'top' | 'bottom' | 'left' | 'right' | null>(null);
+  const [isDraggingPanel, setIsDraggingPanel] = useState(false);
 
   const addComponent = (component: DroppedComponent) => {
     setDroppedComponents(prev => [...prev, component]);
@@ -103,6 +106,8 @@ export const DesignCanvasProvider: React.FC<{ children: ReactNode }> = ({ childr
     setDockHints,
     activeDockZone,
     setActiveDockZone,
+    isDraggingPanel,
+    setIsDraggingPanel,
   };
 
   return (
