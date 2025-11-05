@@ -38,9 +38,11 @@ export function DraggablePanel({
   const [isPinned, setIsPinned] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
   const [snapToGrid, setSnapToGrid] = useState(false);
+  const [dockedPosition, setDockedPosition] = useState<'top' | 'bottom' | 'left' | 'right' | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   
   const gridSize = 20; // pixels
+  const dockThreshold = 10; // pixels from edge to trigger docking
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!panelRef.current || isPinned) return;
@@ -96,9 +98,46 @@ export function DraggablePanel({
     const maxX = window.innerWidth - minVisible;
     const maxY = window.innerHeight - minVisible;
     
+    const constrainedX = Math.max(-size.width + minVisible, Math.min(newX, maxX));
+    const constrainedY = Math.max(-size.height + minVisible, Math.min(newY, maxY));
+    
+    // Auto-docking detection using switch case
+    let newDockedPosition: typeof dockedPosition = null;
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    
+    // Switch case for edge detection and auto-docking to design canvas perimeter
+    switch (true) {
+      case constrainedY <= dockThreshold:
+        // Panel edge reached top of screen
+        newDockedPosition = 'top';
+        break;
+      
+      case (constrainedY + size.height) >= (screenHeight - dockThreshold):
+        // Panel edge reached bottom of screen
+        newDockedPosition = 'bottom';
+        break;
+      
+      case constrainedX <= dockThreshold:
+        // Panel edge reached left of screen
+        newDockedPosition = 'left';
+        break;
+      
+      case (constrainedX + size.width) >= (screenWidth - dockThreshold):
+        // Panel edge reached right of screen
+        newDockedPosition = 'right';
+        break;
+      
+      default:
+        // Not docked to any edge - floating freely
+        newDockedPosition = null;
+        break;
+    }
+    
+    setDockedPosition(newDockedPosition);
     setPosition({
-      x: Math.max(-size.width + minVisible, Math.min(newX, maxX)),
-      y: Math.max(-size.height + minVisible, Math.min(newY, maxY))
+      x: constrainedX,
+      y: constrainedY
     });
   };
 
@@ -169,9 +208,34 @@ export function DraggablePanel({
         />
       )}
       
+      {/* Dock Zone Indicators - Show when dragging */}
+      {isDragging && (
+        <div className="fixed inset-0 z-40 pointer-events-none">
+          {/* Top Dock Zone */}
+          <div className={`absolute top-0 left-0 right-0 h-3 transition-all ${
+            dockedPosition === 'top' ? 'bg-primary/30 border-b-2 border-primary' : 'bg-muted/10'
+          }`} />
+          
+          {/* Bottom Dock Zone */}
+          <div className={`absolute bottom-0 left-0 right-0 h-3 transition-all ${
+            dockedPosition === 'bottom' ? 'bg-primary/30 border-t-2 border-primary' : 'bg-muted/10'
+          }`} />
+          
+          {/* Left Dock Zone */}
+          <div className={`absolute top-0 left-0 bottom-0 w-3 transition-all ${
+            dockedPosition === 'left' ? 'bg-primary/30 border-r-2 border-primary' : 'bg-muted/10'
+          }`} />
+          
+          {/* Right Dock Zone */}
+          <div className={`absolute top-0 right-0 bottom-0 w-3 transition-all ${
+            dockedPosition === 'right' ? 'bg-primary/30 border-l-2 border-primary' : 'bg-muted/10'
+          }`} />
+        </div>
+      )}
+      
       <Card
         ref={panelRef}
-        className={`fixed shadow-2xl border-2 z-50 ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''} ${className}`}
+        className={`fixed shadow-2xl border-2 ${dockedPosition ? 'z-10' : 'z-50'} ${dockedPosition ? 'border-primary/50' : ''} ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''} ${className}`}
         style={{
           left: position.x,
           top: position.y,
@@ -191,6 +255,11 @@ export function DraggablePanel({
         <div className="flex items-center gap-2">
           <GripVertical className="h-4 w-4 text-muted-foreground" />
           <h3 className="font-semibold text-sm">{title}</h3>
+          {dockedPosition && (
+            <span className="text-xs px-2 py-0.5 rounded bg-primary/20 text-primary border border-primary/30">
+              Docked: {dockedPosition.toUpperCase()}
+            </span>
+          )}
         </div>
         
         <div className="flex items-center gap-1">
