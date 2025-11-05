@@ -13,7 +13,7 @@ export function DockZones({ isDragging, onDockZoneHover }: DockZonesProps) {
   if (!isDragging) return null;
 
   return (
-    <div className="fixed inset-0 z-40 pointer-events-none">
+    <div className="fixed inset-0 z-[9998] pointer-events-none">
       {/* Top Dock Zone */}
       <div 
         className={cn(

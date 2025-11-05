@@ -41,7 +41,7 @@ function ConfiguratorContent() {
         {/* Top Docked Panel */}
         {topPanel && (
           <div 
-            className="border-b border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto"
+            className="border-b border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10"
             style={{ height: topPanel.size }}
             data-testid="docked-panel-top"
           >
@@ -64,7 +64,7 @@ function ConfiguratorContent() {
           {/* Left Docked Panel */}
           {leftPanel && (
             <div 
-              className="border-r border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto"
+              className="border-r border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10"
               style={{ width: leftPanel.size }}
               data-testid="docked-panel-left"
             >
@@ -83,7 +83,7 @@ function ConfiguratorContent() {
           )}
 
           {/* Design Canvas - Resizes based on docked panels */}
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-6 relative z-0">
             <div className="h-full w-full rounded-xl border border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 shadow-lg overflow-hidden">
               <DesignCanvas />
             </div>
@@ -92,7 +92,7 @@ function ConfiguratorContent() {
           {/* Right Docked Panel */}
           {rightPanel && (
             <div 
-              className="border-l border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto"
+              className="border-l border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10"
               style={{ width: rightPanel.size }}
               data-testid="docked-panel-right"
             >
@@ -114,7 +114,7 @@ function ConfiguratorContent() {
         {/* Bottom Docked Panel */}
         {bottomPanel && (
           <div 
-            className="border-t border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto"
+            className="border-t border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10"
             style={{ height: bottomPanel.size }}
             data-testid="docked-panel-bottom"
           >

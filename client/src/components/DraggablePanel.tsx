@@ -264,7 +264,7 @@ export function DraggablePanel({
       
       <Card
         ref={panelRef}
-        className={`fixed shadow-2xl border-2 ${dockedPosition ? 'z-10' : 'z-50'} ${dockedPosition ? 'border-primary/50' : ''} ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''} ${className}`}
+        className={`fixed shadow-2xl border-2 z-[9999] ${dockedPosition ? 'border-primary/50 ring-4 ring-primary/30' : ''} ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''} ${className}`}
         style={{
           left: position.x,
           top: position.y,
