@@ -33,7 +33,7 @@ export function DraggablePanel({
   enableGridSnap = true,
   enableDocking = true
 }: DraggablePanelProps) {
-  const { setActiveDockZone, activeDockZone, dockPanel, undockPanel } = useDesignCanvas();
+  const { setActiveDockZone, activeDockZone, dockPanel, undockPanel, dockedPanels } = useDesignCanvas();
   const [position, setPosition] = useState(defaultPosition);
   const [size, setSize] = useState(defaultSize);
   const [isDragging, setIsDragging] = useState(false);
@@ -49,6 +49,14 @@ export function DraggablePanel({
   
   const gridSize = 20; // pixels
   const dockThreshold = 10; // pixels from edge to trigger docking
+  
+  // Check if this panel is currently docked
+  const isDocked = dockedPanels.some(p => p.id === id);
+  
+  // If docked, don't render the floating panel
+  if (isDocked) {
+    return null;
+  }
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!panelRef.current || isPinned) return;
