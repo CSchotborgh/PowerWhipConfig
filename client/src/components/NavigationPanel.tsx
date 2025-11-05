@@ -27,6 +27,7 @@ export function NavigationPanel({ activeTab, onTabChange, defaultPosition = { x:
 
   return (
     <DraggablePanel
+      id="navigation-panel"
       title="Navigation"
       defaultPosition={position}
       defaultSize={{ width: 450, height: 120 }}

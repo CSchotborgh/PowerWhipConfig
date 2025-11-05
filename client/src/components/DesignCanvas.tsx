@@ -507,6 +507,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
       {/* Floating Component Library Panel */}
       {showComponentLibrary && viewMode === "design" && (
         <DraggablePanel
+          id="component-library-panel"
           title="Component Library - MasterBubbleUpLookup"
           defaultPosition={{ x: 50, y: 100 }}
           defaultSize={{ width: 400, height: 600 }}

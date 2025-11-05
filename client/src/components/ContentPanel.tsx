@@ -47,6 +47,7 @@ export function ContentPanel({ activeTab, defaultPosition = { x: 50, y: 250 } }:
 
   return (
     <DraggablePanel
+      id="content-panel"
       title={getTabTitle()}
       defaultPosition={position}
       defaultSize={{ width: 450, height: 600 }}

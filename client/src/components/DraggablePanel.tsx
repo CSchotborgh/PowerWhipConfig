@@ -2,8 +2,10 @@ import React, { useState, useRef, ReactNode } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { GripVertical, Minimize2, Maximize2, X, Pin, PinOff } from 'lucide-react';
+import { useDesignCanvas } from '@/contexts/DesignCanvasContext';
 
 interface DraggablePanelProps {
+  id: string;
   title: string;
   children: ReactNode;
   defaultPosition?: { x: number; y: number };
@@ -14,9 +16,11 @@ interface DraggablePanelProps {
   className?: string;
   scalable?: boolean;
   enableGridSnap?: boolean;
+  enableDocking?: boolean;
 }
 
 export function DraggablePanel({
+  id,
   title,
   children,
   defaultPosition = { x: 100, y: 100 },
@@ -26,8 +30,10 @@ export function DraggablePanel({
   onClose,
   className = '',
   scalable = true,
-  enableGridSnap = true
+  enableGridSnap = true,
+  enableDocking = true
 }: DraggablePanelProps) {
+  const { setActiveDockZone, activeDockZone, dockPanel, undockPanel } = useDesignCanvas();
   const [position, setPosition] = useState(defaultPosition);
   const [size, setSize] = useState(defaultSize);
   const [isDragging, setIsDragging] = useState(false);
@@ -101,40 +107,38 @@ export function DraggablePanel({
     const constrainedX = Math.max(-size.width + minVisible, Math.min(newX, maxX));
     const constrainedY = Math.max(-size.height + minVisible, Math.min(newY, maxY));
     
-    // Auto-docking detection using switch case
-    let newDockedPosition: typeof dockedPosition = null;
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-    
-    // Switch case for edge detection and auto-docking to design canvas perimeter
-    switch (true) {
-      case constrainedY <= dockThreshold:
-        // Panel edge reached top of screen
+    // Docking zone detection (for visual feedback during drag)
+    if (enableDocking) {
+      let newDockedPosition: typeof dockedPosition = null;
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      const dockZoneSize = 96; // Match DockZones component size
+      
+      // Detect if mouse is over dock zones (centered zones, not edges)
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+      
+      // Top zone: centered, top 96px
+      if (mouseY <= dockZoneSize && mouseX >= screenWidth / 4 && mouseX <= (screenWidth * 3) / 4) {
         newDockedPosition = 'top';
-        break;
-      
-      case (constrainedY + size.height) >= (screenHeight - dockThreshold):
-        // Panel edge reached bottom of screen
+      }
+      // Bottom zone: centered, bottom 96px
+      else if (mouseY >= screenHeight - dockZoneSize && mouseX >= screenWidth / 4 && mouseX <= (screenWidth * 3) / 4) {
         newDockedPosition = 'bottom';
-        break;
-      
-      case constrainedX <= dockThreshold:
-        // Panel edge reached left of screen
+      }
+      // Left zone: centered vertically, left 96px
+      else if (mouseX <= dockZoneSize && mouseY >= screenHeight / 4 && mouseY <= (screenHeight * 3) / 4) {
         newDockedPosition = 'left';
-        break;
-      
-      case (constrainedX + size.width) >= (screenWidth - dockThreshold):
-        // Panel edge reached right of screen
+      }
+      // Right zone: centered vertically, right 96px
+      else if (mouseX >= screenWidth - dockZoneSize && mouseY >= screenHeight / 4 && mouseY <= (screenHeight * 3) / 4) {
         newDockedPosition = 'right';
-        break;
+      }
       
-      default:
-        // Not docked to any edge - floating freely
-        newDockedPosition = null;
-        break;
+      setDockedPosition(newDockedPosition);
+      setActiveDockZone(newDockedPosition);
     }
     
-    setDockedPosition(newDockedPosition);
     setPosition({
       x: constrainedX,
       y: constrainedY
@@ -142,9 +146,23 @@ export function DraggablePanel({
   };
 
   const handleMouseUp = () => {
+    // Handle docking if panel is in a dock zone
+    if (enableDocking && dockedPosition && activeDockZone) {
+      const dockSize = dockedPosition === 'top' || dockedPosition === 'bottom' ? size.height : size.width;
+      dockPanel({
+        id,
+        title,
+        position: dockedPosition,
+        size: dockSize,
+        content: children
+      });
+    }
+    
     setIsDragging(false);
     setShowGrid(false);
     setSnapToGrid(false);
+    setActiveDockZone(null);
+    setDockedPosition(null);
   };
 
   // Global mouse event listeners

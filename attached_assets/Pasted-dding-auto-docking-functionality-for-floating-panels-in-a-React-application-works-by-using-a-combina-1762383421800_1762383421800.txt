@@ -1,0 +1,20 @@
+dding auto-docking functionality for floating panels in a React application works by using a combination of drag-and-drop mechanics, monitoring the panel's proximity to target areas (like screen edges or specific dock zones), and dynamically updating the layout state when a drop occurs within a threshold. 
+Core Principles
+Draggable Panels: The panels are implemented as draggable components, often using libraries like react-draggable or dedicated layout managers such as rc-dock or react-resizable-panels, which manage the panel's position on the screen in real-time during a drag operation.
+Layout Management/Dock Zones: The main application area (design canvas/WebView) is set up with predefined "drop target" areas or uses a comprehensive layout management system that knows the boundaries and potential docking positions (top, bottom, left, right, or merged into a tab group).
+State Management: The application's layout is controlled by a central state. When a panel is dragged, the state tracks its floating position; when it's dropped and docked, the state is updated to reflect its new, fixed position within the layout hierarchy. 
+Implementation Steps & Mechanisms
+1. Tracking the Drag Operation
+Event Listeners: During the onDrag event, the system continuously monitors the floating panel's current coordinates relative to the viewport and the predefined drop zones.
+Proximity Detection: The logic checks if the panel's position (specifically the mouse pointer or a designated anchor point) is within a certain pixel threshold of a screen edge or a designated dock zone. 
+2. Visual Feedback (Dock Hints)
+Helper Icons/Transparent Boxes: When the panel enters a dockable area, visual cues (often semi-transparent blue boxes or "dock helper" icons) appear to show the user where the panel will land and what the new layout will look like if dropped there.
+Hover Behavior: Hovering over a specific helper icon determines the final docking direction (e.g., hovering over the right icon of a main canvas might dock the panel to the right edge, resizing the canvas accordingly). 
+3. Handling the Drop Event
+onDrop Event: When the user releases the mouse button (onDrop event), the system evaluates the final position.
+Conditional Logic:
+If the panel is within the proximity threshold of a dock zone and a dock hint was active, the panel "snaps" to that position. The component's position is updated from position: fixed (floating) to a layout-managed position (e.g., a child of a horizontal or vertical flex container).
+If dropped in a neutral area, it remains a floating window.
+Layout Recalculation: The main layout container reacts to this state change, dynamically resizing its other panels (like the main design canvas/WebView) to accommodate the newly docked panel, ensuring a seamless and integrated user interface. 
+4. Reactivity and Integration
+The entire system is reactive. When the panel docks, the React component hierarchy and CSS styles update to reflect the panel as a fully integrated part of the design canvas/WebView layout, rather than a separate floating element. This ensures the panel "becomes one" with the canvas, functioning as a single, cohesive interface. 
