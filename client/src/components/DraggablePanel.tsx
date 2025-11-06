@@ -46,17 +46,13 @@ export function DraggablePanel({
   const [snapToGrid, setSnapToGrid] = useState(false);
   const [dockedPosition, setDockedPosition] = useState<'top' | 'bottom' | 'left' | 'right' | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const currentDockZoneRef = useRef<'top' | 'bottom' | 'left' | 'right' | null>(null);
   
   const gridSize = 20; // pixels
   const dockThreshold = 10; // pixels from edge to trigger docking
   
   // Check if this panel is currently docked
   const isDocked = dockedPanels.some(p => p.id === id);
-  
-  // If docked, don't render the floating panel
-  if (isDocked) {
-    return null;
-  }
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!panelRef.current || isPinned) return;
@@ -130,20 +126,26 @@ export function DraggablePanel({
       // Top zone: centered, top 96px
       if (mouseY <= dockZoneSize && mouseX >= screenWidth / 4 && mouseX <= (screenWidth * 3) / 4) {
         newDockedPosition = 'top';
+        console.log('Hovering over TOP dock zone');
       }
       // Bottom zone: centered, bottom 96px
       else if (mouseY >= screenHeight - dockZoneSize && mouseX >= screenWidth / 4 && mouseX <= (screenWidth * 3) / 4) {
         newDockedPosition = 'bottom';
+        console.log('Hovering over BOTTOM dock zone');
       }
       // Left zone: centered vertically, left 96px
       else if (mouseX <= dockZoneSize && mouseY >= screenHeight / 4 && mouseY <= (screenHeight * 3) / 4) {
         newDockedPosition = 'left';
+        console.log('Hovering over LEFT dock zone');
       }
       // Right zone: centered vertically, right 96px
       else if (mouseX >= screenWidth - dockZoneSize && mouseY >= screenHeight / 4 && mouseY <= (screenHeight * 3) / 4) {
         newDockedPosition = 'right';
+        console.log('Hovering over RIGHT dock zone');
       }
       
+      // Store in ref for immediate access in handleMouseUp
+      currentDockZoneRef.current = newDockedPosition;
       setDockedPosition(newDockedPosition);
       setActiveDockZone(newDockedPosition);
     }
@@ -155,19 +157,25 @@ export function DraggablePanel({
   };
 
   const handleMouseUp = () => {
-    // Handle docking if panel is in a dock zone
-    if (enableDocking && dockedPosition && activeDockZone) {
-      const dockSize = dockedPosition === 'top' || dockedPosition === 'bottom' ? size.height : size.width;
-      console.log('Docking panel:', { id, title, position: dockedPosition, size: dockSize });
+    // Handle docking if panel is in a dock zone (use ref for immediate value)
+    const targetDockZone = currentDockZoneRef.current;
+    
+    if (enableDocking && targetDockZone) {
+      const dockSize = targetDockZone === 'top' || targetDockZone === 'bottom' ? size.height : size.width;
+      console.log('Docking panel:', { id, title, position: targetDockZone, size: dockSize, enableDocking });
       dockPanel({
         id,
         title,
-        position: dockedPosition,
+        position: targetDockZone,
         size: dockSize,
         content: children
       });
+    } else {
+      console.log('Docking skipped:', { enableDocking, targetDockZone, dockedPosition, activeDockZone });
     }
     
+    // Clear states
+    currentDockZoneRef.current = null;
     setIsDragging(false);
     setIsDraggingPanel(false); // Clear global dragging state
     setShowGrid(false);
@@ -220,6 +228,11 @@ export function DraggablePanel({
       handleScale(scale + delta);
     }
   };
+
+  // If docked, don't render the floating panel (avoid early return to prevent hook violations)
+  if (isDocked) {
+    return null;
+  }
 
   return (
     <>

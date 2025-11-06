@@ -41,21 +41,21 @@ function ConfiguratorContent() {
         {/* Top Docked Panel */}
         {topPanel && (
           <div 
-            className="border-b border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10"
-            style={{ height: topPanel.size }}
+            className="border-b border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10 flex flex-col"
+            style={{ height: topPanel.size, minHeight: topPanel.size }}
             data-testid="docked-panel-top"
           >
-            <div className="p-3 flex items-center justify-between border-b border-technical-200 dark:border-technical-600">
+            <div className="p-3 flex items-center justify-between border-b border-technical-200 dark:border-technical-600 shrink-0">
               <h3 className="font-semibold text-sm">{topPanel.title}</h3>
               <button
                 onClick={() => undockPanel(topPanel.id)}
-                className="text-xs text-muted-foreground hover:text-foreground"
+                className="text-xs px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30"
                 data-testid="undock-button-top"
               >
                 Undock
               </button>
             </div>
-            <div className="p-4">{topPanel.content}</div>
+            <div className="flex-1 p-4 overflow-auto w-full">{topPanel.content}</div>
           </div>
         )}
 
@@ -64,21 +64,21 @@ function ConfiguratorContent() {
           {/* Left Docked Panel */}
           {leftPanel && (
             <div 
-              className="border-r border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10"
-              style={{ width: leftPanel.size }}
+              className="border-r border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10 flex flex-col"
+              style={{ width: leftPanel.size, minWidth: leftPanel.size }}
               data-testid="docked-panel-left"
             >
-              <div className="p-3 flex items-center justify-between border-b border-technical-200 dark:border-technical-600">
+              <div className="p-3 flex items-center justify-between border-b border-technical-200 dark:border-technical-600 shrink-0">
                 <h3 className="font-semibold text-sm">{leftPanel.title}</h3>
                 <button
                   onClick={() => undockPanel(leftPanel.id)}
-                  className="text-xs text-muted-foreground hover:text-foreground"
+                  className="text-xs px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30"
                   data-testid="undock-button-left"
                 >
                   Undock
                 </button>
               </div>
-              <div className="p-4">{leftPanel.content}</div>
+              <div className="flex-1 p-4 overflow-auto h-full">{leftPanel.content}</div>
             </div>
           )}
 
@@ -92,21 +92,21 @@ function ConfiguratorContent() {
           {/* Right Docked Panel */}
           {rightPanel && (
             <div 
-              className="border-l border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10"
-              style={{ width: rightPanel.size }}
+              className="border-l border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10 flex flex-col"
+              style={{ width: rightPanel.size, minWidth: rightPanel.size }}
               data-testid="docked-panel-right"
             >
-              <div className="p-3 flex items-center justify-between border-b border-technical-200 dark:border-technical-600">
+              <div className="p-3 flex items-center justify-between border-b border-technical-200 dark:border-technical-600 shrink-0">
                 <h3 className="font-semibold text-sm">{rightPanel.title}</h3>
                 <button
                   onClick={() => undockPanel(rightPanel.id)}
-                  className="text-xs text-muted-foreground hover:text-foreground"
+                  className="text-xs px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30"
                   data-testid="undock-button-right"
                 >
                   Undock
                 </button>
               </div>
-              <div className="p-4">{rightPanel.content}</div>
+              <div className="flex-1 p-4 overflow-auto h-full">{rightPanel.content}</div>
             </div>
           )}
         </div>
@@ -114,21 +114,21 @@ function ConfiguratorContent() {
         {/* Bottom Docked Panel */}
         {bottomPanel && (
           <div 
-            className="border-t border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10"
-            style={{ height: bottomPanel.size }}
+            className="border-t border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10 flex flex-col"
+            style={{ height: bottomPanel.size, minHeight: bottomPanel.size }}
             data-testid="docked-panel-bottom"
           >
-            <div className="p-3 flex items-center justify-between border-b border-technical-200 dark:border-technical-600">
+            <div className="p-3 flex items-center justify-between border-b border-technical-200 dark:border-technical-600 shrink-0">
               <h3 className="font-semibold text-sm">{bottomPanel.title}</h3>
               <button
                 onClick={() => undockPanel(bottomPanel.id)}
-                className="text-xs text-muted-foreground hover:text-foreground"
+                className="text-xs px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30"
                 data-testid="undock-button-bottom"
               >
                 Undock
               </button>
             </div>
-            <div className="p-4">{bottomPanel.content}</div>
+            <div className="flex-1 p-4 overflow-auto w-full">{bottomPanel.content}</div>
           </div>
         )}
       </div>
