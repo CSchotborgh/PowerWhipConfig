@@ -22,7 +22,9 @@ import {
   ShoppingCart,
   LayoutGrid
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { usePanelManager } from './PanelManager';
+import { useDesignCanvas } from '@/contexts/DesignCanvasContext';
 import { FloatingComponentLibrary } from './FloatingComponentLibrary';
 import { FloatingExcelTransformer } from './FloatingExcelTransformer';
 import ConfigurationDetailsPanel from './ConfigurationDetailsPanel';
@@ -32,6 +34,12 @@ import { ExcelFileViewerEditor } from './excel/ExcelFileViewerEditor';
 
 export function PanelControls() {
   const { panels, openPanel, closePanel } = usePanelManager();
+  const { dockedPanels } = useDesignCanvas();
+  
+  // Check if this panel is docked and get its position
+  const dockedPanel = dockedPanels.find(p => p.id === 'all-features-panel');
+  const dockedPosition = dockedPanel?.position;
+  const isVertical = dockedPosition === 'left' || dockedPosition === 'right';
   
   // Quick access panel definitions for drag-and-drop ordering
   const quickAccessPanels = [
@@ -276,16 +284,25 @@ export function PanelControls() {
   };
 
   return (
-    <div className="flex items-center gap-1">
+    <div className={cn(
+      "flex gap-1",
+      isVertical ? "flex-col items-stretch" : "flex-row items-center"
+    )}>
       {/* Panel Count Badge - more compact */}
       {panels.length > 0 && (
-        <Badge variant="secondary" className="h-6 px-2 text-xs mr-1">
+        <Badge variant="secondary" className={cn(
+          "h-6 px-2 text-xs",
+          isVertical ? "mb-1 text-center" : "mr-1"
+        )}>
           {panels.length}
         </Badge>
       )}
 
       {/* Draggable Quick Access Icon Buttons */}
-      <div className="flex items-center gap-1">
+      <div className={cn(
+        "flex gap-1",
+        isVertical ? "flex-col items-stretch" : "flex-row items-center"
+      )}>
         {iconOrder.map((panelId) => {
           const panelDef = quickAccessPanels.find(p => p.id === panelId);
           const availablePanel = availablePanels[panelDef?.index || 0];

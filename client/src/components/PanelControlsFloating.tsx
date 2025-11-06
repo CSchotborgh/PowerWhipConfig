@@ -3,6 +3,7 @@ import { FileText, Palette, Layers } from 'lucide-react';
 import { DraggablePanel } from './DraggablePanel';
 import { PanelControls } from './PanelControls';
 import { cn } from '@/lib/utils';
+import { useDesignCanvas } from '@/contexts/DesignCanvasContext';
 
 interface PanelControlsFloatingProps {
   activeTab: string;
@@ -12,16 +13,29 @@ interface PanelControlsFloatingProps {
 
 // Extract the content to a separate component so it can be rendered in docked mode
 export function PanelControlsContent({ activeTab, onTabChange }: { activeTab: string; onTabChange: (tabId: string) => void }) {
+  const { dockedPanels } = useDesignCanvas();
+  
   const [tabs] = useState([
     { id: 'configuration', label: 'Configuration', icon: Layers },
     { id: 'visual', label: 'Visual Design', icon: Palette },
     { id: 'documentation', label: 'Documentation', icon: FileText }
   ]);
 
+  // Check if this panel is docked and get its position
+  const dockedPanel = dockedPanels.find(p => p.id === 'all-features-panel');
+  const dockedPosition = dockedPanel?.position;
+  const isVertical = dockedPosition === 'left' || dockedPosition === 'right';
+
   return (
-    <div className="flex items-center gap-3 p-3">
+    <div className={cn(
+      "flex gap-3 p-3",
+      isVertical ? "flex-col items-stretch" : "flex-row items-center"
+    )}>
       {/* Navigation Tabs - Icon Only */}
-      <div className="flex items-center gap-2">
+      <div className={cn(
+        "flex gap-2",
+        isVertical ? "flex-col items-stretch" : "flex-row items-center"
+      )}>
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -40,8 +54,11 @@ export function PanelControlsContent({ activeTab, onTabChange }: { activeTab: st
               data-testid={`nav-tab-${tab.id}`}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
-              {isActive && (
+              {isActive && !isVertical && (
                 <div className="absolute -bottom-1.5 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-md" />
+              )}
+              {isActive && isVertical && (
+                <div className="absolute -right-1.5 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-white rounded-full shadow-md" />
               )}
             </button>
           );
@@ -49,10 +66,16 @@ export function PanelControlsContent({ activeTab, onTabChange }: { activeTab: st
       </div>
 
       {/* Divider */}
-      <div className="h-10 w-px bg-technical-200 dark:bg-technical-600" />
+      <div className={cn(
+        "bg-technical-200 dark:bg-technical-600",
+        isVertical ? "h-px w-full" : "h-10 w-px"
+      )} />
 
       {/* Quick Access Icons */}
-      <div className="flex items-center">
+      <div className={cn(
+        "flex",
+        isVertical ? "flex-col items-stretch" : "flex-row items-center"
+      )}>
         <PanelControls />
       </div>
     </div>
