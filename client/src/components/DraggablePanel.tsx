@@ -19,6 +19,8 @@ interface DraggablePanelProps {
   enableDocking?: boolean;
   zIndex?: number;
   onBringToFront?: () => void;
+  enableCollision?: boolean;
+  onPositionChange?: (position: { x: number; y: number }) => void;
 }
 
 export function DraggablePanel({
@@ -35,7 +37,9 @@ export function DraggablePanel({
   enableGridSnap = true,
   enableDocking = true,
   zIndex = 9999,
-  onBringToFront
+  onBringToFront,
+  enableCollision = false,
+  onPositionChange
 }: DraggablePanelProps) {
   const { setActiveDockZone, activeDockZone, dockPanel, undockPanel, dockedPanels, setIsDraggingPanel } = useDesignCanvas();
   const [position, setPosition] = useState(defaultPosition);
@@ -159,10 +163,13 @@ export function DraggablePanel({
       setActiveDockZone(newDockedPosition);
     }
     
-    setPosition({
-      x: constrainedX,
-      y: constrainedY
-    });
+    const newPosition = { x: constrainedX, y: constrainedY };
+    setPosition(newPosition);
+    
+    // Notify parent of position change for collision detection
+    if (onPositionChange) {
+      onPositionChange(newPosition);
+    }
   };
 
   const handleMouseUp = () => {
