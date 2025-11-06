@@ -316,20 +316,23 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
                   onClick={() => setViewMode("design")} 
                   variant={viewMode === "design" ? "default" : "outline"}
                   size="sm"
+                  data-testid="button-view-design"
                 >
                   Design
                 </Button>
                 <Button 
                   onClick={() => setViewMode("configurator")} 
-                  variant={viewMode === "configurator" ? "default" : "outline"}
+                  variant={(viewMode as string) === "configurator" ? "default" : "outline"}
                   size="sm"
+                  data-testid="button-view-configurator"
                 >
                   Configurator
                 </Button>
                 <Button 
                   onClick={() => setViewMode("excel")} 
-                  variant={viewMode === "excel" ? "default" : "outline"}
+                  variant={(viewMode as string) === "excel" ? "default" : "outline"}
                   size="sm"
+                  data-testid="button-view-excel"
                 >
                   Excel
                 </Button>
