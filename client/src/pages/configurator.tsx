@@ -1,11 +1,12 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 import DesignCanvas from "@/components/DesignCanvas";
-import { PanelControlsFloating } from "@/components/PanelControlsFloating";
-import { ContentPanel } from "@/components/ContentPanel";
+import { PanelControlsFloating, PanelControlsContent } from "@/components/PanelControlsFloating";
+import { ContentPanel, ContentPanelContent } from "@/components/ContentPanel";
 import { ConfigurationProvider } from "@/contexts/ConfigurationContext";
 import { DesignCanvasProvider, useDesignCanvas } from "@/contexts/DesignCanvasContext";
 import { DockZones } from "@/components/DockZones";
+import { PanelManagerProvider } from "@/components/PanelManager";
 
 function ConfiguratorContent() {
   const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation">("configuration");
@@ -15,18 +16,18 @@ function ConfiguratorContent() {
     setActiveDockZone(zone);
   };
 
-  // Helper function to render panel content based on panel ID
+  // Helper function to render panel content based on panel ID (without DraggablePanel wrapper)
   const renderPanelContent = (panelId: string) => {
     switch (panelId) {
       case 'all-features-panel':
         return (
-          <PanelControlsFloating 
+          <PanelControlsContent 
             activeTab={activeTab}
             onTabChange={(tabId) => setActiveTab(tabId as "configuration" | "visual" | "documentation")}
           />
         );
       case 'content-panel':
-        return <ContentPanel activeTab={activeTab} />;
+        return <ContentPanelContent activeTab={activeTab} />;
       default:
         return null;
     }
@@ -157,7 +158,9 @@ export default function Configurator() {
   return (
     <ConfigurationProvider>
       <DesignCanvasProvider>
-        <ConfiguratorContent />
+        <PanelManagerProvider>
+          <ConfiguratorContent />
+        </PanelManagerProvider>
       </DesignCanvasProvider>
     </ConfigurationProvider>
   );

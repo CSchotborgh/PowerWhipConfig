@@ -4,7 +4,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { PanelManagerProvider } from "@/components/PanelManager";
 import Configurator from "@/pages/configurator";
 import NotFound from "@/pages/not-found";
 import LoadingScreen from "@/components/LoadingScreen";
@@ -57,10 +56,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
-          <PanelManagerProvider>
-            <Toaster />
-            <Router />
-          </PanelManagerProvider>
+          <Toaster />
+          <Router />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

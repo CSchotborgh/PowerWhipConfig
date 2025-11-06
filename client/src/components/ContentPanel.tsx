@@ -9,16 +9,8 @@ interface ContentPanelProps {
   defaultPosition?: { x: number; y: number };
 }
 
-export function ContentPanel({ activeTab, defaultPosition = { x: 50, y: 250 } }: ContentPanelProps) {
-  const [position, setPosition] = useState(() => {
-    const saved = localStorage.getItem('contentPanelPosition');
-    return saved ? JSON.parse(saved) : defaultPosition;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('contentPanelPosition', JSON.stringify(position));
-  }, [position]);
-
+// Extract content to separate component for docked mode
+export function ContentPanelContent({ activeTab }: { activeTab: string }) {
   const renderTabContent = () => {
     switch (activeTab) {
       case "configuration":
@@ -31,6 +23,23 @@ export function ContentPanel({ activeTab, defaultPosition = { x: 50, y: 250 } }:
         return <ConfigurationTab />;
     }
   };
+
+  return (
+    <div className="h-full overflow-auto">
+      {renderTabContent()}
+    </div>
+  );
+}
+
+export function ContentPanel({ activeTab, defaultPosition = { x: 50, y: 250 } }: ContentPanelProps) {
+  const [position, setPosition] = useState(() => {
+    const saved = localStorage.getItem('contentPanelPosition');
+    return saved ? JSON.parse(saved) : defaultPosition;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('contentPanelPosition', JSON.stringify(position));
+  }, [position]);
 
   const getTabTitle = () => {
     switch (activeTab) {
@@ -56,9 +65,7 @@ export function ContentPanel({ activeTab, defaultPosition = { x: 50, y: 250 } }:
       className="bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm"
       scalable={true}
     >
-      <div className="h-full overflow-auto">
-        {renderTabContent()}
-      </div>
+      <ContentPanelContent activeTab={activeTab} />
     </DraggablePanel>
   );
 }
