@@ -67,11 +67,15 @@ function ConfiguratorContent() {
             style={{ height: topPanel.size, minHeight: topPanel.size }}
             data-testid="docked-panel-top"
           >
-            <div className="p-3 flex items-center justify-between border-b border-technical-200 dark:border-technical-600 shrink-0">
+            <div className={`p-3 flex items-center border-b border-technical-200 dark:border-technical-600 shrink-0 ${
+              topPanel.id === 'all-features-panel' 
+                ? 'gap-2' 
+                : 'justify-between'
+            }`}>
               <h3 className="font-semibold text-sm">{topPanel.title}</h3>
               <button
                 onClick={() => undockPanel(topPanel.id)}
-                className="text-xs px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30"
+                className="text-xs px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 whitespace-nowrap"
                 data-testid="undock-button-top"
               >
                 Undock
@@ -148,11 +152,15 @@ function ConfiguratorContent() {
             style={{ height: bottomPanel.size, minHeight: bottomPanel.size }}
             data-testid="docked-panel-bottom"
           >
-            <div className="p-3 flex items-center justify-between border-b border-technical-200 dark:border-technical-600 shrink-0">
+            <div className={`p-3 flex items-center border-b border-technical-200 dark:border-technical-600 shrink-0 ${
+              bottomPanel.id === 'all-features-panel' 
+                ? 'gap-2' 
+                : 'justify-between'
+            }`}>
               <h3 className="font-semibold text-sm">{bottomPanel.title}</h3>
               <button
                 onClick={() => undockPanel(bottomPanel.id)}
-                className="text-xs px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30"
+                className="text-xs px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 whitespace-nowrap"
                 data-testid="undock-button-bottom"
               >
                 Undock
