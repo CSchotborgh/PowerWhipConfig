@@ -208,7 +208,15 @@ export function DraggablePanel({
     const targetDockZone = currentDockZoneRef.current;
     
     if (enableDocking && targetDockZone) {
-      const dockSize = targetDockZone === 'top' || targetDockZone === 'bottom' ? size.height : size.width;
+      // Determine dock size based on position and panel ID
+      let dockSize: number;
+      if (targetDockZone === 'top' || targetDockZone === 'bottom') {
+        dockSize = size.height;
+      } else {
+        // For left/right docking, use narrower width for All Features panel
+        dockSize = id === 'all-features-panel' ? 80 : size.width;
+      }
+      
       console.log('Docking panel:', { id, title, position: targetDockZone, size: dockSize, enableDocking });
       dockPanel({
         id,

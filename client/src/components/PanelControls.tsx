@@ -286,13 +286,13 @@ export function PanelControls() {
   return (
     <div className={cn(
       "flex gap-1",
-      isVertical ? "flex-col items-stretch" : "flex-row items-center"
+      isVertical ? "flex-col items-center" : "flex-row items-center"
     )}>
       {/* Panel Count Badge - more compact */}
       {panels.length > 0 && (
         <Badge variant="secondary" className={cn(
-          "h-6 px-2 text-xs",
-          isVertical ? "mb-1 text-center" : "mr-1"
+          "h-6 px-2 text-xs flex-shrink-0",
+          isVertical ? "mb-1 text-center w-10" : "mr-1"
         )}>
           {panels.length}
         </Badge>
@@ -301,7 +301,7 @@ export function PanelControls() {
       {/* Draggable Quick Access Icon Buttons */}
       <div className={cn(
         "flex gap-1",
-        isVertical ? "flex-col items-stretch" : "flex-row items-center"
+        isVertical ? "flex-col items-center" : "flex-row items-center"
       )}>
         {iconOrder.map((panelId) => {
           const panelDef = quickAccessPanels.find(p => p.id === panelId);
@@ -325,13 +325,15 @@ export function PanelControls() {
               onDrop={(e) => handleDrop(e, panelId)}
               onDragEnd={handleDragEnd}
               title={`${panelDef.title} (drag to reorder)`}
-              className={`p-3 rounded-xl transition-all duration-200 cursor-move flex items-center justify-center border-2 bg-white dark:bg-technical-800 text-technical-600 dark:text-technical-400 border-technical-200 dark:border-technical-600 hover:bg-primary/10 hover:text-primary hover:border-primary/50 hover:scale-105 hover:shadow-lg ${
+              className={cn(
+                "p-3 rounded-xl transition-all duration-200 cursor-move flex items-center justify-center border-2 bg-white dark:bg-technical-800 text-technical-600 dark:text-technical-400 border-technical-200 dark:border-technical-600 hover:bg-primary/10 hover:text-primary hover:border-primary/50 hover:scale-105 hover:shadow-lg flex-shrink-0",
+                isVertical ? "w-12 h-12" : "w-auto h-auto",
                 isDragging 
                   ? 'opacity-30 scale-90 rotate-3 z-10' 
                   : isDragTarget
                   ? 'scale-110 bg-primary/20 ring-2 ring-primary/50 shadow-lg'
                   : ''
-              }`}
+              )}
               style={{
                 transform: isDragging ? 'rotate(5deg) scale(0.9)' : isDragTarget ? 'scale(1.1)' : ''
               }}
@@ -348,7 +350,10 @@ export function PanelControls() {
         <DropdownMenuTrigger asChild>
           <button 
             title="All Panels" 
-            className="p-3 rounded-xl transition-all duration-200 flex items-center justify-center border-2 bg-white dark:bg-technical-800 text-technical-600 dark:text-technical-400 border-technical-200 dark:border-technical-600 hover:bg-primary/10 hover:text-primary hover:border-primary/50 hover:scale-105 hover:shadow-lg"
+            className={cn(
+              "p-3 rounded-xl transition-all duration-200 flex items-center justify-center border-2 bg-white dark:bg-technical-800 text-technical-600 dark:text-technical-400 border-technical-200 dark:border-technical-600 hover:bg-primary/10 hover:text-primary hover:border-primary/50 hover:scale-105 hover:shadow-lg flex-shrink-0",
+              isVertical ? "w-12 h-12" : "w-auto h-auto"
+            )}
           >
             <LayoutGrid className="h-5 w-5 flex-shrink-0" />
           </button>
