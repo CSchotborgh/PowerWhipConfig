@@ -90,11 +90,15 @@ function ConfiguratorContent() {
               style={{ width: leftPanel.size, minWidth: leftPanel.size }}
               data-testid="docked-panel-left"
             >
-              <div className="p-3 flex items-center justify-between border-b border-technical-200 dark:border-technical-600 shrink-0">
-                <h3 className="font-semibold text-sm">{leftPanel.title}</h3>
+              <div className={`p-3 flex border-b border-technical-200 dark:border-technical-600 shrink-0 ${
+                leftPanel.id === 'all-features-panel' 
+                  ? 'flex-col items-center gap-2' 
+                  : 'flex-row items-center justify-between'
+              }`}>
+                <h3 className="font-semibold text-sm text-center">{leftPanel.title}</h3>
                 <button
                   onClick={() => undockPanel(leftPanel.id)}
-                  className="text-xs px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30"
+                  className="text-xs px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 whitespace-nowrap"
                   data-testid="undock-button-left"
                 >
                   Undock
@@ -118,11 +122,15 @@ function ConfiguratorContent() {
               style={{ width: rightPanel.size, minWidth: rightPanel.size }}
               data-testid="docked-panel-right"
             >
-              <div className="p-3 flex items-center justify-between border-b border-technical-200 dark:border-technical-600 shrink-0">
-                <h3 className="font-semibold text-sm">{rightPanel.title}</h3>
+              <div className={`p-3 flex border-b border-technical-200 dark:border-technical-600 shrink-0 ${
+                rightPanel.id === 'all-features-panel' 
+                  ? 'flex-col items-center gap-2' 
+                  : 'flex-row items-center justify-between'
+              }`}>
+                <h3 className="font-semibold text-sm text-center">{rightPanel.title}</h3>
                 <button
                   onClick={() => undockPanel(rightPanel.id)}
-                  className="text-xs px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30"
+                  className="text-xs px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 whitespace-nowrap"
                   data-testid="undock-button-right"
                 >
                   Undock
