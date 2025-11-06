@@ -67,11 +67,7 @@ function ConfiguratorContent() {
             style={{ height: topPanel.size, minHeight: topPanel.size }}
             data-testid="docked-panel-top"
           >
-            <div className={`p-3 flex items-center border-b border-technical-200 dark:border-technical-600 shrink-0 ${
-              topPanel.id === 'all-features-panel' 
-                ? 'gap-2' 
-                : 'justify-between'
-            }`}>
+            <div className="p-3 flex items-center gap-2 border-b border-technical-200 dark:border-technical-600 shrink-0">
               <h3 className="font-semibold text-sm">{topPanel.title}</h3>
               <button
                 onClick={() => undockPanel(topPanel.id)}
@@ -94,11 +90,7 @@ function ConfiguratorContent() {
               style={{ width: leftPanel.size, minWidth: leftPanel.size }}
               data-testid="docked-panel-left"
             >
-              <div className={`p-3 flex border-b border-technical-200 dark:border-technical-600 shrink-0 ${
-                leftPanel.id === 'all-features-panel' 
-                  ? 'flex-col items-center gap-2' 
-                  : 'flex-row items-center justify-between'
-              }`}>
+              <div className="p-3 flex flex-col items-center gap-2 border-b border-technical-200 dark:border-technical-600 shrink-0">
                 <h3 className="font-semibold text-sm text-center">{leftPanel.title}</h3>
                 <button
                   onClick={() => undockPanel(leftPanel.id)}
@@ -126,11 +118,7 @@ function ConfiguratorContent() {
               style={{ width: rightPanel.size, minWidth: rightPanel.size }}
               data-testid="docked-panel-right"
             >
-              <div className={`p-3 flex border-b border-technical-200 dark:border-technical-600 shrink-0 ${
-                rightPanel.id === 'all-features-panel' 
-                  ? 'flex-col items-center gap-2' 
-                  : 'flex-row items-center justify-between'
-              }`}>
+              <div className="p-3 flex flex-col items-center gap-2 border-b border-technical-200 dark:border-technical-600 shrink-0">
                 <h3 className="font-semibold text-sm text-center">{rightPanel.title}</h3>
                 <button
                   onClick={() => undockPanel(rightPanel.id)}
@@ -152,11 +140,7 @@ function ConfiguratorContent() {
             style={{ height: bottomPanel.size, minHeight: bottomPanel.size }}
             data-testid="docked-panel-bottom"
           >
-            <div className={`p-3 flex items-center border-b border-technical-200 dark:border-technical-600 shrink-0 ${
-              bottomPanel.id === 'all-features-panel' 
-                ? 'gap-2' 
-                : 'justify-between'
-            }`}>
+            <div className="p-3 flex items-center gap-2 border-b border-technical-200 dark:border-technical-600 shrink-0">
               <h3 className="font-semibold text-sm">{bottomPanel.title}</h3>
               <button
                 onClick={() => undockPanel(bottomPanel.id)}
