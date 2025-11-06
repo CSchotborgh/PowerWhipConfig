@@ -8,6 +8,7 @@ import { ConfigurationProvider } from "@/contexts/ConfigurationContext";
 import { DesignCanvasProvider, useDesignCanvas } from "@/contexts/DesignCanvasContext";
 import { DockZones } from "@/components/DockZones";
 import { PanelManagerProvider } from "@/components/PanelManager";
+import { FloatingPanelCoordinatorProvider } from "@/contexts/FloatingPanelCoordinator";
 
 function ConfiguratorContent() {
   const [activeTab, setActiveTab] = useState<"configuration" | "visual" | "documentation">("configuration");
@@ -161,9 +162,11 @@ export default function Configurator() {
   return (
     <ConfigurationProvider>
       <DesignCanvasProvider>
-        <PanelManagerProvider>
-          <ConfiguratorContent />
-        </PanelManagerProvider>
+        <FloatingPanelCoordinatorProvider>
+          <PanelManagerProvider>
+            <ConfiguratorContent />
+          </PanelManagerProvider>
+        </FloatingPanelCoordinatorProvider>
       </DesignCanvasProvider>
     </ConfigurationProvider>
   );

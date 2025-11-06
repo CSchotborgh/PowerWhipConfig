@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { GripVertical, Minimize2, Maximize2, X, Pin, PinOff } from 'lucide-react';
 import { useDesignCanvas } from '@/contexts/DesignCanvasContext';
+import { usePanelManager } from './PanelManager';
+import { useFloatingPanelCoordinatorOptional } from '@/contexts/FloatingPanelCoordinator';
 
 interface DraggablePanelProps {
   id: string;
@@ -42,6 +44,17 @@ export function DraggablePanel({
   onPositionChange
 }: DraggablePanelProps) {
   const { setActiveDockZone, activeDockZone, dockPanel, undockPanel, dockedPanels, setIsDraggingPanel } = useDesignCanvas();
+  
+  // Try to get panel manager context (may not be available for all panels)
+  let panelManager = null;
+  try {
+    panelManager = usePanelManager();
+  } catch (e) {
+    // Panel manager not available - will use coordinator instead
+  }
+  
+  // Get floating panel coordinator (for standalone panels)
+  const coordinator = useFloatingPanelCoordinatorOptional();
   const [position, setPosition] = useState(defaultPosition);
   const [size, setSize] = useState(defaultSize);
   const [isDragging, setIsDragging] = useState(false);
@@ -163,10 +176,33 @@ export function DraggablePanel({
       setActiveDockZone(newDockedPosition);
     }
     
-    const newPosition = { x: constrainedX, y: constrainedY };
+    let newPosition = { x: constrainedX, y: constrainedY };
+    
+    // Apply collision detection/snapping if enabled
+    if (enableCollision) {
+      if (panelManager) {
+        // Use PanelManager for managed panels
+        const adjustedPosition = panelManager.checkCollisions(id, newPosition, size);
+        if (adjustedPosition.x !== newPosition.x || adjustedPosition.y !== newPosition.y) {
+          newPosition = adjustedPosition;
+        }
+      } else if (coordinator) {
+        // Use Coordinator for standalone panels
+        const adjustedPosition = coordinator.getSnappedPosition(id, newPosition, size);
+        if (adjustedPosition.x !== newPosition.x || adjustedPosition.y !== newPosition.y) {
+          newPosition = adjustedPosition;
+        }
+      }
+    }
+    
     setPosition(newPosition);
     
-    // Notify parent of position change for collision detection
+    // Update coordinator if available
+    if (coordinator) {
+      coordinator.updatePanelPosition(id, newPosition);
+    }
+    
+    // Notify parent of position change
     if (onPositionChange) {
       onPositionChange(newPosition);
     }
@@ -198,6 +234,23 @@ export function DraggablePanel({
     setActiveDockZone(null);
     setDockedPosition(null);
   };
+
+  // Register with coordinator
+  React.useEffect(() => {
+    if (coordinator && enableCollision) {
+      coordinator.registerPanel(id, position, size);
+      return () => {
+        coordinator.unregisterPanel(id);
+      };
+    }
+  }, [coordinator, enableCollision, id]);
+
+  // Update size in coordinator when it changes
+  React.useEffect(() => {
+    if (coordinator && enableCollision) {
+      coordinator.registerPanel(id, position, size);
+    }
+  }, [size]);
 
   // Global mouse event listeners
   React.useEffect(() => {

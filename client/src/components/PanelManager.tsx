@@ -71,9 +71,9 @@ export function PanelManagerProvider({ children }: { children: ReactNode }) {
 
     let adjustedX = newPosition.x;
     let adjustedY = newPosition.y;
-    const margin = 10; // Minimum gap between panels
+    const snapThreshold = 20; // Distance in pixels to trigger snapping
 
-    // Check collision with other panels that have collision enabled
+    // Check for snapping opportunities with other panels
     panels.forEach(otherPanel => {
       if (otherPanel.id === panelId || !otherPanel.enableCollision || !otherPanel.position || !otherPanel.size) return;
 
@@ -91,30 +91,41 @@ export function PanelManagerProvider({ children }: { children: ReactNode }) {
         bottom: otherPanel.position.y + otherPanel.size.height
       };
 
-      // Check if panels overlap
-      const overlapX = panel1.right > panel2.left && panel1.left < panel2.right;
-      const overlapY = panel1.bottom > panel2.top && panel1.top < panel2.bottom;
+      // Snap to left edge (panel1 right edge near panel2 left edge)
+      if (Math.abs(panel1.right - panel2.left) < snapThreshold) {
+        adjustedX = panel2.left - panelSize.width;
+      }
+      // Snap to right edge (panel1 left edge near panel2 right edge)
+      else if (Math.abs(panel1.left - panel2.right) < snapThreshold) {
+        adjustedX = panel2.right;
+      }
 
-      if (overlapX && overlapY) {
-        // Calculate overlap amounts in each direction
-        const overlapLeft = panel1.right - panel2.left;
-        const overlapRight = panel2.right - panel1.left;
-        const overlapTop = panel1.bottom - panel2.top;
-        const overlapBottom = panel2.bottom - panel1.top;
+      // Snap to top edge (panel1 bottom edge near panel2 top edge)
+      if (Math.abs(panel1.bottom - panel2.top) < snapThreshold) {
+        adjustedY = panel2.top - panelSize.height;
+      }
+      // Snap to bottom edge (panel1 top edge near panel2 bottom edge)
+      else if (Math.abs(panel1.top - panel2.bottom) < snapThreshold) {
+        adjustedY = panel2.bottom;
+      }
 
-        // Find smallest overlap to determine push direction
-        const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+      // Align edges when panels are side-by-side or stacked
+      // Align top edges
+      if (Math.abs(panel1.top - panel2.top) < snapThreshold) {
+        adjustedY = panel2.top;
+      }
+      // Align bottom edges
+      else if (Math.abs(panel1.bottom - panel2.bottom) < snapThreshold) {
+        adjustedY = panel2.bottom - panelSize.height;
+      }
 
-        // Push panel in direction of smallest overlap
-        if (minOverlap === overlapLeft) {
-          adjustedX = panel2.left - panelSize.width - margin;
-        } else if (minOverlap === overlapRight) {
-          adjustedX = panel2.right + margin;
-        } else if (minOverlap === overlapTop) {
-          adjustedY = panel2.top - panelSize.height - margin;
-        } else {
-          adjustedY = panel2.bottom + margin;
-        }
+      // Align left edges
+      if (Math.abs(panel1.left - panel2.left) < snapThreshold) {
+        adjustedX = panel2.left;
+      }
+      // Align right edges
+      else if (Math.abs(panel1.right - panel2.right) < snapThreshold) {
+        adjustedX = panel2.right - panelSize.width;
       }
     });
 
