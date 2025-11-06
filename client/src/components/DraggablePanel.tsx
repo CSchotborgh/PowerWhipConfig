@@ -197,11 +197,6 @@ export function DraggablePanel({
     
     setPosition(newPosition);
     
-    // Update coordinator if available
-    if (coordinator) {
-      coordinator.updatePanelPosition(id, newPosition);
-    }
-    
     // Notify parent of position change
     if (onPositionChange) {
       onPositionChange(newPosition);
@@ -234,23 +229,6 @@ export function DraggablePanel({
     setActiveDockZone(null);
     setDockedPosition(null);
   };
-
-  // Register with coordinator
-  React.useEffect(() => {
-    if (coordinator && enableCollision) {
-      coordinator.registerPanel(id, position, size);
-      return () => {
-        coordinator.unregisterPanel(id);
-      };
-    }
-  }, [coordinator, enableCollision, id]);
-
-  // Update size in coordinator when it changes
-  React.useEffect(() => {
-    if (coordinator && enableCollision) {
-      coordinator.registerPanel(id, position, size);
-    }
-  }, [size]);
 
   // Global mouse event listeners
   React.useEffect(() => {

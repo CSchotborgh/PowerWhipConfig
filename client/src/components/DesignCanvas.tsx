@@ -517,7 +517,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
           minSize={{ width: 300, height: 400 }}
           maxSize={{ width: 800, height: 900 }}
           onClose={() => setShowComponentLibrary(false)}
-          enableCollision={true}
+          enableCollision={false}
           zIndex={10000}
         >
           <ExpandedComponentLibrary />

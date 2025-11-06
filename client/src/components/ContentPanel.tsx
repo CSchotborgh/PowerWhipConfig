@@ -64,7 +64,7 @@ export function ContentPanel({ activeTab, defaultPosition = { x: 50, y: 250 } }:
       maxSize={{ width: 800, height: 900 }}
       className="bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm"
       scalable={true}
-      enableCollision={true}
+      enableCollision={false}
       zIndex={10000}
     >
       <ContentPanelContent activeTab={activeTab} />

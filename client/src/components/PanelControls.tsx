@@ -31,16 +31,7 @@ import { FloatingOrderEntryPanel } from './FloatingOrderEntryPanel';
 import { ExcelFileViewerEditor } from './excel/ExcelFileViewerEditor';
 
 export function PanelControls() {
-  // Try to get panel manager - may not be available in all contexts
-  let panelManager = null;
-  try {
-    panelManager = usePanelManager();
-  } catch (e) {
-    // Panel manager not available
-    return null; // Don't render panel controls if no manager
-  }
-  
-  const { panels, openPanel, closePanel } = panelManager;
+  const { panels, openPanel, closePanel } = usePanelManager();
   
   // Quick access panel definitions for drag-and-drop ordering
   const quickAccessPanels = [
