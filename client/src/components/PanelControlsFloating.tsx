@@ -28,13 +28,13 @@ export function PanelControlsContent({ activeTab, onTabChange }: { activeTab: st
 
   return (
     <div className={cn(
-      "flex gap-3 p-3",
-      isVertical ? "flex-col items-center w-full" : "flex-row items-center"
+      "flex",
+      isVertical ? "flex-col items-center w-full py-3 px-2 gap-2" : "flex-row items-center p-3 gap-3"
     )}>
       {/* Navigation Tabs - Icon Only */}
       <div className={cn(
-        "flex gap-2",
-        isVertical ? "flex-col items-center" : "flex-row items-center"
+        "flex",
+        isVertical ? "flex-col items-center gap-2" : "flex-row items-center gap-2"
       )}>
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -45,8 +45,8 @@ export function PanelControlsContent({ activeTab, onTabChange }: { activeTab: st
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "p-3 rounded-xl transition-all duration-200 relative group border-2 flex items-center justify-center flex-shrink-0",
-                isVertical ? "w-12 h-12" : "w-auto h-auto",
+                "rounded-xl transition-all duration-200 relative group border-2 flex items-center justify-center flex-shrink-0",
+                isVertical ? "w-12 h-12 p-2" : "p-3 w-auto h-auto",
                 isActive
                   ? "bg-primary text-white shadow-xl border-primary"
                   : "bg-white dark:bg-technical-800 text-technical-600 dark:text-technical-400 border-technical-200 dark:border-technical-600 hover:bg-primary/10 hover:text-primary hover:border-primary/50 hover:scale-105 hover:shadow-lg"
@@ -69,7 +69,7 @@ export function PanelControlsContent({ activeTab, onTabChange }: { activeTab: st
       {/* Divider */}
       <div className={cn(
         "bg-technical-200 dark:bg-technical-600",
-        isVertical ? "h-px w-10" : "h-10 w-px"
+        isVertical ? "h-px w-10 my-1" : "h-10 w-px"
       )} />
 
       {/* Quick Access Icons */}

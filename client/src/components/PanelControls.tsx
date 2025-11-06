@@ -285,8 +285,8 @@ export function PanelControls() {
 
   return (
     <div className={cn(
-      "flex gap-1",
-      isVertical ? "flex-col items-center" : "flex-row items-center"
+      "flex",
+      isVertical ? "flex-col items-center gap-2" : "flex-row items-center gap-1"
     )}>
       {/* Panel Count Badge - more compact */}
       {panels.length > 0 && (
@@ -300,8 +300,8 @@ export function PanelControls() {
 
       {/* Draggable Quick Access Icon Buttons */}
       <div className={cn(
-        "flex gap-1",
-        isVertical ? "flex-col items-center" : "flex-row items-center"
+        "flex",
+        isVertical ? "flex-col items-center gap-2" : "flex-row items-center gap-1"
       )}>
         {iconOrder.map((panelId) => {
           const panelDef = quickAccessPanels.find(p => p.id === panelId);
@@ -326,8 +326,8 @@ export function PanelControls() {
               onDragEnd={handleDragEnd}
               title={`${panelDef.title} (drag to reorder)`}
               className={cn(
-                "p-3 rounded-xl transition-all duration-200 cursor-move flex items-center justify-center border-2 bg-white dark:bg-technical-800 text-technical-600 dark:text-technical-400 border-technical-200 dark:border-technical-600 hover:bg-primary/10 hover:text-primary hover:border-primary/50 hover:scale-105 hover:shadow-lg flex-shrink-0",
-                isVertical ? "w-12 h-12" : "w-auto h-auto",
+                "rounded-xl transition-all duration-200 cursor-move flex items-center justify-center border-2 bg-white dark:bg-technical-800 text-technical-600 dark:text-technical-400 border-technical-200 dark:border-technical-600 hover:bg-primary/10 hover:text-primary hover:border-primary/50 hover:scale-105 hover:shadow-lg flex-shrink-0",
+                isVertical ? "w-12 h-12 p-2" : "p-3 w-auto h-auto",
                 isDragging 
                   ? 'opacity-30 scale-90 rotate-3 z-10' 
                   : isDragTarget
@@ -351,8 +351,8 @@ export function PanelControls() {
           <button 
             title="All Panels" 
             className={cn(
-              "p-3 rounded-xl transition-all duration-200 flex items-center justify-center border-2 bg-white dark:bg-technical-800 text-technical-600 dark:text-technical-400 border-technical-200 dark:border-technical-600 hover:bg-primary/10 hover:text-primary hover:border-primary/50 hover:scale-105 hover:shadow-lg flex-shrink-0",
-              isVertical ? "w-12 h-12" : "w-auto h-auto"
+              "rounded-xl transition-all duration-200 flex items-center justify-center border-2 bg-white dark:bg-technical-800 text-technical-600 dark:text-technical-400 border-technical-200 dark:border-technical-600 hover:bg-primary/10 hover:text-primary hover:border-primary/50 hover:scale-105 hover:shadow-lg flex-shrink-0",
+              isVertical ? "w-12 h-12 p-2 mt-1" : "p-3 w-auto h-auto"
             )}
           >
             <LayoutGrid className="h-5 w-5 flex-shrink-0" />
