@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import DesignCanvas from "@/components/DesignCanvas";
 import { PanelControlsFloating, PanelControlsContent } from "@/components/PanelControlsFloating";
 import { ContentPanel, ContentPanelContent } from "@/components/ContentPanel";
+import { ExpandedComponentLibrary } from "@/components/ExpandedComponentLibrary";
 import { ConfigurationProvider } from "@/contexts/ConfigurationContext";
 import { DesignCanvasProvider, useDesignCanvas } from "@/contexts/DesignCanvasContext";
 import { DockZones } from "@/components/DockZones";
@@ -28,6 +29,8 @@ function ConfiguratorContent() {
         );
       case 'content-panel':
         return <ContentPanelContent activeTab={activeTab} />;
+      case 'component-library-panel':
+        return <ExpandedComponentLibrary />;
       default:
         return null;
     }

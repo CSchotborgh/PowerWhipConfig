@@ -17,6 +17,8 @@ interface DraggablePanelProps {
   scalable?: boolean;
   enableGridSnap?: boolean;
   enableDocking?: boolean;
+  zIndex?: number;
+  onBringToFront?: () => void;
 }
 
 export function DraggablePanel({
@@ -31,7 +33,9 @@ export function DraggablePanel({
   className = '',
   scalable = true,
   enableGridSnap = true,
-  enableDocking = true
+  enableDocking = true,
+  zIndex = 9999,
+  onBringToFront
 }: DraggablePanelProps) {
   const { setActiveDockZone, activeDockZone, dockPanel, undockPanel, dockedPanels, setIsDraggingPanel } = useDesignCanvas();
   const [position, setPosition] = useState(defaultPosition);
@@ -56,6 +60,11 @@ export function DraggablePanel({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!panelRef.current || isPinned) return;
+    
+    // Bring panel to front when clicked
+    if (onBringToFront) {
+      onBringToFront();
+    }
     
     const rect = panelRef.current.getBoundingClientRect();
     setDragOffset({
@@ -276,7 +285,7 @@ export function DraggablePanel({
       
       <Card
         ref={panelRef}
-        className={`fixed shadow-2xl border-2 z-[9999] ${dockedPosition ? 'border-primary/50 ring-4 ring-primary/30' : ''} ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''} ${className}`}
+        className={`fixed shadow-2xl border-2 ${dockedPosition ? 'border-primary/50 ring-4 ring-primary/30' : ''} ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''} ${className}`}
         style={{
           left: position.x,
           top: position.y,
@@ -285,9 +294,16 @@ export function DraggablePanel({
           minWidth: minSize.width,
           minHeight: isMinimized ? 'auto' : minSize.height,
           transform: scalable ? `scale(${scale})` : 'none',
-          transformOrigin: 'top left'
+          transformOrigin: 'top left',
+          zIndex: zIndex
         }}
         onWheel={scalable ? handleWheel : undefined}
+        onMouseDown={() => {
+          // Bring to front on any click/interaction
+          if (onBringToFront) {
+            onBringToFront();
+          }
+        }}
       >
       <CardHeader 
         className={`flex flex-row items-center justify-between p-3 bg-muted/50 ${isPinned ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}`}

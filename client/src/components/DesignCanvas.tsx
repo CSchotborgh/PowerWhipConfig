@@ -509,10 +509,15 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
         <DraggablePanel
           id="component-library-panel"
           title="Component Library - MasterBubbleUpLookup"
-          defaultPosition={{ x: 50, y: 100 }}
-          defaultSize={{ width: 400, height: 600 }}
+          defaultPosition={{ 
+            x: Math.max(0, (window.innerWidth - 450) / 2),
+            y: Math.max(0, (window.innerHeight - 600) / 2)
+          }}
+          defaultSize={{ width: 450, height: 600 }}
+          minSize={{ width: 300, height: 400 }}
+          maxSize={{ width: 800, height: 900 }}
           onClose={() => setShowComponentLibrary(false)}
-          className="z-50"
+          zIndex={10003}
         >
           <ExpandedComponentLibrary />
         </DraggablePanel>

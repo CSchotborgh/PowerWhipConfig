@@ -10,6 +10,7 @@ interface Panel {
   minSize?: { width: number; height: number };
   maxSize?: { width: number; height: number };
   scalable?: boolean;
+  zIndex?: number;
 }
 
 interface PanelManagerContextType {
@@ -17,22 +18,28 @@ interface PanelManagerContextType {
   openPanel: (panel: Partial<Panel> & { title: string; component: ReactNode }) => string;
   closePanel: (id: string) => void;
   updatePanel: (id: string, updates: Partial<Panel>) => void;
+  bringToFront: (id: string) => void;
 }
 
 const PanelManagerContext = createContext<PanelManagerContextType | null>(null);
 
 export function PanelManagerProvider({ children }: { children: ReactNode }) {
   const [panels, setPanels] = useState<Panel[]>([]);
+  const [maxZIndex, setMaxZIndex] = useState(9999);
 
   const openPanel = (panel: Partial<Panel> & { title: string; component: ReactNode }): string => {
     const id = panel.id || Math.random().toString(36).substr(2, 9);
+    const newZIndex = maxZIndex + 1;
+    setMaxZIndex(newZIndex);
+    
     const newPanel: Panel = {
       ...panel,
       id,
       position: panel.position || { 
         x: 100 + panels.length * 30, 
         y: 100 + panels.length * 30 
-      }
+      },
+      zIndex: newZIndex
     };
     setPanels(prev => [...prev, newPanel]);
     return id;
@@ -48,8 +55,16 @@ export function PanelManagerProvider({ children }: { children: ReactNode }) {
     ));
   };
 
+  const bringToFront = (id: string) => {
+    const newZIndex = maxZIndex + 1;
+    setMaxZIndex(newZIndex);
+    setPanels(prev => prev.map(panel =>
+      panel.id === id ? { ...panel, zIndex: newZIndex } : panel
+    ));
+  };
+
   return (
-    <PanelManagerContext.Provider value={{ panels, openPanel, closePanel, updatePanel }}>
+    <PanelManagerContext.Provider value={{ panels, openPanel, closePanel, updatePanel, bringToFront }}>
       {children}
       
       {/* Render all open panels */}
@@ -63,7 +78,9 @@ export function PanelManagerProvider({ children }: { children: ReactNode }) {
           minSize={panel.minSize}
           maxSize={panel.maxSize}
           scalable={panel.scalable !== false}
+          zIndex={panel.zIndex}
           onClose={() => closePanel(panel.id)}
+          onBringToFront={() => bringToFront(panel.id)}
         >
           {panel.component}
         </DraggablePanel>

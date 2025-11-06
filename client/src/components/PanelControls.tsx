@@ -102,13 +102,23 @@ export function PanelControls() {
     setDragOverItem(null);
   };
 
+  // Helper function to calculate centered position
+  const getCenterPosition = (panelWidth: number, panelHeight: number) => {
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1080;
+    return {
+      x: Math.max(0, (viewportWidth - panelWidth) / 2),
+      y: Math.max(0, (viewportHeight - panelHeight) / 2)
+    };
+  };
+
   const availablePanels = [
     {
       id: 'component-library',
       title: 'Component Library',
       icon: <Package className="h-4 w-4" />,
       component: <FloatingComponentLibrary />,
-      position: { x: 50, y: 100 },
+      position: getCenterPosition(450, 600),
       size: { width: 450, height: 600 },
       minSize: { width: 300, height: 400 },
       maxSize: { width: 800, height: 900 },
@@ -119,7 +129,7 @@ export function PanelControls() {
       title: 'Configuration Details',
       icon: <Settings className="h-4 w-4" />,
       component: <ConfigurationDetailsPanel />,
-      position: { x: 500, y: 100 },
+      position: getCenterPosition(500, 650),
       size: { width: 500, height: 650 },
       minSize: { width: 350, height: 450 },
       maxSize: { width: 900, height: 1000 },
@@ -130,7 +140,7 @@ export function PanelControls() {
       title: 'Excel Transformer',
       icon: <FileSpreadsheet className="h-4 w-4" />,
       component: <FloatingExcelTransformer />,
-      position: { x: 550, y: 150 },
+      position: getCenterPosition(400, 550),
       size: { width: 400, height: 550 },
       minSize: { width: 350, height: 450 },
       maxSize: { width: 600, height: 800 },
@@ -141,7 +151,7 @@ export function PanelControls() {
       title: 'Specifications & Analysis',
       icon: <Zap className="h-4 w-4" />,
       component: <SpecificationsAnalysisPanel />,
-      position: { x: 700, y: 200 },
+      position: getCenterPosition(480, 650),
       size: { width: 480, height: 650 },
       minSize: { width: 350, height: 450 },
       maxSize: { width: 700, height: 900 },
@@ -176,7 +186,7 @@ export function PanelControls() {
           </div>
         </div>
       ),
-      position: { x: 950, y: 100 },
+      position: getCenterPosition(380, 450),
       size: { width: 380, height: 450 },
       minSize: { width: 280, height: 350 },
       maxSize: { width: 600, height: 700 },
@@ -187,7 +197,7 @@ export function PanelControls() {
       title: 'Excel File Viewer & Editor',
       icon: <Database className="h-4 w-4" />,
       component: <ExcelFileViewerEditor />,
-      position: { x: 600, y: 50 },
+      position: getCenterPosition(900, 700),
       size: { width: 900, height: 700 },
       minSize: { width: 600, height: 500 },
       maxSize: { width: 1200, height: 900 },
@@ -198,7 +208,7 @@ export function PanelControls() {
       title: 'High-Performance Order Entry',
       icon: <ShoppingCart className="h-4 w-4" />,
       component: <FloatingOrderEntryPanel />,
-      position: { x: 800, y: 150 },
+      position: getCenterPosition(600, 700),
       size: { width: 600, height: 700 },
       minSize: { width: 400, height: 500 },
       maxSize: { width: 1000, height: 900 },
@@ -233,7 +243,7 @@ export function PanelControls() {
           </div>
         </div>
       ),
-      position: { x: 750, y: 300 },
+      position: getCenterPosition(350, 400),
       size: { width: 350, height: 400 },
       minSize: { width: 250, height: 300 },
       maxSize: { width: 500, height: 600 },
