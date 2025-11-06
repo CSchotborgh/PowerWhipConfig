@@ -56,6 +56,7 @@ export function PanelManagerProvider({ children }: { children: ReactNode }) {
       {panels.map(panel => (
         <DraggablePanel
           key={panel.id}
+          id={panel.id}
           title={panel.title}
           defaultPosition={panel.position}
           defaultSize={panel.size}
