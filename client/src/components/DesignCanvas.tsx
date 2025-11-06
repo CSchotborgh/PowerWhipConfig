@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Grid, Layers, Settings, RotateCcw, Save, Undo, ZoomIn, ZoomOut } from "lucide-react";
@@ -506,23 +506,51 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
 
       {/* Floating Component Library Panel */}
       {showComponentLibrary && viewMode === "design" && (
-        <DraggablePanel
-          id="component-library-panel"
-          title="Component Library - MasterBubbleUpLookup"
-          defaultPosition={{ 
-            x: Math.max(0, (window.innerWidth - 450) / 2),
-            y: Math.max(0, (window.innerHeight - 600) / 2)
-          }}
-          defaultSize={{ width: 450, height: 600 }}
-          minSize={{ width: 300, height: 400 }}
-          maxSize={{ width: 800, height: 900 }}
-          onClose={() => setShowComponentLibrary(false)}
-          enableCollision={false}
-          zIndex={10000}
-        >
-          <ExpandedComponentLibrary />
-        </DraggablePanel>
+        <ComponentLibraryPanel onClose={() => setShowComponentLibrary(false)} />
       )}
     </div>
+  );
+}
+
+// Separate component for Component Library Panel to handle positioning
+function ComponentLibraryPanel({ onClose }: { onClose: () => void }) {
+  const { lastUndockedPanelId } = useDesignCanvas();
+  const [position, setPosition] = useState(() => {
+    const saved = localStorage.getItem('componentLibraryPanelPosition');
+    return saved ? JSON.parse(saved) : {
+      x: Math.max(0, (window.innerWidth - 450) / 2),
+      y: Math.max(0, (window.innerHeight - 600) / 2)
+    };
+  });
+
+  // Reset to center when undocked
+  useEffect(() => {
+    if (lastUndockedPanelId === 'component-library-panel') {
+      const centerX = window.innerWidth / 2 - 225; // Half of default width (450px)
+      const centerY = window.innerHeight / 2 - 300; // Half of default height (600px)
+      const centerPosition = { x: centerX, y: centerY };
+      setPosition(centerPosition);
+      localStorage.setItem('componentLibraryPanelPosition', JSON.stringify(centerPosition));
+    }
+  }, [lastUndockedPanelId]);
+
+  useEffect(() => {
+    localStorage.setItem('componentLibraryPanelPosition', JSON.stringify(position));
+  }, [position]);
+
+  return (
+    <DraggablePanel
+      id="component-library-panel"
+      title="Component Library - MasterBubbleUpLookup"
+      defaultPosition={position}
+      defaultSize={{ width: 450, height: 600 }}
+      minSize={{ width: 300, height: 400 }}
+      maxSize={{ width: 800, height: 900 }}
+      onClose={onClose}
+      enableCollision={false}
+      zIndex={10000}
+    >
+      <ExpandedComponentLibrary />
+    </DraggablePanel>
   );
 }

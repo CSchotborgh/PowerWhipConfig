@@ -84,11 +84,22 @@ export function PanelControlsContent({ activeTab, onTabChange }: { activeTab: st
 }
 
 export function PanelControlsFloating({ activeTab, onTabChange, defaultPosition = { x: 20, y: 100 } }: PanelControlsFloatingProps) {
-  const { dockedPanels } = useDesignCanvas();
+  const { dockedPanels, lastUndockedPanelId } = useDesignCanvas();
   const [position, setPosition] = useState(() => {
     const saved = localStorage.getItem('panelControlsFloatingPosition');
     return saved ? JSON.parse(saved) : defaultPosition;
   });
+
+  // Reset to center when undocked
+  useEffect(() => {
+    if (lastUndockedPanelId === 'all-features-panel') {
+      const centerX = window.innerWidth / 2 - 350; // Half of default width
+      const centerY = window.innerHeight / 2 - 80; // Half of default height
+      const centerPosition = { x: centerX, y: centerY };
+      setPosition(centerPosition);
+      localStorage.setItem('panelControlsFloatingPosition', JSON.stringify(centerPosition));
+    }
+  }, [lastUndockedPanelId]);
 
   useEffect(() => {
     localStorage.setItem('panelControlsFloatingPosition', JSON.stringify(position));

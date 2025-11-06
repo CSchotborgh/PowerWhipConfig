@@ -3,6 +3,7 @@ import { DraggablePanel } from './DraggablePanel';
 import ConfigurationTab from './ConfigurationTab';
 import VisualDesignTab from './VisualDesignTab';
 import DocumentationTab from './DocumentationTab';
+import { useDesignCanvas } from '@/contexts/DesignCanvasContext';
 
 interface ContentPanelProps {
   activeTab: string;
@@ -32,10 +33,22 @@ export function ContentPanelContent({ activeTab }: { activeTab: string }) {
 }
 
 export function ContentPanel({ activeTab, defaultPosition = { x: 50, y: 250 } }: ContentPanelProps) {
+  const { lastUndockedPanelId } = useDesignCanvas();
   const [position, setPosition] = useState(() => {
     const saved = localStorage.getItem('contentPanelPosition');
     return saved ? JSON.parse(saved) : defaultPosition;
   });
+
+  // Reset to center when undocked
+  useEffect(() => {
+    if (lastUndockedPanelId === 'content-panel') {
+      const centerX = window.innerWidth / 2 - 225; // Half of default width (450px)
+      const centerY = window.innerHeight / 2 - 300; // Half of default height (600px)
+      const centerPosition = { x: centerX, y: centerY };
+      setPosition(centerPosition);
+      localStorage.setItem('contentPanelPosition', JSON.stringify(centerPosition));
+    }
+  }, [lastUndockedPanelId]);
 
   useEffect(() => {
     localStorage.setItem('contentPanelPosition', JSON.stringify(position));

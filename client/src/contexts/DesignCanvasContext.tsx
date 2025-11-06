@@ -39,6 +39,8 @@ interface DesignCanvasContextType {
   setActiveDockZone: React.Dispatch<React.SetStateAction<'top' | 'bottom' | 'left' | 'right' | null>>;
   isDraggingPanel: boolean;
   setIsDraggingPanel: React.Dispatch<React.SetStateAction<boolean>>;
+  lastUndockedPanelId: string | null;
+  setLastUndockedPanelId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const DesignCanvasContext = createContext<DesignCanvasContextType | undefined>(undefined);
@@ -62,6 +64,7 @@ export const DesignCanvasProvider: React.FC<{ children: ReactNode }> = ({ childr
   ]);
   const [activeDockZone, setActiveDockZone] = useState<'top' | 'bottom' | 'left' | 'right' | null>(null);
   const [isDraggingPanel, setIsDraggingPanel] = useState(false);
+  const [lastUndockedPanelId, setLastUndockedPanelId] = useState<string | null>(null);
 
   const addComponent = (component: DroppedComponent) => {
     setDroppedComponents(prev => [...prev, component]);
@@ -89,6 +92,9 @@ export const DesignCanvasProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   const undockPanel = (panelId: string) => {
     setDockedPanels(prev => prev.filter(p => p.id !== panelId));
+    setLastUndockedPanelId(panelId);
+    // Reset after a short delay to allow panels to react
+    setTimeout(() => setLastUndockedPanelId(null), 100);
   };
 
   const value: DesignCanvasContextType = {
@@ -107,6 +113,8 @@ export const DesignCanvasProvider: React.FC<{ children: ReactNode }> = ({ childr
     setActiveDockZone,
     isDraggingPanel,
     setIsDraggingPanel,
+    lastUndockedPanelId,
+    setLastUndockedPanelId,
   };
 
   return (
