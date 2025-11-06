@@ -15,6 +15,23 @@ function ConfiguratorContent() {
     setActiveDockZone(zone);
   };
 
+  // Helper function to render panel content based on panel ID
+  const renderPanelContent = (panelId: string) => {
+    switch (panelId) {
+      case 'all-features-panel':
+        return (
+          <PanelControlsFloating 
+            activeTab={activeTab}
+            onTabChange={(tabId) => setActiveTab(tabId as "configuration" | "visual" | "documentation")}
+          />
+        );
+      case 'content-panel':
+        return <ContentPanel activeTab={activeTab} />;
+      default:
+        return null;
+    }
+  };
+
   // Calculate docked panel sizes
   const topPanel = dockedPanels.find(p => p.position === 'top');
   const bottomPanel = dockedPanels.find(p => p.position === 'bottom');
@@ -55,7 +72,7 @@ function ConfiguratorContent() {
                 Undock
               </button>
             </div>
-            <div className="flex-1 p-4 overflow-auto w-full">{topPanel.content}</div>
+            <div className="flex-1 p-4 overflow-auto w-full">{renderPanelContent(topPanel.id)}</div>
           </div>
         )}
 
@@ -78,7 +95,7 @@ function ConfiguratorContent() {
                   Undock
                 </button>
               </div>
-              <div className="flex-1 p-4 overflow-auto h-full">{leftPanel.content}</div>
+              <div className="flex-1 p-4 overflow-auto h-full">{renderPanelContent(leftPanel.id)}</div>
             </div>
           )}
 
@@ -106,7 +123,7 @@ function ConfiguratorContent() {
                   Undock
                 </button>
               </div>
-              <div className="flex-1 p-4 overflow-auto h-full">{rightPanel.content}</div>
+              <div className="flex-1 p-4 overflow-auto h-full">{renderPanelContent(rightPanel.id)}</div>
             </div>
           )}
         </div>
@@ -128,7 +145,7 @@ function ConfiguratorContent() {
                 Undock
               </button>
             </div>
-            <div className="flex-1 p-4 overflow-auto w-full">{bottomPanel.content}</div>
+            <div className="flex-1 p-4 overflow-auto w-full">{renderPanelContent(bottomPanel.id)}</div>
           </div>
         )}
       </div>

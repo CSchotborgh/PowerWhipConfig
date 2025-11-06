@@ -15,7 +15,6 @@ interface DockedPanel {
   title: string;
   position: 'top' | 'bottom' | 'left' | 'right';
   size: number; // width for left/right, height for top/bottom
-  content: ReactNode;
 }
 
 interface DockHint {

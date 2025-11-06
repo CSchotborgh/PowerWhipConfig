@@ -167,8 +167,7 @@ export function DraggablePanel({
         id,
         title,
         position: targetDockZone,
-        size: dockSize,
-        content: children
+        size: dockSize
       });
     } else {
       console.log('Docking skipped:', { enableDocking, targetDockZone, dockedPosition, activeDockZone });
