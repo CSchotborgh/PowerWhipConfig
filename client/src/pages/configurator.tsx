@@ -62,7 +62,7 @@ function ConfiguratorContent() {
         {/* Top Docked Panel */}
         {topPanel && (
           <div 
-            className="border-b border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10 flex flex-col"
+            className="border-b border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-[5] flex flex-col"
             style={{ height: topPanel.size, minHeight: topPanel.size }}
             data-testid="docked-panel-top"
           >
@@ -135,7 +135,7 @@ function ConfiguratorContent() {
         {/* Bottom Docked Panel */}
         {bottomPanel && (
           <div 
-            className="border-t border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10 flex flex-col"
+            className="border-t border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-[5] flex flex-col"
             style={{ height: bottomPanel.size, minHeight: bottomPanel.size }}
             data-testid="docked-panel-bottom"
           >
