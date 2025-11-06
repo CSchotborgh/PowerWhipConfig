@@ -517,7 +517,8 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
           minSize={{ width: 300, height: 400 }}
           maxSize={{ width: 800, height: 900 }}
           onClose={() => setShowComponentLibrary(false)}
-          zIndex={10003}
+          enableCollision={true}
+          zIndex={10000}
         >
           <ExpandedComponentLibrary />
         </DraggablePanel>

@@ -79,6 +79,8 @@ export function PanelControlsFloating({ activeTab, onTabChange, defaultPosition 
       maxSize={{ width: 1400, height: 250 }}
       className="bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm"
       scalable={true}
+      enableCollision={true}
+      zIndex={10000}
     >
       <PanelControlsContent activeTab={activeTab} onTabChange={onTabChange} />
     </DraggablePanel>
