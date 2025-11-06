@@ -155,6 +155,7 @@ export function PanelManagerProvider({ children }: { children: ReactNode }) {
           scalable={panel.scalable !== false}
           zIndex={panel.zIndex}
           enableCollision={panel.enableCollision}
+          enableDocking={false}
           onClose={() => closePanel(panel.id)}
           onBringToFront={() => bringToFront(panel.id)}
           onPositionChange={(newPosition) => {

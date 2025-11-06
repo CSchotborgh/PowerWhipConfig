@@ -33,7 +33,12 @@ function ConfiguratorContent() {
       case 'component-library-panel':
         return <ExpandedComponentLibrary />;
       default:
-        return null;
+        // For PanelManager panels, show a message that they can't be docked
+        return (
+          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+            This panel cannot be displayed while docked. Please undock it to view.
+          </div>
+        );
     }
   };
 
