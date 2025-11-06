@@ -326,7 +326,7 @@ export function PanelControls() {
             <LayoutGrid className="h-5 w-5 flex-shrink-0" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-56 z-[10000]">
           <div className="px-2 py-1.5 text-sm font-semibold">All Panels</div>
           
           {availablePanels.map(panel => {
