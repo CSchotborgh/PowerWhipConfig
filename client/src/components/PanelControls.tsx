@@ -243,9 +243,10 @@ export function PanelControls() {
 
   const handleOpenPanel = (panel: typeof availablePanels[0]) => {
     // Check if panel is already open
-    const isOpen = panels.some(p => p.title === panel.title);
+    const isOpen = panels.some(p => p.id === panel.id);
     if (!isOpen) {
       openPanel({
+        id: panel.id,
         title: panel.title,
         component: panel.component,
         position: panel.position,

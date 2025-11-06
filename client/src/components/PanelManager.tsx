@@ -14,7 +14,7 @@ interface Panel {
 
 interface PanelManagerContextType {
   panels: Panel[];
-  openPanel: (panel: Omit<Panel, 'id'>) => string;
+  openPanel: (panel: Partial<Panel> & { title: string; component: ReactNode }) => string;
   closePanel: (id: string) => void;
   updatePanel: (id: string, updates: Partial<Panel>) => void;
 }
@@ -24,8 +24,8 @@ const PanelManagerContext = createContext<PanelManagerContextType | null>(null);
 export function PanelManagerProvider({ children }: { children: ReactNode }) {
   const [panels, setPanels] = useState<Panel[]>([]);
 
-  const openPanel = (panel: Omit<Panel, 'id'>): string => {
-    const id = Math.random().toString(36).substr(2, 9);
+  const openPanel = (panel: Partial<Panel> & { title: string; component: ReactNode }): string => {
+    const id = panel.id || Math.random().toString(36).substr(2, 9);
     const newPanel: Panel = {
       ...panel,
       id,
