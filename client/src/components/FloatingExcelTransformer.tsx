@@ -6,8 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Download, FileSpreadsheet, Search, RotateCcw, Type, AlertCircle } from "lucide-react";
+import { Upload, Download, FileSpreadsheet, Search, RotateCcw, Type, AlertCircle, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
+import LookupDataPanel from "./LookupDataPanel";
 
 interface ReceptacleMatch {
   type: string;
@@ -218,7 +219,7 @@ export function FloatingExcelTransformer() {
   return (
     <div className="space-y-4">
       <Tabs defaultValue="upload" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="upload" className="flex items-center gap-2">
             <Upload className="h-4 w-4" />
             Upload
@@ -226,6 +227,10 @@ export function FloatingExcelTransformer() {
           <TabsTrigger value="text" className="flex items-center gap-2">
             <Type className="h-4 w-4" />
             Text Input
+          </TabsTrigger>
+          <TabsTrigger value="lookup" className="flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            Lookup
           </TabsTrigger>
         </TabsList>
 
@@ -280,6 +285,12 @@ export function FloatingExcelTransformer() {
               </p>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="lookup" className="space-y-3">
+          <ScrollArea className="h-[340px] pr-1">
+            <LookupDataPanel />
+          </ScrollArea>
         </TabsContent>
       </Tabs>
 

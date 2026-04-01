@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Download, FileSpreadsheet, Search, RotateCcw } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Upload, Download, FileSpreadsheet, Search, RotateCcw, ChevronDown, ChevronRight, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
+import LookupDataPanel from "./LookupDataPanel";
 
 interface ExcelTransformerProps {
   onToggleView?: () => void;
@@ -47,6 +49,7 @@ CS8369A
 CS8369`);
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [lookupPanelOpen, setLookupPanelOpen] = useState(false);
 
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -397,6 +400,22 @@ CS8369`);
             </Button>
           )}
         </div>
+
+        {/* Lookup Data Settings */}
+        <Collapsible open={lookupPanelOpen} onOpenChange={setLookupPanelOpen}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="flex items-center gap-2 w-full justify-between">
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4" />
+                Lookup Data Settings
+              </div>
+              {lookupPanelOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-2">
+            <LookupDataPanel />
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Results */}
         {parsedData && (

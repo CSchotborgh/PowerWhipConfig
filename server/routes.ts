@@ -776,7 +776,280 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Ultra-fast caching system for Excel components
   let componentCache: { data: any[], timestamp: number, filePath: string } | null = null;
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
-  
+
+  // Required columns for a valid MasterBubbleUpLookup file
+  const REQUIRED_LOOKUP_COLUMNS = ['Choose receptacle'];
+
+  // Lookup data directory
+  const LOOKUP_DIR = './data/lookup';
+
+  // Shared bundled fallback file list (ordered most-recent first)
+  const BUNDLED_LOOKUP_FILES = [
+    './attached_assets/MasterBubbleUpLookup_1755560556826.xlsx',
+    './attached_assets/MasterBubbleUpLookup_1754002723716.xlsx',
+    './attached_assets/MasterBubbleUpLookup_1753993728695.xlsx',
+    './attached_assets/MasterBubbleUpLookup_1753988008068.xlsx',
+    './attached_assets/MasterBubbleUpLookup_1753986672989.xlsx'
+  ];
+
+  // Ensure the lookup directory exists
+  if (!fs.existsSync(LOOKUP_DIR)) {
+    fs.mkdirSync(LOOKUP_DIR, { recursive: true });
+  }
+
+  // Discover the newest *valid* (parseable + contains required column) lookup file from data/lookup/
+  function getNewestUserLookupFile(): { filePath: string; fileName: string; uploadDate: Date } | null {
+    try {
+      if (!fs.existsSync(LOOKUP_DIR)) return null;
+      const files = fs.readdirSync(LOOKUP_DIR)
+        .filter(f => f.toLowerCase().endsWith('.xlsx'))
+        .map(f => {
+          const filePath = path.join(LOOKUP_DIR, f);
+          const stat = fs.statSync(filePath);
+          return { fileName: f, filePath, uploadDate: stat.mtime };
+        })
+        .sort((a, b) => b.uploadDate.getTime() - a.uploadDate.getTime());
+      // Iterate newest-first; return first file that can be read and has required column
+      for (const candidate of files) {
+        try {
+          if (fs.statSync(candidate.filePath).size === 0) continue;
+          const buf = fs.readFileSync(candidate.filePath);
+          const validation = validateLookupBuffer(buf);
+          if (validation.valid) return candidate;
+          console.log(`Skipping lookup file ${candidate.fileName}: missing required columns`);
+        } catch {
+          console.log(`Skipping unreadable lookup file: ${candidate.fileName}`);
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  // Get all versions in data/lookup/ sorted newest first
+  function getAllLookupVersions(): { fileName: string; filePath: string; uploadDate: Date }[] {
+    try {
+      if (!fs.existsSync(LOOKUP_DIR)) return [];
+      return fs.readdirSync(LOOKUP_DIR)
+        .filter(f => f.toLowerCase().endsWith('.xlsx'))
+        .map(f => {
+          const filePath = path.join(LOOKUP_DIR, f);
+          const stat = fs.statSync(filePath);
+          return { fileName: f, filePath, uploadDate: stat.mtime };
+        })
+        .sort((a, b) => b.uploadDate.getTime() - a.uploadDate.getTime());
+    } catch {
+      return [];
+    }
+  }
+
+  // Validate a lookup buffer for required columns (searches all sheets, first 20 rows each)
+  function validateLookupBuffer(buffer: Buffer): { valid: boolean; missingColumns: string[]; sheetName: string } {
+    try {
+      const workbook = XLSX.read(buffer, { type: 'buffer', sheetRows: 20, raw: true });
+      if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+        return { valid: false, missingColumns: REQUIRED_LOOKUP_COLUMNS, sheetName: '' };
+      }
+      // Search all sheets for the required columns
+      for (const sheetName of workbook.SheetNames) {
+        const worksheet = workbook.Sheets[sheetName];
+        if (!worksheet) continue;
+        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', raw: true }) as any[][];
+        for (const row of rows) {
+          const cells = row.map(c => String(c).trim());
+          const missingColumns = REQUIRED_LOOKUP_COLUMNS.filter(col => !cells.includes(col));
+          if (missingColumns.length === 0) {
+            return { valid: true, missingColumns: [], sheetName };
+          }
+        }
+      }
+      return { valid: false, missingColumns: REQUIRED_LOOKUP_COLUMNS, sheetName: workbook.SheetNames[0] };
+    } catch {
+      return { valid: false, missingColumns: REQUIRED_LOOKUP_COLUMNS, sheetName: '' };
+    }
+  }
+
+  // Safely resolve a filename within LOOKUP_DIR (prevents path traversal)
+  function resolveLookupPath(fileName: string): string | null {
+    const resolvedDir = fs.realpathSync(path.resolve(LOOKUP_DIR));
+    const sanitizedBase = path.basename(fileName); // strips any directory components
+    if (!sanitizedBase || sanitizedBase !== fileName) return null; // reject if name contained separators
+    const resolved = path.resolve(resolvedDir, sanitizedBase);
+    if (!resolved.startsWith(resolvedDir + path.sep) && resolved !== resolvedDir) return null;
+    return resolved;
+  }
+
+  // POST /api/lookup/upload — accept and persist a new lookup file
+  app.post("/api/lookup/upload", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      if (!req.file.originalname.toLowerCase().endsWith('.xlsx')) {
+        return res.status(400).json({ message: "Only .xlsx files are accepted" });
+      }
+
+      const validation = validateLookupBuffer(req.file.buffer);
+      if (!validation.valid) {
+        return res.status(422).json({
+          message: `Invalid lookup file: missing required column(s): ${validation.missingColumns.join(', ')}`,
+          missingColumns: validation.missingColumns
+        });
+      }
+
+      const timestamp = Date.now();
+      // Sanitize original filename: strip directory separators, keep only safe chars
+      const safeOriginalBase = path.basename(req.file.originalname)
+        .replace(/[^a-zA-Z0-9_\-. ]/g, '_')
+        .replace(/\.xlsx$/i, '');
+      const savedFileName = `${timestamp}_${safeOriginalBase}.xlsx`;
+      const savedFilePath = path.join(LOOKUP_DIR, savedFileName);
+
+      fs.writeFileSync(savedFilePath, req.file.buffer);
+
+      // Invalidate the cache so the new file is loaded immediately
+      componentCache = null;
+      console.log(`Lookup file uploaded: ${savedFileName}`);
+
+      // Quickly count receptacle rows in the uploaded file (capped for performance)
+      let componentCount = 0;
+      try {
+        const countWorkbook = XLSX.read(req.file.buffer, {
+          cellDates: false, cellNF: false, cellHTML: false, cellStyles: false,
+          cellText: false, raw: true, bookVBA: false, bookSheets: false,
+          sheetRows: 2000 // cap to 2000 rows per sheet to stay fast
+        });
+        const receptaclePattern = /^([A-Z]{1,3}\d+[A-Z]?\d*[A-Z]?|[0-9]+[A-Z]+[0-9]*[A-Z]*|[A-Z]+\d+-\d+[A-Z]*)$/;
+        for (const sheetName of countWorkbook.SheetNames.slice(0, 5)) {
+          const worksheet = countWorkbook.Sheets[sheetName];
+          if (!worksheet) continue;
+          const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', blankrows: false, raw: true }) as any[][];
+          // Find the header row containing 'Choose receptacle'
+          let receptacleCol = -1;
+          let headerRowIdx = -1;
+          for (let r = 0; r < Math.min(rows.length, 15); r++) {
+            const cells = rows[r].map((c: any) => String(c).trim());
+            const idx = cells.findIndex((c: string) => c === 'Choose receptacle');
+            if (idx !== -1) { receptacleCol = idx; headerRowIdx = r; break; }
+          }
+          if (receptacleCol === -1) continue;
+          // Count non-empty receptacle values after the header row
+          for (let r = headerRowIdx + 1; r < rows.length; r++) {
+            const val = String(rows[r][receptacleCol] || '').trim().toUpperCase();
+            if (val.length >= 2 && val.length <= 15 && receptaclePattern.test(val)) {
+              componentCount++;
+            }
+          }
+          if (componentCount > 0) break; // found data in this sheet, stop scanning others
+        }
+      } catch {
+        componentCount = 0;
+      }
+
+      const stat = fs.statSync(savedFilePath);
+      res.json({
+        message: `Lookup file uploaded successfully. ${componentCount} component${componentCount !== 1 ? 's' : ''} loaded.`,
+        fileName: savedFileName,
+        uploadDate: stat.mtime.toISOString(),
+        size: req.file.size,
+        componentCount
+      });
+    } catch (error) {
+      console.error('Lookup upload error:', error);
+      res.status(500).json({ message: "Failed to save lookup file" });
+    }
+  });
+
+  // GET /api/lookup/status — return active file info and version history
+  app.get("/api/lookup/status", async (_req, res) => {
+    try {
+      const versions = getAllLookupVersions();
+
+      // Use the same validity-aware selector as /api/excel/components
+      const activeUserFile = getNewestUserLookupFile();
+
+      let status: 'live' | 'default' | 'no-data' = 'no-data';
+      let activeFileName: string | null = null;
+      let activeUploadDate: string | null = null;
+
+      if (activeUserFile) {
+        status = 'live';
+        activeFileName = activeUserFile.fileName;
+        activeUploadDate = activeUserFile.uploadDate.toISOString();
+      } else {
+        // Check if bundled fallback exists
+        const hasFallback = BUNDLED_LOOKUP_FILES.some(f => fs.existsSync(f) && fs.statSync(f).size > 0);
+        status = hasFallback ? 'default' : 'no-data';
+        if (hasFallback) {
+          const existing = BUNDLED_LOOKUP_FILES.find(f => fs.existsSync(f) && fs.statSync(f).size > 0);
+          activeFileName = existing ? path.basename(existing) : null;
+        }
+      }
+
+      res.json({
+        status,
+        activeFileName,
+        activeUploadDate,
+        versions: versions.slice(0, 3).map(v => ({
+          fileName: v.fileName,
+          uploadDate: v.uploadDate.toISOString()
+        }))
+      });
+    } catch (error) {
+      console.error('Lookup status error:', error);
+      res.status(500).json({ message: "Failed to retrieve lookup status" });
+    }
+  });
+
+  // POST /api/lookup/restore — restore a specific version by filename
+  app.post("/api/lookup/restore", async (req, res) => {
+    try {
+      const { fileName } = req.body;
+      if (!fileName || typeof fileName !== 'string') {
+        return res.status(400).json({ message: "fileName is required" });
+      }
+
+      // Prevent path traversal: only allow filenames that resolve within LOOKUP_DIR
+      const resolvedPath = resolveLookupPath(fileName);
+      if (!resolvedPath) {
+        return res.status(400).json({ message: "Invalid filename" });
+      }
+
+      if (!fs.existsSync(resolvedPath)) {
+        return res.status(404).json({ message: "Version not found" });
+      }
+
+      // Validate the target file before promoting it to avoid restoring invalid files
+      const buf = fs.readFileSync(resolvedPath);
+      const validation = validateLookupBuffer(buf);
+      if (!validation.valid) {
+        return res.status(422).json({
+          message: `Cannot restore: file is missing required column(s): ${validation.missingColumns.join(', ')}`,
+          missingColumns: validation.missingColumns
+        });
+      }
+
+      // Touch the file to update its mtime, making it the "newest"
+      const now = new Date();
+      fs.utimesSync(resolvedPath, now, now);
+
+      // Invalidate cache
+      componentCache = null;
+      console.log(`Lookup version restored: ${fileName}`);
+
+      const stat = fs.statSync(resolvedPath);
+      res.json({
+        message: "Version restored successfully",
+        fileName,
+        uploadDate: stat.mtime.toISOString()
+      });
+    } catch (error) {
+      console.error('Lookup restore error:', error);
+      res.status(500).json({ message: "Failed to restore lookup version" });
+    }
+  });
+
   app.get("/api/excel/components", async (_req, res) => {
     try {
       const startTime = Date.now();
@@ -787,12 +1060,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(componentCache.data);
       }
       
-      // Optimized file path selection - use most reliable file first
-      const filePaths = [
-        './attached_assets/MasterBubbleUpLookup_1753993728695.xlsx',
-        './attached_assets/MasterBubbleUpLookup_1753988008068.xlsx',
-        './attached_assets/MasterBubbleUpLookup_1753986672989.xlsx'
-      ];
+      // Dynamic file path selection: user-uploaded valid files first, then bundled fallbacks
+      const userLookupFile = getNewestUserLookupFile();
+      const filePaths: string[] = userLookupFile
+        ? [userLookupFile.filePath, ...BUNDLED_LOOKUP_FILES] // try user file first, fall back to bundled
+        : BUNDLED_LOOKUP_FILES;
       
       let sheets: any = null;
       let usedFilePath = '';
