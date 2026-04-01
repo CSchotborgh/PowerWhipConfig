@@ -42,11 +42,22 @@ function ConfiguratorContent() {
     }
   };
 
-  // Calculate docked panel sizes
   const topPanel = dockedPanels.find(p => p.position === 'top');
   const bottomPanel = dockedPanels.find(p => p.position === 'bottom');
   const leftPanel = dockedPanels.find(p => p.position === 'left');
   const rightPanel = dockedPanels.find(p => p.position === 'right');
+
+  // Clamp side-panel widths so the canvas always keeps at least 150px.
+  const MIN_CANVAS_WIDTH = 150;
+  const leftSize  = leftPanel?.size  ?? 0;
+  const rightSize = rightPanel?.size ?? 0;
+  const totalPanelWidth = leftSize + rightSize;
+  // If panels would exceed available space, scale them down proportionally.
+  const scale = totalPanelWidth > 0
+    ? Math.min(1, (window.innerWidth - MIN_CANVAS_WIDTH) / totalPanelWidth)
+    : 1;
+  const effectiveLeftWidth  = Math.floor(leftSize  * scale);
+  const effectiveRightWidth = Math.floor(rightSize * scale);
 
   return (
     <div className="h-screen flex flex-col bg-technical-50 dark:bg-technical-900 text-technical-900 dark:text-technical-50">
@@ -92,7 +103,7 @@ function ConfiguratorContent() {
           {leftPanel && (
             <div 
               className="border-r border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10 flex flex-col"
-              style={{ width: leftPanel.size, minWidth: leftPanel.size }}
+              style={{ width: effectiveLeftWidth, minWidth: effectiveLeftWidth, flexShrink: 0 }}
               data-testid="docked-panel-left"
             >
               <div className="p-3 flex flex-col items-center gap-2 border-b border-technical-200 dark:border-technical-600 shrink-0">
@@ -120,7 +131,7 @@ function ConfiguratorContent() {
           {rightPanel && (
             <div 
               className="border-l border-technical-200 dark:border-technical-600 bg-white/95 dark:bg-technical-800/95 backdrop-blur-sm overflow-auto relative z-10 flex flex-col"
-              style={{ width: rightPanel.size, minWidth: rightPanel.size }}
+              style={{ width: effectiveRightWidth, minWidth: effectiveRightWidth, flexShrink: 0 }}
               data-testid="docked-panel-right"
             >
               <div className="p-3 flex flex-col items-center gap-2 border-b border-technical-200 dark:border-technical-600 shrink-0">
