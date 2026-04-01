@@ -12,6 +12,8 @@ import multer from "multer";
 import * as XLSX from 'xlsx';
 import * as fs from 'fs';
 import * as Papa from 'papaparse';
+import { randomUUID } from 'crypto';
+import rateLimit from 'express-rate-limit';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,7 +21,16 @@ const __dirname = path.dirname(__filename);
 // Configure multer for file uploads
 const upload = multer({ 
   storage: multer.memoryStorage(),
-  limits: { fileSize: 200 * 1024 * 1024 } // 200MB limit
+  limits: { fileSize: 25 * 1024 * 1024 } // 25MB limit
+});
+
+// Rate limiter for CPU-intensive file processing endpoints (20 req/min per IP)
+const excelRateLimit = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
 });
 
 // Store uploaded files in memory for processing
@@ -314,6 +325,14 @@ function categorizeByReceptacle(receptacle: string): string {
 // Use existing multer configuration
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Ensure tmp/uploads directory exists at startup
+  await fs.promises.mkdir('./tmp/uploads', { recursive: true });
+
+  // Apply rate limiting to expensive file-processing endpoints
+  app.use('/api/excel/upload', excelRateLimit);
+  app.use('/api/excel/transform', excelRateLimit);
+  app.use('/api/excel/parse-patterns', excelRateLimit);
+
   // Power Whip Configuration routes
   app.get("/api/configurations", async (_req, res) => {
     try {
@@ -497,9 +516,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileName = req.file.originalname || 'uploaded_file.xlsx';
       
       // Create temporary file from buffer since the analyzer expects file path
-      const tempPath = `./tmp/uploads/temp_${Date.now()}_${fileName}`;
+      // Use sanitized UUID-based name to prevent path traversal attacks
+      const safeTempName = `temp_${Date.now()}_${randomUUID()}`;
+      const tempPath = `./tmp/uploads/${safeTempName}`;
       await fs.promises.writeFile(tempPath, req.file.buffer);
-      console.log(`Created temp file: ${tempPath}, size: ${req.file.buffer.length} bytes`);
+      console.log(`Created temp file at safe path, size: ${req.file.buffer.length} bytes`);
       
       const analysis = await analyzer.analyzeFile(tempPath, fileName);
       

@@ -6,14 +6,25 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// File-processing routes whose response bodies should not be logged
+const REDACTED_LOG_PATHS = [
+  '/api/excel/upload',
+  '/api/excel/transform',
+  '/api/excel/parse-patterns',
+];
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
+  const isRedactedPath = REDACTED_LOG_PATHS.some(p => path.startsWith(p));
+
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
+    if (!isRedactedPath) {
+      capturedJsonResponse = bodyJson;
+    }
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
