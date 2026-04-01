@@ -55,7 +55,9 @@ export const useDesignCanvas = () => {
 
 export const DesignCanvasProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [droppedComponents, setDroppedComponents] = useState<DroppedComponent[]>([]);
-  const [dockedPanels, setDockedPanels] = useState<DockedPanel[]>([]);
+  const [dockedPanels, setDockedPanels] = useState<DockedPanel[]>([
+    { id: 'all-features-panel', title: 'All Features', position: 'top', size: 160 },
+  ]);
   const [dockHints, setDockHints] = useState<DockHint[]>([
     { position: 'top', active: false },
     { position: 'bottom', active: false },
