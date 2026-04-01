@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   FileText, Upload, Download, ExternalLink, Eye,
-  RefreshCw, CheckCircle2, XCircle, Loader2, CloudUpload
+  RefreshCw, CheckCircle2, XCircle, Loader2, CloudUpload,
+  AlertTriangle, Ban
 } from "lucide-react";
 import { useDrawings, Drawing } from "@/hooks/useDrawings";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,25 @@ function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// Mirrors server-side sanitisation so we can pre-check for duplicates
+function sanitizeFilename(name: string): string {
+  return name.replace(/[^a-zA-Z0-9\-_(). ]/g, "_");
+}
+
+// Expected: PWxx-{PART}-xxSALx{variant}.pdf  or  PW4K-{PART}-{variant}.pdf
+const PW_PATTERN = /^PW[A-Za-z0-9]+-[A-Za-z0-9]+-/i;
+
+function classifyFile(file: File, existing: Drawing[]): "duplicate" | "invalid-name" | "valid" {
+  const safe = sanitizeFilename(file.name.replace(/\\/g, "/").split("/").pop() || file.name);
+  const safeLC = safe.toLowerCase();
+  // Duplicate: any existing drawing whose display name matches (case-insensitive)
+  const isDup = existing.some(d => d.displayName.toLowerCase() === safeLC);
+  if (isDup) return "duplicate";
+  // Name validation: must match PWxx pattern
+  if (!PW_PATTERN.test(safe)) return "invalid-name";
+  return "valid";
 }
 
 async function uploadSingleFile(file: File): Promise<string> {
@@ -33,15 +53,16 @@ async function uploadSingleFile(file: File): Promise<string> {
 
 interface FileStatus {
   name: string;
-  state: "pending" | "uploading" | "done" | "error";
+  state: "pending" | "uploading" | "done" | "error" | "duplicate" | "invalid-name";
   message?: string;
 }
 
 interface UploadZoneProps {
   onUploadComplete: () => void;
+  existingDrawings: Drawing[];
 }
 
-function UploadZone({ onUploadComplete }: UploadZoneProps) {
+function UploadZone({ onUploadComplete, existingDrawings }: UploadZoneProps) {
   const [dragging, setDragging] = useState(false);
   const [statuses, setStatuses] = useState<FileStatus[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -55,13 +76,26 @@ function UploadZone({ onUploadComplete }: UploadZoneProps) {
     const pdfs = files.filter(f => f.name.toLowerCase().endsWith(".pdf"));
     if (pdfs.length === 0) {
       setStatuses([{ name: "No PDFs found", state: "error", message: "Only .pdf files are accepted" }]);
+      setTimeout(() => setStatuses([]), 4000);
       return;
     }
-    const initial: FileStatus[] = pdfs.map(f => ({ name: f.name, state: "pending" }));
+
+    // Pre-classify every file before any upload starts
+    const initial: FileStatus[] = pdfs.map(f => {
+      const cls = classifyFile(f, existingDrawings);
+      if (cls === "duplicate") {
+        return { name: f.name, state: "duplicate", message: "Already in library — skipped" };
+      }
+      if (cls === "invalid-name") {
+        return { name: f.name, state: "invalid-name", message: "Name doesn't match PWxx-PART-xxSALx pattern — uploading anyway" };
+      }
+      return { name: f.name, state: "pending" };
+    });
     setStatuses(initial);
 
     let anyDone = false;
     for (let i = 0; i < pdfs.length; i++) {
+      if (initial[i].state === "duplicate") continue; // skip duplicates entirely
       updateStatus(i, { state: "uploading" });
       try {
         await uploadSingleFile(pdfs[i]);
@@ -71,10 +105,11 @@ function UploadZone({ onUploadComplete }: UploadZoneProps) {
         updateStatus(i, { state: "error", message: err.message });
       }
     }
-    if (anyDone) {
-      onUploadComplete();
-      setTimeout(() => setStatuses([]), 3000);
-    }
+
+    if (anyDone) onUploadComplete();
+
+    // Keep results visible for a while then clear
+    setTimeout(() => setStatuses([]), 6000);
     if (inputRef.current) inputRef.current.value = "";
   }
 
@@ -140,23 +175,44 @@ function UploadZone({ onUploadComplete }: UploadZoneProps) {
       {statuses.length > 0 && (
         <div className="space-y-1 rounded-md border border-technical-200 dark:border-technical-700 p-2 bg-technical-50 dark:bg-technical-800/50">
           {statuses.map((s, i) => (
-            <div key={i} className="flex items-center gap-2 text-xs">
-              {s.state === "pending" && <Loader2 className="w-3 h-3 text-technical-400 animate-spin flex-shrink-0" />}
-              {s.state === "uploading" && <Loader2 className="w-3 h-3 text-blue-500 animate-spin flex-shrink-0" />}
-              {s.state === "done" && <CheckCircle2 className="w-3 h-3 text-green-500 flex-shrink-0" />}
-              {s.state === "error" && <XCircle className="w-3 h-3 text-red-500 flex-shrink-0" />}
-              <span className={cn(
-                "truncate flex-1 font-mono",
-                s.state === "done" && "text-green-700 dark:text-green-400",
-                s.state === "error" && "text-red-600 dark:text-red-400",
-                s.state === "uploading" && "text-blue-600 dark:text-blue-400",
-                s.state === "pending" && "text-technical-500"
-              )}>
-                {s.name}
-              </span>
-              {s.state === "uploading" && <span className="flex-shrink-0 text-technical-400">Uploading…</span>}
-              {s.state === "done" && <span className="flex-shrink-0 text-green-600">Done</span>}
-              {s.state === "error" && <span className="flex-shrink-0 text-red-500 truncate max-w-[80px]" title={s.message}>{s.message}</span>}
+            <div key={i} className="flex items-start gap-2 text-xs">
+              {/* Icon */}
+              {s.state === "pending"      && <Loader2      className="w-3 h-3 mt-0.5 text-technical-400 animate-spin flex-shrink-0" />}
+              {s.state === "uploading"    && <Loader2      className="w-3 h-3 mt-0.5 text-blue-500 animate-spin flex-shrink-0" />}
+              {s.state === "done"         && <CheckCircle2 className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />}
+              {s.state === "error"        && <XCircle      className="w-3 h-3 mt-0.5 text-red-500 flex-shrink-0" />}
+              {s.state === "duplicate"    && <Ban          className="w-3 h-3 mt-0.5 text-amber-500 flex-shrink-0" />}
+              {s.state === "invalid-name" && <AlertTriangle className="w-3 h-3 mt-0.5 text-yellow-500 flex-shrink-0" />}
+
+              <div className="flex-1 min-w-0">
+                <span className={cn(
+                  "block truncate font-mono",
+                  s.state === "done"         && "text-green-700 dark:text-green-400",
+                  s.state === "error"        && "text-red-600 dark:text-red-400",
+                  s.state === "uploading"    && "text-blue-600 dark:text-blue-400",
+                  s.state === "pending"      && "text-technical-500",
+                  s.state === "duplicate"    && "text-amber-700 dark:text-amber-400 line-through",
+                  s.state === "invalid-name" && "text-yellow-700 dark:text-yellow-400"
+                )}>
+                  {s.name}
+                </span>
+                {s.message && (
+                  <span className={cn(
+                    "block text-[10px] leading-tight",
+                    s.state === "error"        && "text-red-500",
+                    s.state === "duplicate"    && "text-amber-500",
+                    s.state === "invalid-name" && "text-yellow-600 dark:text-yellow-500"
+                  )}>
+                    {s.message}
+                  </span>
+                )}
+              </div>
+
+              {/* Right badge */}
+              {s.state === "uploading"    && <span className="flex-shrink-0 text-technical-400 text-[10px] mt-0.5">Uploading…</span>}
+              {s.state === "done"         && <span className="flex-shrink-0 text-green-600 text-[10px] mt-0.5 font-medium">Added ✓</span>}
+              {s.state === "duplicate"    && <span className="flex-shrink-0 text-amber-500 text-[10px] mt-0.5 font-medium">Skipped</span>}
+              {s.state === "invalid-name" && <span className="flex-shrink-0 text-yellow-600 text-[10px] mt-0.5 font-medium">Warning</span>}
             </div>
           ))}
         </div>
@@ -282,7 +338,7 @@ export default function DrawingsBrowserPanel({ compact = false }: DrawingsBrowse
 
   const content = (
     <>
-      <UploadZone onUploadComplete={handleUploadComplete} />
+      <UploadZone onUploadComplete={handleUploadComplete} existingDrawings={drawings} />
 
       <div className="mt-3">
         {isLoading ? (

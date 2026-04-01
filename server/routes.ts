@@ -3693,6 +3693,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: 'Invalid filename' });
     }
 
+    // Duplicate guard: reject if a file with the same sanitized base name already exists
+    const existing = await fs.promises.readdir(DRAWINGS_DIR);
+    const safeNameLC = safeName.toLowerCase();
+    const duplicate = existing.find(f => {
+      const displayName = f
+        .replace(/^\d+_/, '')
+        .replace(/_\d{13}(\.\w+)$/, '$1');
+      return displayName.toLowerCase() === safeNameLC;
+    });
+    if (duplicate) {
+      return res.status(409).json({
+        error: `Already in library: "${safeName}" — skipped`,
+        duplicate: true,
+        existing: duplicate,
+      });
+    }
+
     await fs.promises.writeFile(savePath, req.file.buffer);
 
     res.json({
