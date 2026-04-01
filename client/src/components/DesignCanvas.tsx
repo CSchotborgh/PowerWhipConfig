@@ -431,76 +431,78 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
       </div>
 
       {/* Right Panel: Properties + Drawings */}
-      <div className="w-80 border-l border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 flex flex-col overflow-hidden">
+      <div className="w-[640px] border-l border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 flex flex-col overflow-hidden">
         {selectedComponentData ? (
           <Card className="flex-shrink-0 rounded-none border-0 border-b border-technical-200 dark:border-technical-600">
-            <CardHeader className="border-b border-technical-200 dark:border-technical-600">
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="py-3 px-4 border-b border-technical-200 dark:border-technical-600">
+              <CardTitle className="flex items-center gap-2 text-sm">
                 <Settings className="w-4 h-4 text-primary" />
                 Component Properties
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 space-y-4">
-              <div>
-                <label className="text-sm font-medium text-technical-700 dark:text-technical-300">
-                  Name
-                </label>
-                <p className="text-sm text-technical-900 dark:text-technical-100 mt-1">
-                  {selectedComponentData.name}
-                </p>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-technical-700 dark:text-technical-300">
-                  Type
-                </label>
-                <p className="text-sm text-technical-900 dark:text-technical-100 mt-1 capitalize">
-                  {selectedComponentData.type}
-                </p>
-              </div>
-
-              {selectedComponentData.partNumber && (
+            <CardContent className="p-4">
+              {/* Top row: Name, Type, Part Number, Position in a 2-col grid */}
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 mb-4">
                 <div>
-                  <label className="text-sm font-medium text-technical-700 dark:text-technical-300">
-                    Part Number
-                  </label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="text-sm text-technical-900 dark:text-technical-100 font-mono flex-1">
-                      {selectedComponentData.partNumber}
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-6 px-2 text-xs gap-1"
-                      onClick={() => setDrawingViewerPartNumber(selectedComponentData.partNumber!)}
-                    >
-                      <FileText className="w-3 h-3" />
-                      Drawing
-                    </Button>
-                  </div>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-technical-500 dark:text-technical-400">Name</label>
+                  <p className="text-sm text-technical-900 dark:text-technical-100 mt-0.5 truncate">
+                    {selectedComponentData.name}
+                  </p>
                 </div>
-              )}
 
-              <div>
-                <label className="text-sm font-medium text-technical-700 dark:text-technical-300">
-                  Position
-                </label>
-                <p className="text-sm text-technical-900 dark:text-technical-100 mt-1">
-                  X: {Math.round(selectedComponentData.x)}px, Y: {Math.round(selectedComponentData.y)}px
-                </p>
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-technical-500 dark:text-technical-400">Type</label>
+                  <p className="text-sm text-technical-900 dark:text-technical-100 mt-0.5 capitalize">
+                    {selectedComponentData.type}
+                  </p>
+                </div>
+
+                {selectedComponentData.partNumber && (
+                  <div className="col-span-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-technical-500 dark:text-technical-400">Part Number</label>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-sm text-technical-900 dark:text-technical-100 font-mono flex-1">
+                        {selectedComponentData.partNumber}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-6 px-2 text-xs gap-1 flex-shrink-0"
+                        onClick={() => setDrawingViewerPartNumber(selectedComponentData.partNumber!)}
+                      >
+                        <FileText className="w-3 h-3" />
+                        Drawing
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-technical-500 dark:text-technical-400">Position X</label>
+                  <p className="text-sm text-technical-900 dark:text-technical-100 mt-0.5 font-mono">
+                    {Math.round(selectedComponentData.x)} px
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-technical-500 dark:text-technical-400">Position Y</label>
+                  <p className="text-sm text-technical-900 dark:text-technical-100 mt-0.5 font-mono">
+                    {Math.round(selectedComponentData.y)} px
+                  </p>
+                </div>
               </div>
 
+              {/* Specifications — 2-col grid, no truncation limit */}
               {selectedComponentData.specifications && Object.keys(selectedComponentData.specifications).length > 0 && (
-                <div>
-                  <label className="text-sm font-medium text-technical-700 dark:text-technical-300 mb-2 block">
+                <div className="mb-4">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-technical-500 dark:text-technical-400 mb-2 block">
                     Specifications
                   </label>
-                  <div className="space-y-2">
-                    {Object.entries(selectedComponentData.specifications).slice(0, 5).map(([key, value]) => (
-                      <div key={key} className="flex justify-between text-xs">
-                        <span className="text-technical-600 dark:text-technical-400">{key}:</span>
-                        <span className="text-technical-900 dark:text-technical-100 text-right">
-                          {String(value).substring(0, 20)}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                    {Object.entries(selectedComponentData.specifications).map(([key, value]) => (
+                      <div key={key} className="flex flex-col">
+                        <span className="text-[10px] font-medium text-technical-500 dark:text-technical-400 uppercase tracking-wide">{key}</span>
+                        <span className="text-xs text-technical-900 dark:text-technical-100">
+                          {String(value).substring(0, 40)}
                         </span>
                       </div>
                     ))}
@@ -508,9 +510,9 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
                 </div>
               )}
 
-              <Button 
-                variant="destructive" 
-                size="sm" 
+              <Button
+                variant="destructive"
+                size="sm"
                 onClick={() => deleteComponent(selectedComponentData.id)}
                 className="w-full"
               >
@@ -526,7 +528,7 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
 
         {/* Drawings browser — always visible at the bottom */}
         <div className="flex-1 overflow-y-auto p-3">
-          <DrawingsBrowserPanel compact />
+          <DrawingsBrowserPanel />
         </div>
       </div>
 
