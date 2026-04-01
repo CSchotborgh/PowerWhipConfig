@@ -185,8 +185,10 @@ function UploadZone({ onUploadComplete, existingDrawings }: UploadZoneProps) {
               {s.state === "invalid-name" && <AlertTriangle className="w-3 h-3 mt-0.5 text-yellow-500 flex-shrink-0" />}
 
               <div className="flex-1 min-w-0">
-                <span className={cn(
-                  "block break-all font-mono text-[11px] leading-snug",
+                <span
+                  title={s.name}
+                  className={cn(
+                  "block truncate font-mono text-[11px]",
                   s.state === "done"         && "text-green-700 dark:text-green-400",
                   s.state === "error"        && "text-red-600 dark:text-red-400",
                   s.state === "uploading"    && "text-blue-600 dark:text-blue-400",
@@ -397,7 +399,7 @@ export default function DrawingsBrowserPanel({ compact = false }: DrawingsBrowse
                   <div
                     key={drawing.filename}
                     className={cn(
-                      "flex items-start gap-2 px-2 py-2 rounded group transition-colors",
+                      "flex items-center gap-2 px-2 py-1.5 rounded group transition-colors",
                       isDeleting
                         ? "bg-red-50 dark:bg-red-950/30 opacity-60"
                         : isConfirming
@@ -420,11 +422,14 @@ export default function DrawingsBrowserPanel({ compact = false }: DrawingsBrowse
                       )} />
                     )}
 
-                    {/* Filename */}
-                    <span className={cn(
-                      "flex-1 text-xs break-all font-mono leading-snug",
-                      isConfirming ? "text-red-600 dark:text-red-400 line-through" : "text-technical-800 dark:text-technical-200"
-                    )}>
+                    {/* Filename — single line with tooltip for full name */}
+                    <span
+                      title={drawing.displayName}
+                      className={cn(
+                        "flex-1 min-w-0 truncate text-xs font-mono",
+                        isConfirming ? "text-red-600 dark:text-red-400 line-through" : "text-technical-800 dark:text-technical-200"
+                      )}
+                    >
                       {drawing.displayName}
                     </span>
 
