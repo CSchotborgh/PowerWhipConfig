@@ -3769,6 +3769,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // DELETE /api/drawings/file/:filename — permanently remove a drawing
+  app.delete('/api/drawings/file/:filename', async (req, res) => {
+    const safeName = path.basename(req.params.filename);
+    const filePath = path.join(DRAWINGS_DIR, safeName);
+
+    // Path-traversal guard
+    if (!filePath.startsWith(DRAWINGS_DIR)) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+
+    try {
+      await fs.promises.access(filePath, fs.constants.F_OK);
+      await fs.promises.unlink(filePath);
+      res.json({ deleted: safeName });
+    } catch {
+      res.status(404).json({ error: 'Drawing not found' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

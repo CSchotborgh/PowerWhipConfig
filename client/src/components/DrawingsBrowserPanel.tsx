@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   FileText, Upload, Download, ExternalLink, Eye,
   RefreshCw, CheckCircle2, XCircle, Loader2, CloudUpload,
-  AlertTriangle, Ban
+  AlertTriangle, Ban, Trash2
 } from "lucide-react";
 import { useDrawings, Drawing } from "@/hooks/useDrawings";
 import { cn } from "@/lib/utils";
@@ -331,9 +331,31 @@ export default function DrawingsBrowserPanel({ compact = false }: DrawingsBrowse
   const { drawings, isLoading, invalidate } = useDrawings();
   const [selectedDrawing, setSelectedDrawing] = useState<Drawing | null>(null);
   const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set());
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   function handleUploadComplete() {
     invalidate();
+  }
+
+  async function handleDelete(filename: string) {
+    setDeleting(filename);
+    setConfirmingDelete(null);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/drawings/file/${encodeURIComponent(filename)}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Delete failed" }));
+        throw new Error(err.error || "Delete failed");
+      }
+      invalidate();
+    } catch (err: any) {
+      setDeleteError(err.message || "Delete failed");
+      setTimeout(() => setDeleteError(null), 4000);
+    } finally {
+      setDeleting(null);
+    }
   }
 
   const content = (
@@ -362,39 +384,100 @@ export default function DrawingsBrowserPanel({ compact = false }: DrawingsBrowse
                 Refresh
               </Button>
             </div>
+            {deleteError && (
+              <p className="text-xs text-red-500 mb-1 flex items-center gap-1">
+                <XCircle className="w-3 h-3" />{deleteError}
+              </p>
+            )}
             <div className="space-y-0.5">
-              {drawings.map((drawing) => (
-                <div
-                  key={drawing.filename}
-                  className={cn(
-                    "flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer group transition-colors",
-                    recentlyAdded.has(drawing.filename)
-                      ? "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
-                      : "hover:bg-blue-50 dark:hover:bg-technical-700"
-                  )}
-                  onClick={() => setSelectedDrawing(drawing)}
-                >
-                  <FileText className={cn(
-                    "w-3.5 h-3.5 flex-shrink-0",
-                    recentlyAdded.has(drawing.filename) ? "text-green-500" : "text-blue-500"
-                  )} />
-                  <span className="flex-1 text-xs text-technical-800 dark:text-technical-200 truncate font-mono leading-tight">
-                    {drawing.displayName}
-                  </span>
-                  <span className="text-[10px] text-technical-400 flex-shrink-0 hidden group-hover:inline">
-                    {formatBytes(drawing.size)}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-5 px-1.5 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                    onClick={(e) => { e.stopPropagation(); setSelectedDrawing(drawing); }}
+              {drawings.map((drawing) => {
+                const isDeleting    = deleting === drawing.filename;
+                const isConfirming  = confirmingDelete === drawing.filename;
+                return (
+                  <div
+                    key={drawing.filename}
+                    className={cn(
+                      "flex items-center gap-2 px-2 py-1.5 rounded group transition-colors",
+                      isDeleting
+                        ? "bg-red-50 dark:bg-red-950/30 opacity-60"
+                        : isConfirming
+                        ? "bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800"
+                        : recentlyAdded.has(drawing.filename)
+                        ? "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
+                        : "hover:bg-blue-50 dark:hover:bg-technical-700 cursor-pointer"
+                    )}
+                    onClick={() => !isConfirming && !isDeleting && setSelectedDrawing(drawing)}
                   >
-                    <Eye className="w-2.5 h-2.5 mr-1" />
-                    View
-                  </Button>
-                </div>
-              ))}
+                    {/* File icon */}
+                    {isDeleting ? (
+                      <Loader2 className="w-3.5 h-3.5 flex-shrink-0 text-red-400 animate-spin" />
+                    ) : (
+                      <FileText className={cn(
+                        "w-3.5 h-3.5 flex-shrink-0",
+                        isConfirming ? "text-red-400"
+                          : recentlyAdded.has(drawing.filename) ? "text-green-500"
+                          : "text-blue-500"
+                      )} />
+                    )}
+
+                    {/* Filename */}
+                    <span className={cn(
+                      "flex-1 text-xs truncate font-mono leading-tight",
+                      isConfirming ? "text-red-600 dark:text-red-400 line-through" : "text-technical-800 dark:text-technical-200"
+                    )}>
+                      {drawing.displayName}
+                    </span>
+
+                    {/* Right side — normal: size + View + Delete; confirming: Yes / Cancel */}
+                    {isConfirming ? (
+                      <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                        <span className="text-[10px] text-red-500 font-medium">Delete?</span>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="h-5 px-2 text-[10px]"
+                          onClick={() => handleDelete(drawing.filename)}
+                        >
+                          Yes
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-5 px-1.5 text-[10px]"
+                          onClick={() => setConfirmingDelete(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[10px] text-technical-400">
+                          {formatBytes(drawing.size)}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-5 px-1.5 text-[10px]"
+                          onClick={(e) => { e.stopPropagation(); setSelectedDrawing(drawing); }}
+                          disabled={isDeleting}
+                        >
+                          <Eye className="w-2.5 h-2.5 mr-1" />
+                          View
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-5 px-1.5 text-[10px] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                          onClick={(e) => { e.stopPropagation(); setConfirmingDelete(drawing.filename); }}
+                          disabled={isDeleting}
+                        >
+                          <Trash2 className="w-2.5 h-2.5" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
