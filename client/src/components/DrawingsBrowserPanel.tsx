@@ -1,12 +1,16 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import {
   FileText, Upload, Download, ExternalLink, Eye,
   RefreshCw, CheckCircle2, XCircle, Loader2, CloudUpload,
-  AlertTriangle, Ban, Trash2
+  AlertTriangle, Ban, Trash2, Search, ArrowUpDown,
 } from "lucide-react";
 import { useDrawings, Drawing } from "@/hooks/useDrawings";
 import { cn } from "@/lib/utils";
@@ -329,6 +333,8 @@ interface DrawingsBrowserPanelProps {
   compact?: boolean;
 }
 
+type SortKey = "name-az" | "name-za" | "newest" | "oldest" | "largest" | "smallest";
+
 export default function DrawingsBrowserPanel({ compact = false }: DrawingsBrowserPanelProps) {
   const { drawings, isLoading, invalidate } = useDrawings();
   const [selectedDrawing, setSelectedDrawing] = useState<Drawing | null>(null);
@@ -336,6 +342,26 @@ export default function DrawingsBrowserPanel({ compact = false }: DrawingsBrowse
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("name-az");
+
+  const filteredSorted = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const filtered = q
+      ? drawings.filter(d => d.displayName.toLowerCase().includes(q))
+      : drawings;
+    return [...filtered].sort((a, b) => {
+      switch (sortKey) {
+        case "name-az":   return a.displayName.localeCompare(b.displayName);
+        case "name-za":   return b.displayName.localeCompare(a.displayName);
+        case "newest":    return new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime();
+        case "oldest":    return new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime();
+        case "largest":   return b.size - a.size;
+        case "smallest":  return a.size - b.size;
+        default:          return 0;
+      }
+    });
+  }, [drawings, searchQuery, sortKey]);
 
   function handleUploadComplete() {
     invalidate();
@@ -376,9 +402,38 @@ export default function DrawingsBrowserPanel({ compact = false }: DrawingsBrowse
           </div>
         ) : (
           <>
+            {/* Search + Sort controls */}
+            <div className="flex gap-1.5 mb-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-technical-400 pointer-events-none" />
+                <Input
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search drawings…"
+                  className="h-7 pl-6 pr-2 text-xs font-mono"
+                />
+              </div>
+              <Select value={sortKey} onValueChange={v => setSortKey(v as SortKey)}>
+                <SelectTrigger className="h-7 w-[110px] text-[11px] px-2">
+                  <ArrowUpDown className="w-3 h-3 mr-1 text-technical-400 flex-shrink-0" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name-az">Name A→Z</SelectItem>
+                  <SelectItem value="name-za">Name Z→A</SelectItem>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="largest">Largest First</SelectItem>
+                  <SelectItem value="smallest">Smallest First</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[10px] font-semibold uppercase tracking-wide text-technical-400">
-                Library ({drawings.length})
+                {searchQuery.trim()
+                  ? `${filteredSorted.length} of ${drawings.length} drawings`
+                  : `Library (${drawings.length})`}
               </span>
               <Button size="sm" variant="ghost" className="h-5 px-1 text-[10px]"
                 onClick={() => invalidate()}>
@@ -391,8 +446,13 @@ export default function DrawingsBrowserPanel({ compact = false }: DrawingsBrowse
                 <XCircle className="w-3 h-3" />{deleteError}
               </p>
             )}
+            {filteredSorted.length === 0 && searchQuery.trim() && (
+              <div className="text-xs text-technical-400 py-3 text-center border border-dashed border-technical-200 dark:border-technical-700 rounded-lg">
+                No drawings match <span className="font-mono font-medium">"{searchQuery}"</span>
+              </div>
+            )}
             <div className="space-y-0.5">
-              {drawings.map((drawing) => {
+              {filteredSorted.map((drawing) => {
                 const isDeleting    = deleting === drawing.filename;
                 const isConfirming  = confirmingDelete === drawing.filename;
                 return (
