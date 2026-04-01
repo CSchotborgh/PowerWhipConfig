@@ -331,6 +331,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await fs.promises.mkdir('./tmp/uploads', { recursive: true });
   await fs.promises.mkdir(DRAWINGS_DIR, { recursive: true });
 
+  // Auto-import any PDFs already present in attached_assets into the drawings library
+  try {
+    const attachedDir = path.resolve(__dirname, '..', 'attached_assets');
+    const attachedFiles = await fs.promises.readdir(attachedDir);
+    for (const f of attachedFiles) {
+      if (!/\.(pdf|PDF)$/.test(f)) continue;
+      const destPath = path.join(DRAWINGS_DIR, f);
+      try {
+        await fs.promises.access(destPath);
+        // Already copied, skip
+      } catch {
+        await fs.promises.copyFile(path.join(attachedDir, f), destPath);
+        console.log(`Drawing imported: ${f}`);
+      }
+    }
+  } catch {
+    // attached_assets may not exist — silently skip
+  }
+
   // Apply rate limiting to expensive file-processing endpoints
   app.use('/api/excel/upload', excelRateLimit);
   app.use('/api/excel/transform', excelRateLimit);
@@ -3692,9 +3711,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .filter(f => f.toLowerCase().endsWith('.pdf'))
         .map(filename => {
           const stats = fs.statSync(path.join(DRAWINGS_DIR, filename));
+          const displayName = filename
+            .replace(/^\d+_/, '')           // strip our upload timestamp prefix
+            .replace(/_\d{13}(\.\w+)$/, '$1'); // strip Replit attachment timestamp suffix
           return {
             filename,
-            displayName: filename.replace(/^\d+_/, ''), // strip timestamp prefix
+            displayName,
             uploadedAt: stats.mtime.toISOString(),
             size: stats.size,
           };

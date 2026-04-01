@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Search, Plug, Shield, Zap, Cable, Settings, Package, Tag, Wrench, Terminal, X, Filter, Edit3, Check } from 'lucide-react';
+import { DrawingButton } from './DrawingButton';
 import type { ElectricalComponent } from '@shared/schema';
 
 interface ExpandedComponentLibraryProps {
@@ -601,9 +602,15 @@ export function ExpandedComponentLibrary({ onAddComponent }: ExpandedComponentLi
                               </div>
                               
                               {(component.specifications as any)?.partNumber && (
-                                <p className="text-xs text-muted-foreground mb-1 font-mono">
-                                  P/N: {(component.specifications as any).partNumber}
-                                </p>
+                                <div className="flex items-center gap-1 mb-1">
+                                  <p className="text-xs text-muted-foreground font-mono">
+                                    P/N: {(component.specifications as any).partNumber}
+                                  </p>
+                                  <DrawingButton
+                                    partNumber={(component.specifications as any).partNumber}
+                                    size="xs"
+                                  />
+                                </div>
                               )}
                               
                               {(component.specifications as any)?.description && (

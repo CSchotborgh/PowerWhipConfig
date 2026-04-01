@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Grid, Layers, Settings, RotateCcw, Save, Undo, ZoomIn, ZoomOut } from "lucide-react";
+import { Grid, Layers, Settings, RotateCcw, Save, Undo, ZoomIn, ZoomOut, FileText } from "lucide-react";
+import { DrawingViewer } from "./DrawingViewer";
 import { cn } from "@/lib/utils";
 import { useDesignCanvas } from "@/contexts/DesignCanvasContext";
 
@@ -30,6 +31,7 @@ interface DesignCanvasProps {
 export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
   const { droppedComponents, setDroppedComponents, addComponent, removeComponent, updateComponent } = useDesignCanvas();
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
+  const [drawingViewerPartNumber, setDrawingViewerPartNumber] = useState<string | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
   const [viewMode, setViewMode] = useState<"design" | "configurator" | "excel">("design");
   const [isDraggingComponent, setIsDraggingComponent] = useState(false);
@@ -461,9 +463,20 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
                   <label className="text-sm font-medium text-technical-700 dark:text-technical-300">
                     Part Number
                   </label>
-                  <p className="text-sm text-technical-900 dark:text-technical-100 mt-1 font-mono">
-                    {selectedComponentData.partNumber}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-sm text-technical-900 dark:text-technical-100 font-mono flex-1">
+                      {selectedComponentData.partNumber}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-6 px-2 text-xs gap-1"
+                      onClick={() => setDrawingViewerPartNumber(selectedComponentData.partNumber!)}
+                    >
+                      <FileText className="w-3 h-3" />
+                      Drawing
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -505,6 +518,15 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Drawing Viewer dialog */}
+      {drawingViewerPartNumber && (
+        <DrawingViewer
+          partNumber={drawingViewerPartNumber}
+          open={!!drawingViewerPartNumber}
+          onClose={() => setDrawingViewerPartNumber(null)}
+        />
       )}
 
       {/* Floating Component Library Panel */}

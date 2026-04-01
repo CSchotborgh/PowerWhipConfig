@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Search, ChevronDown, ChevronRight, Zap, Cable, Box, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DrawingButton } from "./DrawingButton";
 
 interface ExcelComponent {
   partNumber?: string;
@@ -116,7 +117,7 @@ export default function EnhancedComponentLibrary() {
         }}
       >
         <div className="space-y-2">
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-1">
             <div className="flex-1 min-w-0">
               <h4 className="text-sm font-medium text-technical-900 dark:text-technical-100 truncate">
                 {component.description || 'No Description'}
@@ -127,11 +128,16 @@ export default function EnhancedComponentLibrary() {
                 </p>
               )}
             </div>
-            {component.availability && (
-              <Badge variant="secondary" className="ml-2 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                Available
-              </Badge>
-            )}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {component.partNumber && (
+                <DrawingButton partNumber={component.partNumber} size="xs" />
+              )}
+              {component.availability && (
+                <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                  Available
+                </Badge>
+              )}
+            </div>
           </div>
           
           {component.specifications && Object.keys(component.specifications).length > 0 && (
