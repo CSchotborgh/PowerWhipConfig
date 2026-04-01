@@ -1,438 +1,527 @@
-# ⚡ Power Whip Configuration Tool
+# Power Whip Configuration Tool
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-5.x-purple.svg)](https://vitejs.dev/)
 
-> **A next-generation electrical engineering platform** designed for professionals to configure, design, validate, and document custom electrical power whip assemblies with AI-powered pattern recognition, real-time NEC compliance validation, and comprehensive Excel integration.
-
-![Power Whip Configuration Tool](https://via.placeholder.com/800x400/1a1a1a/ffffff?text=⚡+Power+Whip+Configuration+Tool+⚡)
+> A professional electrical engineering platform designed for electrical engineers, technicians, and procurement teams to configure, design, validate, and document custom electrical power whip assemblies — with AI-powered pattern recognition, real-time NEC compliance validation, comprehensive Excel integration, and an Adobe After Effects-style docking panel workspace.
 
 ---
 
-## 🚀 Revolutionary Features
+## Table of Contents
 
-### 🎯 **Smart Movable Panel System**
-- **Complete UI Freedom**: Drag panels anywhere on screen, resize to fit your workflow
-- **Professional Layout**: Replace fixed sidebars with intelligent floating interfaces  
-- **Context-Aware Panels**: Each panel remembers position and adapts to content
-- **Multi-Monitor Support**: Spread panels across multiple displays
-
-### 🧠 **AI-Powered Pattern Recognition**
-- **Natural Language Processing**: Convert "860 power whips total" into structured patterns
-- **Multi-Sheet Analysis**: Scan all Excel sheets regardless of naming conventions
-- **Pattern Deduplication**: Intelligent handling of 800+ patterns with reverse-order processing
-- **Smart Component Mapping**: Automatic NEMA, IEC, L-series connector identification
-
-### ⚡ **Live NEC Compliance Validation**
-- **Real-Time Calculations**: Voltage drop, thermal analysis, ampacity checking
-- **Three Validation Modes**: Live, Static Display, or Hidden
-- **Code Compliance**: Automatic NEC standard verification
-- **Safety Margins**: Temperature and electrical safety analysis
-
-### 🎨 **Visual Design Canvas** 
-- **Intelligent Export**: 150px proximity grouping with connector/receptacle priority
-- **Spatial Parsing**: Convert 2D layouts to structured order entry format
-- **PreSal Compatibility**: Professional 50+ column export structure
-- **Undo/Redo System**: Complete design history with keyboard shortcuts
-
-### 🔧 **Dynamic Component Library**
-- **Live Specification Editing**: Click any field to edit (voltage, current, wire gauge, price)
-- **Contextual Permissions**: Different edit capabilities by component type
-- **Automatic Variant Creation**: Each edit creates permanent new components
-- **50+ Components**: NEMA, IEC, L-series, protection devices, wire/cable
-
-### 📊 **Professional Order Entry**
-- **Three Interface Options**: Standard, Performance (virtualized), AG-Grid
-- **Excel-Like Experience**: Copy/paste, cell editing, filtering, sorting
-- **Floating Panel Access**: No redundant interfaces, single optimized workflow
-- **Export Integration**: Generate professional documentation packages
-
-### 🚄 **Ultra-Fast Performance**
-- **Excel Processing**: <5 seconds cached, <100ms natural language, <50ms patterns
-- **Design Canvas Export**: Optimized from 11+ seconds to 31ms
-- **Virtualized Rendering**: Handle 1000+ components smoothly
-- **Intelligent Caching**: 5-minute Excel parsing cache system
+- [What Is This Tool?](#what-is-this-tool)
+- [Major Modules](#major-modules)
+- [System Architecture](#system-architecture)
+- [Design Canvas](#design-canvas-module)
+- [Component Library](#component-library-module)
+- [Excel Transformer & DCN Transformation](#excel-transformer--dcn-transformation)
+- [Order Entry](#order-entry-module)
+- [Panel System](#panel-system)
+- [NEC Compliance Validation](#nec-compliance-validation)
+- [Technical Complexity & Performance](#technical-complexity--performance)
+- [Quick Start Guide](#quick-start-guide)
+- [API Reference](#api-reference)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## 🏗️ System Architecture
+## What Is This Tool?
 
-### Frontend Stack
-```
-React 18 + TypeScript
-├── UI Framework: shadcn/ui (Radix UI)
-├── Styling: Tailwind CSS
-├── State Management: TanStack Query + React Context
-├── Routing: Wouter
-├── Forms: React Hook Form + Zod
-└── Build Tool: Vite
-```
+The Power Whip Configuration Tool is a full-stack web application for designing and documenting electrical power whip assemblies used in data centers, manufacturing plants, commercial buildings, and industrial installations.
 
-### Backend Stack
-```
-Node.js + Express.js
-├── Database: PostgreSQL (Neon Serverless)
-├── ORM: Drizzle ORM
-├── Validation: Zod Schemas
-├── Session: Express Sessions
-└── File Processing: xlsx, papaparse
-```
+**Target users:**
+- **Electrical Engineers**: Design assemblies, validate NEC compliance, generate Bill of Materials
+- **Technicians**: Configure existing assemblies, browse and customize components
+- **Procurement Teams**: Generate structured order entry output from Excel files or design canvases
 
-### Database Schema
-```sql
-powerWhipConfigurations  -- Main configurations
-├── electricalComponents -- Component library
-├── excelFormulaLibrary  -- Reusable Excel formulas
-├── excelPatternLibrary  -- Pattern recognition data
-├── excelFileArchive     -- Uploaded file metadata
-└── componentDataSources -- Multi-source data integration
-```
+Core capabilities at a glance:
+
+| Capability | Summary |
+|---|---|
+| Visual Design Canvas | Drag-and-drop workspace for spatial component arrangement |
+| Component Library | 50+ live-editable NEMA/IEC/L-series components |
+| Excel Transformer | Converts DCN input files to SAL-0y Configurator format |
+| Order Entry | AG-Grid professional interface with Excel-like experience |
+| Docking Panel System | Adobe AE-style floating panels with magnetic edge snapping |
+| NEC Validation | Real-time voltage drop, thermal, and ampacity calculations |
 
 ---
 
-## 📊 System Architecture Diagrams
+## Major Modules
 
-### 🎯 **Movable Panel System Architecture**
+### Design Canvas Module
 
-```mermaid
-graph TB
-    subgraph "Header Controls"
-        HC[Panel Controls] --> CL[Component Library]
-        HC --> CD[Configuration Details]
-        HC --> ET[Excel Transformer]
-        HC --> SA[Specifications & Analysis]
-        HC --> OE[Order Entry]
-        HC --> VP[Validation Panel]
-    end
-    
-    subgraph "Floating Panel Manager"
-        PM[Panel Manager Context] --> DP[Draggable Panel]
-        DP --> RS[Resize System]
-        DP --> PS[Position State]
-        DP --> MM[Minimize/Maximize]
-    end
-    
-    subgraph "Panel Interactions"
-        CL --> DC[Design Canvas]
-        ET --> PR[Pattern Recognition]
-        OE --> AG[AG-Grid Interface]
-        VP --> NEC[NEC Validation]
-    end
-    
-    HC --> PM
-    PM --> DC
-```
+The Design Canvas is an interactive 2D layout workspace where engineers place and arrange electrical components to represent a real installation.
 
-### 🧠 **AI Pattern Recognition Flow**
+**Key behaviors:**
+- Drag components from the Component Library onto the canvas
+- Reposition with pixel precision; supports zoom 25%–300%
+- Full undo/redo history (Ctrl+Z)
+- Export to XLSX in PreSal format using intelligent spatial parsing
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant UI as Upload Interface
-    participant MS as Multi-Sheet Scanner
-    participant PR as Pattern Recognition
-    participant NLP as Natural Language Processor
-    participant DB as Component Database
-    participant EX as Export Engine
-    
-    U->>UI: Upload Excel File / Enter Text
-    UI->>MS: Scan All Sheets
-    MS->>MS: Identify Sheet Types (Row-3, Sheet1, etc.)
-    MS->>PR: Extract Patterns
-    
-    par Pattern Analysis
-        PR->>PR: NEMA Recognition (460C9W, L6-30R)
-        PR->>PR: IEC Detection (CS8269A series)
-        PR->>PR: Cable/Conduit Mapping (MMC, FMC, SO)
-        PR->>PR: Length Identification
-    and Natural Language
-        PR->>NLP: "860 power whips total"
-        NLP->>NLP: Parse Quantities & Distribution
-        NLP->>NLP: Generate Structured Patterns
-    end
-    
-    PR->>DB: Query Component Specifications
-    DB-->>PR: Return Matched Components
-    PR->>EX: Generate Transformed Output
-    EX-->>U: Structured Order Entry Format
-```
-
-### ⚡ **Live Validation Architecture**
-
-```mermaid
-graph LR
-    subgraph "Validation Engine"
-        VE[Validation Engine] --> VD[Voltage Drop Calculator]
-        VE --> TA[Thermal Analysis]
-        VE --> AC[Ampacity Calculator]
-        VE --> NEC[NEC Compliance Checker]
-    end
-    
-    subgraph "Data Sources"
-        CL[Component Library] --> VE
-        DC[Design Canvas] --> VE
-        OE[Order Entry] --> VE
-        CF[Configuration Form] --> VE
-    end
-    
-    subgraph "Validation Modes"
-        VE --> LV[Live Mode: Real-time calculations]
-        VE --> SV[Static Mode: Cached results]
-        VE --> HV[Hidden Mode: Background processing]
-    end
-    
-    subgraph "Results Display"
-        LV --> SUCCESS[✓ Green: Compliant]
-        LV --> WARNING[⚠ Yellow: Marginal]
-        LV --> ERROR[✗ Red: Code Violation]
-    end
-```
-
-### 🎨 **Design Canvas Export Intelligence**
+**Export intelligence:**
+1. After clicking "Export Design Canvas", the system performs spatial analysis on all placed components
+2. Components within **150px of each other** are grouped together
+3. Connectors and receptacles act as **priority triggers** — they always start a new row in the output
+4. Output is mapped to the full **PreSal 50+ column structure**
+5. Export completes in approximately **31ms** (optimized from 11+ seconds)
 
 ```mermaid
 flowchart TD
     DC[Design Canvas] --> SA[Spatial Analysis]
     SA --> CD[Component Detection]
-    SA --> PG[Proximity Grouping: 150px threshold]
-    SA --> PR[Priority Rules: Connectors trigger rows]
-    
+    SA --> PG["Proximity Grouping: 150px threshold"]
+    SA --> PR["Priority Rules: Connectors start new rows"]
+
     CD --> SM[Specification Mapping]
-    PG --> GR[Group Relationships]  
+    PG --> GR[Group Relationships]
     PR --> LO[Logical Ordering]
-    
-    SM --> PS[PreSal Structure]
+
+    SM --> PS[PreSal 50+ Column Structure]
     GR --> PS
     LO --> PS
-    
-    PS --> C1[Column 1-10: Basic Info]
-    PS --> C2[Column 11-20: Specifications]
-    PS --> C3[Column 21-30: Electrical Data]
-    PS --> C4[Column 31-40: Physical Data]
-    PS --> C5[Column 41-50: Compliance Data]
-    
-    C1 --> EX[XLSX Export: 31ms]
-    C2 --> EX
-    C3 --> EX
-    C4 --> EX
-    C5 --> EX
-    
-    EX --> S1[Sheet 1: Order Entry]
-    EX --> S2[Sheet 2: Components]
-    EX --> S3[Sheet 3: Specifications]
-    EX --> S4[Sheet 4: Compliance]
-    EX --> S5[Sheet 5: Summary]
+
+    PS --> EX["XLSX Export (~31ms)"]
+    EX --> S1[Order Entry Sheet]
+    EX --> S2[Components Sheet]
+    EX --> S3[Specifications Sheet]
+    EX --> S4[Compliance Sheet]
+    EX --> S5[Summary Sheet]
 ```
 
 ---
 
-## 🔄 Advanced Workflow Diagrams
+### Component Library Module
 
-### 🔧 **Live Component Editing Workflow**
+The Component Library provides a browsable, live-editable catalog of 50+ electrical components.
+
+**Supported component families:**
+
+| Family | Examples | Editable Fields |
+|---|---|---|
+| NEMA Straight Blade | 5-15R, 5-20R, 14-30R | Name, Voltage, Current, Wire Gauge, Price |
+| NEMA Twist-Lock (L-series) | L6-30R, L14-30R | Name, Voltage, Current, Wire Gauge, Price |
+| Three-Phase | 460C9W, 460R9W | Name, Voltage, Current, Wire Gauge, Price |
+| IEC Pin & Sleeve (CS-series) | CS8269A, CS8369A | Name, Voltage, Current, Wire Gauge, Price |
+| Protection Devices | GFCI, AFCI, Breakers | Voltage, Current, Price |
+| Wire & Cable | SO, MC, FMC, LFMC, EMT | Wire Gauge, Price |
+| Junction Boxes | Standard, Weather Resistant | Price only |
+
+**Live editing — how it works:**
+- Click any editable field (voltage badge, current badge, wire gauge, price display)
+- Type the new value and press Enter (or Escape to cancel)
+- Every saved edit creates a **permanent new component variant** — the original is never modified
+- New variants appear in the library instantly and persist to the database
+- Editing permissions are **contextual** — protection devices cannot have their wire gauge edited; junction boxes expose only price
+
+**Workflow diagram:**
 
 ```mermaid
 sequenceDiagram
     participant U as User
     participant CL as Component Library
-    participant ED as Edit Dialog
-    participant VS as Validation System
+    participant ED as Inline Editor
+    participant VS as Validation
     participant API as Backend API
     participant DB as Database
-    
-    U->>CL: Click Editable Field (Voltage Badge)
-    CL->>ED: Show Inline Editor
-    U->>ED: Change Value (125V → 240V)
-    ED->>VS: Validate New Specification
-    
-    alt Validation Success
-        VS-->>ED: ✓ Valid Configuration
-        ED->>API: POST /api/components (Create Variant)
-        API->>DB: Insert New Component
-        DB-->>API: New Component ID
-        API-->>ED: Success Response
-        ED->>CL: Update Library Display
-        CL->>CL: Show New Component Variant
-        ED-->>U: ✓ Component Created
-    else Validation Failed  
-        VS-->>ED: ✗ Invalid Configuration
-        ED-->>U: ⚠ Show Error Message
+
+    U->>CL: Click voltage badge (e.g. 125V)
+    CL->>ED: Activate inline editor
+    U->>ED: Type new value (240V) and press Enter
+    ED->>VS: Validate specification
+
+    alt Valid
+        VS-->>ED: OK
+        ED->>API: POST /api/components
+        API->>DB: Insert variant (isCustomVariant=true)
+        DB-->>API: New component ID
+        API-->>CL: Updated component list
+        CL-->>U: New variant appears in library
+    else Invalid
+        VS-->>ED: Error
+        ED-->>U: Show error message
     end
 ```
 
-**Contextual Editing Permissions:**
-| Component Type | Name | Voltage | Current | Wire Gauge | Price | Special Rules |
-|---|---|---|---|---|---|---|
-| **NEMA Connectors** | ✓ | ✓ | ✓ | ✓ | ✓ | Full specification control |
-| **IEC Pin & Sleeve** | ✓ | ✓ | ✓ | ✓ | ✓ | International standards |
-| **Protection Devices** | ✗ | ✓ | ✓ | ✗ | ✓ | Electrical parameters only |
-| **Wire & Cable** | ✗ | ✗ | ✗ | ✓ | ✓ | Gauge and pricing |
-| **Junction Boxes** | ✗ | ✗ | ✗ | ✗ | ✓ | Price management only |
+---
 
-### 🎨 **Design Canvas Spatial Intelligence**
+### Excel Transformer & DCN Transformation
 
-```mermaid
-flowchart LR
-    subgraph "Component Placement"
-        CP[Component Placed] --> SC[Store Coordinates]
-        SC --> PA[Proximity Analysis]
-        PA --> RD[Relationship Detection]
-    end
-    
-    subgraph "Grouping Algorithm"
-        RD --> PG{Within 150px?}
-        PG -->|Yes| CG[Create Group]
-        PG -->|No| IG[Individual Component]
-        CG --> PR{Contains Connector?}
-        PR -->|Yes| NR[New Row Priority]
-        PR -->|No| SR[Same Row Group]
-    end
-    
-    subgraph "Export Structure"
-        NR --> R1[Row 1: Primary Group]
-        SR --> R1
-        IG --> R2[Row 2: Secondary Items]
-        R1 --> ES[Export Structure]
-        R2 --> ES
-        ES --> OE[Order Entry Format]
-    end
-    
-    subgraph "Performance Optimization"
-        ES --> CT[Component Tree]
-        CT --> SM[Specification Mapping]
-        SM --> 31MS[31ms Export Time]
-    end
-```
+The Excel Transformer is the most technically complex module. It processes uploaded DCN (Design Change Notice) Excel files and transforms them into the SAL-0y Configurator format used for order entry.
 
-### 📊 **Professional Order Entry Interfaces**
+#### Multi-Sheet Excel Scanning
 
-```mermaid
-graph TB
-    subgraph "Floating Order Entry Panel"
-        FP[Floating Panel] --> IO[Interface Options]
-        IO --> ST[Standard Interface]
-        IO --> PE[Performance Interface]
-        IO --> AG[AG-Grid Professional]
-    end
-    
-    subgraph "Standard Interface"
-        ST --> SF[Simple Forms]
-        ST --> BV[Basic Validation]
-        ST --> QC[Quantity Controls]
-    end
-    
-    subgraph "Performance Interface (Virtualized)"
-        PE --> VR[Virtual Rendering]
-        PE --> LS[Large Dataset Support]
-        PE --> OS[Optimized Scrolling]
-        PE --> 1K[1000+ Items]
-    end
-    
-    subgraph "AG-Grid Professional"
-        AG --> CE[Cell Editing]
-        AG --> CP[Copy/Paste Excel]
-        AG --> SF2[Sort/Filter]
-        AG --> RS[Range Selection]
-        AG --> KN[Keyboard Navigation]
-    end
-    
-    subgraph "Shared Features"
-        ST --> EX[Export Options]
-        PE --> EX
-        AG --> EX
-        EX --> XLSX[XLSX Export]
-        EX --> PDF[PDF Export]
-        EX --> CSV[CSV Export]
-    end
-```
+When an Excel file is uploaded, the system scans **all sheets regardless of their names** (Row-3, Sheet1, Row-4, etc.). It looks for:
+- Receptacle IDs (NEMA codes like `460C9W`, `L6-30R`; IEC codes like `CS8269A`)
+- Cable/Conduit Type IDs (`MMC`, `LFMC`, `FMC`, `SO`, `MC`, `EMT`)
+- Whip and Tail Length identifiers
+- General pattern identifiers
 
-### 2. Design Canvas Workflow
+The scanner processes up to **800+ patterns** including duplicates, in reverse order to ensure complete capture.
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant DC as Design Canvas
-    participant CL as Component Library
-    participant EX as Export System
-    
-    U->>CL: Select Component
-    CL->>DC: Add to Canvas
-    DC->>DC: Position Component
-    U->>DC: Arrange Layout
-    DC->>DC: Update Spatial Data
-    U->>DC: Export Design
-    DC->>EX: Generate XLSX
-    EX->>EX: Parse Components
-    EX->>EX: Apply Proximity Grouping
-    EX->>EX: Create Order Format
-    EX-->>U: Download File
-```
+#### DCN File Type Detection: CERTUSOFT vs Hornetsecurity
 
-**Design Canvas Features:**
-- **Spatial Grouping**: 150px proximity threshold for component relationships
-- **Priority Detection**: Connector/receptacle detection triggers new rows
-- **Export Parsing**: Sophisticated rules for PreSal format generation
+The transformer identifies which DCN variant was uploaded using a two-stage detection pipeline:
 
-### 3. Excel Integration Workflow
+**Stage 1 — Filename inspection:**
+- File names containing `hornetsecurity` or `q-40824` → classified as **Hornetsecurity**
+- File names containing `certusoft` or `32275` → classified as **CERTUSOFT**
+
+**Stage 2 — Content inspection** (if filename is ambiguous):
+- Scans all sheet content for vendor-specific strings
+- Falls back to standard DCN structure heuristics
+- Default fallback: **CERTUSOFT** (minimum 2-row output, scalable up to 999)
 
 ```mermaid
 sequenceDiagram
     participant U as User
     participant UI as Upload Interface
-    participant EP as Excel Parser
-    participant PR as Pattern Recognition
-    participant DB as Database
-    
-    U->>UI: Upload Excel File
-    UI->>EP: Process File
-    EP->>EP: Parse Sheets
-    EP->>PR: Analyze Patterns
-    PR->>PR: Extract Receptacles
-    PR->>PR: Identify Components
-    PR->>DB: Store Patterns
-    DB-->>PR: Success
-    PR-->>EP: Processed Data
-    EP-->>UI: Analysis Results
-    UI-->>U: Display Findings
+    participant DT as DCN Type Detector
+    participant HT as Hornetsecurity Handler
+    participant CT as CERTUSOFT Handler
+    participant EX as Output Generator
+
+    U->>UI: Upload DCN file
+    UI->>DT: Inspect filename
+    alt Filename contains "hornetsecurity" or "q-40824"
+        DT->>HT: Route to Hornetsecurity handler
+        HT->>HT: Generate 36-row template pattern
+        HT->>EX: 36 order entries
+    else Filename contains "certusoft" or "32275"
+        DT->>CT: Route to CERTUSOFT handler
+        CT->>CT: Extract actual electrical data from sheets
+        CT->>CT: Parse Master sheet, Packing Slip, Breaker List
+        CT->>EX: Actual extracted entries (adaptive count)
+    else Ambiguous filename
+        DT->>DT: Scan sheet content for vendor strings
+        DT->>CT: Default to CERTUSOFT if DCN structure detected
+        CT->>EX: Adaptive order entries
+    end
+    EX->>EX: Apply expression rules from Requirements sheet
+    EX->>EX: Generate OrderEntryResult.xlsx
+    EX-->>U: Download output file
 ```
 
-**Pattern Recognition Capabilities:**
-- **Multi-Sheet Analysis**: Scans all sheets regardless of name
-- **Receptacle Detection**: NEMA, IEC, L-series pattern matching
-- **Component Mapping**: Cable, conduit, length identification
-- **Duplicate Handling**: Comprehensive pattern capture with deduplication
+**CERTUSOFT extraction process:**
+- Scans `Master` sheet, `Packing Slip` sheet, and `Breaker List` sheet
+- Applies flexible pattern matching to identify electrical specifications
+- Extracts receptacle type, conduit type, whip length, tail length, and label color
+- Defaults conduit type to **LFMC** for CERTUSOFT files when not specified
 
-### 4. Order Entry Workflow
+**Hornetsecurity extraction process:**
+- Generates a **36-row standardized template** based on known Hornetsecurity patterns
+- Each row uses a consistent structure matching the expected output format
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant OE as Order Entry
-    participant AG as AG-Grid
-    participant Val as Validator
-    participant Ex as Exporter
-    
-    U->>OE: Input Order Data
-    OE->>AG: Populate Grid
-    AG->>Val: Validate Entries
-    Val->>Val: Check NEC Compliance
-    Val->>Val: Verify Components
-    Val-->>AG: Validation Results
-    AG-->>OE: Display Status
-    U->>OE: Export Order
-    OE->>Ex: Generate Export
-    Ex->>Ex: Apply Header Format
-    Ex->>Ex: Create 5-Sheet Structure
-    Ex-->>U: Download XLSX
+#### OrderEntryResult Output Format
+
+The output is an `.xlsx` file named `OrderEntryResult_<timestamp>.xlsx` with two sheets:
+
+**Order Entry sheet columns:**
+
+| Column | Description |
+|---|---|
+| (line number) | Auto-incremented row ID |
+| Order QTY | Quantity ordered |
+| Choose receptacle | NEMA/IEC receptacle code |
+| Cable/Conduit Type | LFMC, FMC, EMT, etc. |
+| Brand Preference | Manufacturer preference |
+| Whip Length (ft) | Primary cable run length |
+| Tail Length (ft) | Pigtail/stub length |
+| Conduit Color | Color designation |
+| Label Color (Background/Text) | Label specification |
+| building, PDU, Panel | Installation location references |
+| First/Second/Third Circuit | Electrical circuit assignments |
+| Cage, Cabinet Number | Physical location in rack/cabinet |
+| Included Breaker | Breaker specification |
+| Conductor AWG, Green AWG | Wire gauge specifications |
+| Voltage, Current | Electrical ratings |
+| Drawing number, Notes | Documentation fields |
+| Orderable Part number | Final part number for ordering |
+| Whip Parts Cost, Breaker Cost, Total parts Cost | Pricing breakdown |
+| List Price, Margin fields | Pricing tiers |
+
+**Technical Data sheet:** Contains transformation metadata, source analysis summary, and processing log.
+
+#### Pattern Parser
+
+The transformer also accepts comma-delimited pattern specifications directly via `/api/excel/parse-patterns`:
+
+```
+Input:  "460R9W, Metal Conduit, 50ft, Pigtail 10"
+Output: Structured row with receptacle=460R9W, conduit=MCC, whipLength=50, tailLength=10
+
+Input:  "L6-30R, LFMC, 25ft, 8"
+Output: Structured row with L6-30R specs + LFMC conduit, 25ft whip, 8ft tail
+```
+
+Each comma-delimited entry maps to: `receptacle, conduit type, whip length, tail length`. The parser normalizes conduit names (e.g., "Metal Conduit" → "MCC", "Liquid tight" → "LFMC") and looks up electrical specifications from a built-in receptacle database.
+
+Processing time: **<50ms** for comma-delimited patterns.
+
+#### Expression Rules (Requirements Sheet)
+
+Each transformation applies a set of expression rules derived from the SAL-0y Requirements sheet:
+
+```
+receptacle   → IF(Requirements!B4='Yes', EXTRACT_RECEPTACLE_FROM_DCN(), '')
+conduitType  → IF(Requirements!C4='Yes', EXTRACT_CONDUIT_FROM_DCN(), '')
+conduitLength → IF(Requirements!D4='Yes', EXTRACT_LENGTH_FROM_DCN(), '')
+tailLength   → IF(Requirements!E4='Yes', EXTRACT_TAIL_FROM_DCN(), '')
+labelColor   → IF(Requirements!K4='No', 'Black (conduit)', CUSTOM_LABEL_COLOR())
 ```
 
 ---
 
-## 🚀 Quick Start Guide
+### Order Entry Module
 
-### Installation & Setup
+The Order Entry module provides three interface options for entering and managing order data.
+
+| Interface | Use Case | Key Features |
+|---|---|---|
+| Standard | Small orders, basic entry | Simple forms, basic validation |
+| Performance | Large datasets (1000+ rows) | Virtualized rendering via `react-window` |
+| Order Entry | Component catalog order view | Search, filter by category, quantity controls, CSV export |
+
+**Order Entry features:**
+- Browse and search components from the Master Bubble Lookup data source by part number, description, or manufacturer
+- Filter by electrical category
+- Quantity +/- controls with running price totals per line and order summary
+- Export active order items to CSV format
+
+**Workflow:**
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant OE as Order Entry Panel
+    participant API as /api/excel/components
+    participant Cache as Component Cache
+
+    U->>OE: Open Order Entry panel
+    OE->>API: GET /api/excel/components
+    alt Cache hit (within 5 minutes)
+        API->>Cache: Read from componentCache
+        Cache-->>OE: Instant response
+    else Cache miss
+        API->>API: Load MasterBubbleUpLookup.xlsx from disk
+        API->>Cache: Store result
+        API-->>OE: Component list
+    end
+    OE-->>U: Display searchable component catalog
+    U->>OE: Set quantities and export
+    OE-->>U: Download order-entry-<date>.csv
+```
+
+---
+
+### Panel System
+
+The panel system provides a professional floating workspace inspired by Adobe After Effects — panels can float freely, dock to screen edges, and includes magnetic snapping infrastructure for edge alignment.
+
+#### Provider Hierarchy
+
+```
+ConfigurationProvider
+  └── DesignCanvasProvider          ← manages canvas state + docking state
+        └── FloatingPanelCoordinatorProvider   ← magnetic snapping for standalone panels
+              └── PanelManagerProvider         ← dynamically spawned panels (e.g. from order entry)
+                    └── ConfiguratorContent
+```
+
+#### DesignCanvasContext
+
+`DesignCanvasContext` is the central hub for the workspace layout. It manages:
+- **`droppedComponents`** — components placed on the canvas
+- **`dockedPanels`** — panels currently docked into layout zones (top/bottom/left/right)
+- **`activeDockZone`** — the dock zone currently highlighted during a drag
+- **`isDraggingPanel`** — global signal to show dock zone overlays
+
+#### FloatingPanelCoordinator
+
+`FloatingPanelCoordinatorContext` provides the infrastructure for **magnetic edge snapping** between floating panels. It does not depend on `PanelManager`.
+
+The context exposes:
+- `registerPanel(id, position, size)` — registers a panel so other panels can snap to it
+- `unregisterPanel(id)` — removes a panel from the snapping registry
+- `updatePanelPosition(id, position)` — updates a registered panel's position
+- `getSnappedPosition(id, newPosition, size)` — computes a snapped position if within 20px of any registered panel's edge
+
+Snapping logic when called:
+- Threshold: **20px** from another panel's edge
+- Snaps to: left edge, right edge, top edge, bottom edge
+- Also aligns: top-top, bottom-bottom, left-left, right-right edges
+
+Note: `DraggablePanel` calls `getSnappedPosition` via the coordinator when `enableCollision=true`, but does not currently call `registerPanel` or `updatePanelPosition`. Panel self-registration is implemented in the coordinator but is not wired into `DraggablePanel`'s lifecycle.
+
+#### DraggablePanel Component
+
+Each floating panel is rendered by `DraggablePanel`, which provides:
+- Free-form drag anywhere on screen (minimum 50px must remain visible)
+- **Adobe AE-style docking**: drag to center top/bottom/left/right zones (96px) to dock
+- Dock zone visual feedback during drag (colored overlay indicators)
+- **Grid snapping**: hold Ctrl/Cmd while dragging for 20px grid alignment
+- Corner and edge resize handles
+- Scale controls (50%–200% via Ctrl+scroll or ± buttons)
+- Pin button (disables dragging to lock position)
+- Minimize/maximize toggle
+- Z-index management (click to bring to front)
+
+#### Z-Index Hierarchy
+
+| Layer | Z-Index | Component |
+|---|---|---|
+| Design Canvas | 0 | Canvas background |
+| Top/Bottom docked panels | z-[5] | Prevents overlap with canvas |
+| Left/Right docked panels | z-10 | Side panels |
+| Floating panels (all) | 10000 | Equal priority layer |
+| Active panel (brought to front) | 10001+ | Increments on each bring-to-front |
+
+#### Docking: How it works
+
+```mermaid
+graph TB
+    subgraph "Panel Drag Flow"
+        D[Panel Drag Start] --> DZ[Check Dock Zones during drag]
+        DZ --> TZ["Top Zone: mouse Y ≤ 96px, X in middle 50%"]
+        DZ --> BZ["Bottom Zone: mouse Y ≥ screen-96px, X in middle 50%"]
+        DZ --> LZ["Left Zone: mouse X ≤ 96px, Y in middle 50%"]
+        DZ --> RZ["Right Zone: mouse X ≥ screen-96px, Y in middle 50%"]
+    end
+
+    subgraph "On Release"
+        TZ --> DOCK[dockPanel() called in DesignCanvasContext]
+        BZ --> DOCK
+        LZ --> DOCK
+        RZ --> DOCK
+        DOCK --> LAYOUT[configurator.tsx renders docked panel inline]
+        DOCK --> HIDE[DraggablePanel returns null - hidden from float layer]
+    end
+
+    subgraph "Docked Rendering"
+        LAYOUT --> TOP[Top: height = panel.size, z-5]
+        LAYOUT --> BOTTOM[Bottom: height = panel.size, z-5]
+        LAYOUT --> LEFT[Left: width = panel.size, z-10]
+        LAYOUT --> RIGHT[Right: width = panel.size, z-10]
+    end
+```
+
+Panels that can be docked: `all-features-panel`, `content-panel`, `component-library-panel`.
+PanelManager-spawned panels (dynamic) display a "cannot be docked" message when docked.
+
+---
+
+### NEC Compliance Validation
+
+The validation engine performs real-time electrical code compliance checking.
+
+**Validation modes:**
+
+| Mode | Behavior |
+|---|---|
+| Live | Recalculates on every change — for active design work |
+| Static | Displays cached results — for review and presentation |
+| Hidden | Runs in background but UI hidden — for large dataset processing |
+
+**Calculations performed:**
+- Voltage drop analysis (line loss vs NEC limits)
+- Thermal derating and safety margin analysis
+- Ampacity checking (current-carrying capacity per wire gauge)
+- Wire gauge compatibility validation
+- NEC standard verification (Article 400 and related)
+
+**Result display:**
+- Green badge: NEC compliant
+- Yellow badge: Marginal — within tolerance but close to limits
+- Red badge: Code violation or safety issue
+
+---
+
+## System Architecture
+
+### Frontend Stack
+
+```
+React 18 + TypeScript
+├── UI Framework: shadcn/ui (Radix UI primitives)
+├── Styling: Tailwind CSS with custom technical color palette
+├── State Management: TanStack Query (server) + React Context (UI)
+├── Routing: Wouter
+├── Forms: React Hook Form + Zod validation
+├── Data Grid: AG-Grid Community
+├── Virtualization: react-window (FixedSizeList)
+└── Build Tool: Vite
+```
+
+### Backend Stack
+
+```
+Node.js + Express.js
+├── Database: PostgreSQL (Neon Serverless)
+├── ORM: Drizzle ORM with Zod schemas
+├── File Upload: multer (memory storage, 200MB limit)
+├── Excel Processing: xlsx, papaparse
+└── Session: Express sessions
+```
+
+### Mermaid: Full Architecture Overview
+
+```mermaid
+graph TB
+    subgraph "Frontend"
+        DC[Design Canvas] --> DCC[DesignCanvasContext]
+        DCC --> DP[DraggablePanel]
+        DP --> FPC[FloatingPanelCoordinator]
+        FPC --> PM[PanelManager]
+        PM --> CONF[configurator.tsx]
+    end
+
+    subgraph "Backend"
+        API[Express Routes] --> ST[Storage Layer]
+        API --> EXT[ExtremeExcelTransformer]
+        API --> MPR[MultiSheetProcessor]
+        API --> RPP[ReceptaclePatternParser]
+        ST --> DB[(PostgreSQL via Neon)]
+    end
+
+    subgraph "Excel Pipeline"
+        UPLOAD[File Upload] --> EXT
+        EXT --> DCN[DCN Type Detection]
+        DCN --> |CERTUSOFT| CE[CERTUSOFT Extractor]
+        DCN --> |Hornetsecurity| HE[Hornetsecurity Generator]
+        CE --> OER[OrderEntryResult.xlsx]
+        HE --> OER
+    end
+
+    CONF --> API
+    CONF --> DC
+```
+
+### Database Schema
+
+```
+powerWhipConfigurations   -- Main power whip assembly configurations
+electricalComponents      -- Component library (NEMA, IEC, L-series, protection, wire)
+excelFormulaLibrary       -- Stored Excel formulas with complexity analysis
+excelPatternLibrary       -- Recognized patterns from uploaded files
+excelFileArchive          -- Uploaded file metadata and processing status
+componentDataSources      -- Multi-source data integration config
+```
+
+---
+
+## Quick Start Guide
+
+### Prerequisites
+
+- Node.js 20.x LTS
+- PostgreSQL database (or Neon serverless account)
+
+### Installation
+
 ```bash
 # Clone the repository
 git clone <repository-url>
@@ -441,1370 +530,281 @@ cd power-whip-configuration-tool
 # Install dependencies
 npm install
 
-# Set up PostgreSQL database
+# Configure environment variables
+DATABASE_URL=postgresql://username:password@host:5432/powerwhip
+NODE_ENV=development
+
+# Push database schema
 npm run db:push
 
-# Start development server
+# Start development server (frontend + backend on same port)
 npm run dev
-# → Application runs on http://localhost:5000
+# → Application available at http://localhost:5000
 ```
 
-### Environment Variables
-```bash
-# Required environment variables
-DATABASE_URL=postgresql://username:password@localhost:5432/powerwhip
-NODE_ENV=development
-SESSION_SECRET=your-secret-key-here
-```
+### Using the Tool: Step-by-Step
+
+#### 1. Design a Power Whip Assembly
+1. Open the **Component Library** panel from the header
+2. Browse or search for components (e.g., "L6-30R", "LFMC")
+3. Click the ⚡ button or drag a component onto the **Design Canvas**
+4. Arrange components to represent the physical installation layout
+5. Place related components within 150px for automatic grouping in export
+6. Click **Export Design Canvas** to download an XLSX in PreSal format
+
+#### 2. Transform a DCN Excel File
+1. Open the **Excel Transformer** panel
+2. Upload your DCN `.xlsx` file (CERTUSOFT or Hornetsecurity format)
+3. The system detects the file type automatically
+4. Review the transformation log
+5. Download the `OrderEntryResult.xlsx` output file
+
+#### 3. Enter Orders Manually
+1. Open the **Order Entry** panel
+2. Select **AG-Grid** interface for an Excel-like experience
+3. Enter data directly or paste from Excel
+4. Validation indicators update in real-time
+5. Export when complete
+
+#### 4. Edit a Component
+1. In the **Component Library**, find a component
+2. Click any editable field (voltage, current, wire gauge, price)
+3. Type the new value and press Enter
+4. A new permanent variant is created and appears in the library
+
+#### 5. Dock Panels for a Fixed Layout
+1. Drag any panel by its title bar
+2. Move toward the top, bottom, left, or right edge of the screen
+3. When the dock zone highlights, release the mouse
+4. The panel becomes part of the fixed layout surrounding the canvas
+5. Click **Undock** to return it to floating mode
 
 ---
 
-## 📖 Comprehensive Feature Guide
+## Technical Complexity & Performance
 
-### 🎯 **Movable Panel System**
+### Pre-compiled Regex Pattern Engine
 
-**Revolutionary UI Design**: Replace traditional fixed sidebars with complete panel freedom
+The receptacle identification engine uses pre-compiled regex patterns to achieve sub-millisecond pattern matching:
 
-#### Panel Management
-```
-Header Controls → Manage all panels from single location
-├── Component Library    # Browse and edit electrical components
-├── Configuration Details # Basic power whip settings  
-├── Excel Transformer   # Pattern recognition and data conversion
-├── Specifications      # Advanced analysis and validation
-├── Order Entry        # Professional order management
-└── Validation Panel   # Real-time NEC compliance checking
-```
-
-#### How to Use Panels:
-1. **Open Panels**: Click panel buttons in header controls
-2. **Move Panels**: Drag by title bar to any screen location
-3. **Resize Panels**: Use corner handles to adjust dimensions
-4. **Minimize/Maximize**: Click panel control buttons
-5. **Multi-Monitor**: Drag panels across multiple displays
-
----
-
-### 🔧 **Component Library Module**
-
-**Dynamic Electrical Component Management with Live Editing**
-
-#### Supported Component Types
-| Component Type | Editable Fields | Special Features |
-|---|---|---|
-| **Connectors & Receptacles** | Name, Voltage, Current, Wire Gauge, Price | Full specification editing |
-| **Protection Devices** | Voltage, Current, Price | Electrical parameter editing |
-| **Wire & Cable** | Wire Gauge, Price | Gauge specification editing |
-| **Junction Boxes** | Price Only | Limited editing permissions |
-| **Conduit Systems** | Price Only | Cost management only |
-
-#### Live Editing Workflow
-1. **Browse Components**: 
-   - Navigate accordion categories (Connectors, Protection, Wire/Cable)
-   - Use search to filter across all specifications
-   - Auto-expand categories during search
-
-2. **Edit Specifications** (Click to Edit):
-   ```
-   Component Name → Click title → Edit → Auto-save variant
-   Voltage Rating → Click badge → 125V → 240V → Create new component
-   Current Rating → Click badge → 15A → 20A → Permanent variant  
-   Wire Gauge → Click badge → 12 AWG → 10 AWG → New specification
-   Price → Click display → $12.50 → $15.99 → Updated pricing
-   ```
-
-3. **Variant Creation**:
-   - Every edit creates a permanent new component
-   - Original component remains unchanged
-   - New variants appear in library instantly
-   - Contextual editing based on component category
-
-4. **Design Integration**:
-   - Click ⚡ button to add to Design Canvas
-   - Drag components from library to canvas
-   - Components maintain all edited specifications
-
-#### Key Features:
-- **Real-time editing**: No forms, click and edit directly
-- **Contextual permissions**: Different fields editable per component type
-- **Visual feedback**: Hover states indicate editable fields
-- **Keyboard shortcuts**: Enter to save, Escape to cancel
-- **Search integration**: Find components by any specification
-
----
-
-### 🎨 **Design Canvas Module**
-
-**Visual Electrical Layout Design with Intelligent Export**
-
-#### Core Design Features
-- **Drag & Drop**: Add components from library or floating panel
-- **Spatial Arrangement**: Position components with pixel precision
-- **Proximity Grouping**: 150px threshold for automatic component relationships
-- **Undo/Redo System**: Complete design history (Ctrl+Z support)
-- **Zoom Controls**: 25% to 300% with mouse wheel support
-
-#### Intelligent Export System
-```
-Design Canvas → Spatial Analysis → Order Entry Format
-├── Component Detection    # Identify all placed components
-├── Proximity Grouping    # Group components within 150px
-├── Priority Rules        # Connectors/receptacles trigger new rows
-├── Specification Mapping # Extract all component specifications  
-└── PreSal Format        # Generate 50+ column professional structure
-```
-
-#### Export Features:
-- **Performance Optimized**: 31ms export time (down from 11+ seconds)
-- **Spatial Intelligence**: Convert 2D layouts to structured data
-- **Priority Detection**: Electrical connectors create logical groupings
-- **Professional Format**: Compatible with PreSal industry standards
-- **5-Sheet Structure**: Complete documentation package
-
-#### Usage Workflow:
-1. **Component Placement**: Drag from Component Library or click ⚡ buttons
-2. **Spatial Design**: Arrange components to represent actual electrical layout
-3. **Grouping Strategy**: Place related components within 150px for auto-grouping
-4. **Export Design**: Click "Export Design Canvas" in header for XLSX generation
-
----
-
-### 🧠 **Excel Integration & Pattern Recognition**
-
-**AI-Powered Data Processing with Natural Language Understanding**
-
-#### Multi-Source Data Architecture
-```
-Data Sources
-├── Excel Files (.xlsx)     # Upload and analyze existing designs
-├── Web URLs               # Remote data integration  
-├── External APIs          # Odoo, ERP system connections
-└── Manual Entry          # Direct component specification
-```
-
-#### Pattern Recognition Engine
-- **Multi-Sheet Scanning**: Analyze ALL sheets regardless of names (Row-3, Sheet1, etc.)
-- **Pattern Categories**:
-  ```
-  Receptacle IDs     → NEMA: 460C9W, 5-20R, L6-30R | IEC: CS8269A series
-  Cable/Conduit Types → MMC, LFMC, FMC, SO, MC, EMT specifications
-  Length Identifiers → Whip lengths, tail lengths, custom measurements
-  General Patterns   → Natural language specifications and requirements
-  ```
-
-#### Natural Language Processing
-```bash
-# Input Examples:
-"860 power whips total" → Structured pattern: 860 units with equal distribution
-"25 L6-30R receptacles with 12 AWG wire" → Component mapping with specifications
-"Data center power distribution" → Context-aware component suggestions
-```
-
-#### Processing Performance
-- **Pattern Recognition**: <50ms for comma-delimited patterns
-- **Natural Language**: <100ms for complex specifications  
-- **Excel Analysis**: <5 seconds with 5-minute intelligent caching
-- **Duplicate Handling**: 800+ patterns with reverse-order processing
-
-#### Usage Guide:
-1. **File Upload**: Drag & drop .xlsx files or browse
-2. **Pattern Analysis**: Automatic detection and categorization
-3. **Data Extraction**: View parsed components and specifications
-4. **Transform Data**: Convert to structured order entry format
-5. **Export Results**: Generate professional documentation
-
----
-
-### 📊 **Order Entry Module**
-
-**Professional Order Management with Three Interface Options**
-
-#### Interface Options
-| Interface | Use Case | Key Features |
-|---|---|---|
-| **Standard** | Basic order entry | Simple form-based input, validation |
-| **Performance** | Large datasets (1000+ items) | Virtualized rendering, optimized scrolling |
-| **AG-Grid** | Excel-like experience | Copy/paste, cell editing, advanced filtering |
-
-#### AG-Grid Professional Features
-```
-Excel-Like Experience
-├── Cell Editing        # Click any cell to edit with validation
-├── Copy/Paste         # Full Excel clipboard integration
-├── Sorting/Filtering  # Advanced data management tools
-├── Range Selection    # Multi-cell operations and formulas
-├── Keyboard Navigation # Excel shortcuts and hotkeys
-└── Export Options     # Professional documentation generation
-```
-
-#### Order Management Workflow
-1. **Data Input**: 
-   - Manual entry in AG-Grid interface
-   - Import from Excel pattern recognition
-   - Auto-populate from component library
-   - Bulk operations with copy/paste
-
-2. **Real-Time Validation**:
-   - Component availability checking
-   - Price calculation and totals
-   - Specification compliance verification
-   - NEC code validation integration
-
-3. **Professional Export**:
-   - Multi-format exports (XLSX, PDF, CSV)
-   - Custom templates and headers
-   - Order summary and totals
-   - Compliance documentation
-
-#### Advanced Features:
-- **Floating Panel Access**: Single optimized interface, no redundancy
-- **Component Integration**: Direct connection to component library
-- **Validation Integration**: Real-time NEC compliance checking
-- **Export Flexibility**: Multiple format options with custom templates
-
----
-
-### ⚡ **Live Validation System**
-
-**Real-Time NEC Compliance with Electrical Engineering Calculations**
-
-#### Validation Modes
-| Mode | Description | Use Case |
-|---|---|---|
-| **Live** | Real-time calculations and validation | Active design work |
-| **Static** | Display cached validation results | Review and presentation |
-| **Hidden** | Validation runs but UI hidden | Background processing |
-
-#### Electrical Calculations
-```
-NEC Compliance Engine
-├── Voltage Drop Analysis    # Line loss calculations and limits
-├── Thermal Analysis        # Temperature derating and safety margins  
-├── Ampacity Calculations   # Current-carrying capacity verification
-├── Wire Gauge Compatibility # Gauge vs. current rating validation
-├── Code Compliance        # National Electrical Code standard checks
-└── Safety Margins         # Engineering safety factor analysis
-```
-
-#### Validation Results Display
-- **Success Indicators**: Green badges for compliant configurations
-- **Warning States**: Yellow alerts for marginal but acceptable conditions  
-- **Error Conditions**: Red alerts for code violations or safety issues
-- **Detailed Analysis**: Hover tooltips with calculation details
-
-#### Integration Points:
-- **Component Library**: Validate specifications during editing
-- **Design Canvas**: Spatial validation of component relationships
-- **Order Entry**: Real-time validation during data entry
-- **Export System**: Include compliance documentation in outputs
-
-#### 🎨 Design Canvas Module
-
-**Purpose**: Visual design and spatial arrangement of electrical components
-
-**How to Use:**
-1. **Add Components**: Drag from Component Library or click ⚡ button
-2. **Position Elements**: Drag components to desired locations
-3. **Group Related Items**: Place related components within 150px for auto-grouping
-4. **Export Design**: Click "Export Design Canvas" for XLSX generation
-
-**Export Features:**
-- **Spatial Parsing**: Components grouped by proximity
-- **Priority Rules**: Connectors/receptacles trigger new rows
-- **PreSal Format**: Professional 50+ column structure
-- **5-Sheet Export**: Complete documentation package
-
-#### 📊 Excel Integration Module
-
-**Purpose**: Process and analyze Excel files for component data
-
-**How to Use:**
-1. **Upload Files**: Drag & drop or browse for .xlsx files
-2. **Pattern Analysis**: Automatic detection of electrical patterns
-3. **Data Extraction**: View parsed components and specifications
-4. **Transform Data**: Convert patterns to structured format
-
-**Supported Patterns:**
-- **NEMA Standards**: 460C9W, 460R9W, 5-20R, L6-30R
-- **IEC Pin & Sleeve**: CS8269A series
-- **Cable Types**: MMC, LFMC, FMC, SO, MC, EMT
-- **Custom Patterns**: User-defined electrical specifications
-
-#### 📋 Order Entry Module
-
-**Purpose**: Professional order management with validation
-
-**How to Use:**
-1. **Data Input**: Enter order details in AG-Grid interface
-2. **Validation**: Real-time NEC compliance checking
-3. **Component Lookup**: Auto-populate from component library
-4. **Export Orders**: Generate professional order documentation
-
-**AG-Grid Features:**
-- **Excel-like Interface**: Familiar spreadsheet experience
-- **Cell Editing**: Click-to-edit with validation
-- **Sorting & Filtering**: Advanced data management
-- **Copy/Paste**: Bulk data operations
-
-### 🎯 Panel Management
-
-**Movable Panel System:**
-- **Drag Panels**: Click title bar and drag anywhere
-- **Resize**: Use corner handles to adjust size
-- **Minimize/Maximize**: Click panel controls
-- **Reset Layout**: Use header controls to restore defaults
-
----
-
-## 📁 Detailed Project Architecture
-
-### 🏗️ **Frontend Architecture**
-```
-client/src/
-├── components/                 # React Component Library
-│   ├── panels/                # Floating Panel System
-│   │   ├── DraggablePanel.tsx           # Core draggable container
-│   │   ├── PanelControls.tsx            # Header panel management
-│   │   ├── FloatingComponentLibrary.tsx # Component browser panel
-│   │   ├── FloatingOrderEntryPanel.tsx  # Order entry panel
-│   │   ├── ConfigurationDetailsPanel.tsx # Configuration panel
-│   │   └── SpecificationsAnalysisPanel.tsx # Analysis panel
-│   ├── library/               # Component Library System
-│   │   ├── ExpandedComponentLibrary.tsx # Main library interface
-│   │   ├── ComponentLibrary.tsx         # Basic library view
-│   │   └── EditableComponentCard.tsx    # Live editing interface
-│   ├── canvas/                # Design Canvas System
-│   │   ├── DesignCanvas.tsx             # Main canvas interface
-│   │   ├── CanvasComponent.tsx          # Draggable canvas elements
-│   │   └── DesignCanvasExportButton.tsx # Export functionality
-│   ├── excel/                 # Excel Integration
-│   │   ├── ExcelTransformer.tsx         # Pattern recognition
-│   │   ├── AGGridExcelViewer.tsx        # Excel-like interface
-│   │   ├── ExcelFileViewer.tsx          # File analysis
-│   │   └── ExcelLikeInterface.tsx       # Professional Excel UI
-│   ├── order/                 # Order Entry System
-│   │   ├── AGGridOrderEntry.tsx         # Professional grid interface
-│   │   ├── PerformanceOrderEntry.tsx    # Virtualized performance view
-│   │   └── VirtualizedOrderEntry.tsx    # Large dataset handling
-│   ├── validation/            # Validation System
-│   │   ├── ValidationOptions.tsx        # Validation mode selector
-│   │   └── ValidationStatus.tsx         # Real-time status display
-│   └── ui/                    # shadcn/ui Components
-├── contexts/                  # State Management
-│   ├── ConfigurationContext.tsx        # Global configuration state
-│   ├── DesignCanvasContext.tsx         # Canvas state management
-│   └── PanelManagerContext.tsx         # Panel positioning state
-├── hooks/                     # Custom React Hooks
-│   ├── use-mobile.tsx                  # Mobile responsiveness
-│   ├── use-toast.tsx                   # Notification system
-│   └── use-panel-state.tsx             # Panel state management
-├── lib/                       # Utility Functions
-│   ├── utils.ts                        # General utilities
-│   ├── queryClient.ts                  # TanStack Query setup
-│   ├── electricalCalculations.ts      # NEC compliance calculations
-│   └── exportUtils.ts                  # Export functionality
-└── types/                     # TypeScript Definitions
-    ├── component.ts                    # Component library types
-    ├── panel.ts                        # Panel system types
-    └── validation.ts                   # Validation system types
-```
-
-### 🖥️ **Backend Architecture**
-```
-server/
-├── core/                      # Core Business Logic
-│   ├── routes.ts                       # API endpoint definitions
-│   ├── index.ts                        # Express server setup
-│   ├── storage.ts                      # Data persistence layer
-│   └── db.ts                          # Database connection
-├── excel/                     # Excel Processing Engine
-│   ├── excelParser.ts                  # File parsing and analysis
-│   ├── analyzeExcel.js                 # Pattern recognition logic
-│   ├── analyzeLookupFile.js           # Lookup table processing
-│   ├── excelFormulaExtractor.ts       # Formula extraction
-│   └── multiSheetProcessor.ts         # Multi-sheet analysis
-├── export/                    # Export System
-│   ├── designCanvasExport.ts          # Canvas to XLSX conversion
-│   └── exportUtils.ts                 # Export utility functions
-└── data/                      # Data Management
-    ├── dataSourceManager.ts           # Multi-source data integration
-    └── componentDataSources.ts        # Component data handling
-```
-
-### 🗄️ **Database Schema Architecture**
-```sql
--- Core Configuration Tables
-powerWhipConfigurations {
-  id: uuid PRIMARY KEY
-  name: varchar(255)
-  voltage: integer
-  current: integer
-  wireGauge: varchar(10)
-  specifications: jsonb
-  createdAt: timestamp
-  updatedAt: timestamp
-}
-
--- Component Library System
-electricalComponents {
-  id: uuid PRIMARY KEY
-  name: varchar(255) NOT NULL
-  type: varchar(50) NOT NULL        -- connector, protection, wire, etc.
-  category: varchar(100)            -- NEMA, IEC, L-series, etc.
-  partNumber: varchar(100)
-  voltage: integer
-  current: integer
-  wireGauge: varchar(10)
-  price: decimal(10,2)
-  specifications: jsonb             -- Flexible specification storage
-  manufacturer: varchar(255)
-  isCustomVariant: boolean DEFAULT false
-  parentComponentId: uuid           -- Reference to original component
-  createdAt: timestamp
-}
-
--- Excel Processing & Pattern Recognition  
-excelFormulaLibrary {
-  id: uuid PRIMARY KEY
-  fileName: varchar(255)
-  sheetName: varchar(255)
-  formula: text
-  category: varchar(100)            -- calculation, lookup, validation
-  complexity: integer               -- 1-5 complexity rating
-  dependencies: jsonb               -- Formula dependencies
-  description: text
-  extractedAt: timestamp
-}
-
-excelPatternLibrary {
-  id: uuid PRIMARY KEY
-  fileName: varchar(255)
-  sheetName: varchar(255)
-  patternType: varchar(50)          -- receptacle, cable, length, etc.
-  originalPattern: varchar(255)    -- Raw pattern from Excel
-  normalizedPattern: varchar(255)  -- Standardized pattern
-  componentMapping: jsonb           -- Mapped component specifications
-  frequency: integer                -- Pattern occurrence count
-  extractedAt: timestamp
-}
-
--- File Archive & Data Sources
-excelFileArchive {
-  id: uuid PRIMARY KEY
-  fileName: varchar(255)
-  originalName: varchar(255)
-  fileSize: bigint
-  uploadedAt: timestamp
-  processingStatus: varchar(50)     -- pending, processing, completed, error
-  extractedData: jsonb              -- Processed file data
-  patternCount: integer             -- Number of patterns found
-  errorLog: text                    -- Processing error information
-}
-
-componentDataSources {
-  id: uuid PRIMARY KEY
-  sourceType: varchar(50)           -- excel, url, api, manual
-  sourceName: varchar(255)
-  sourceUrl: text
-  lastSync: timestamp
-  syncStatus: varchar(50)           -- active, paused, error
-  dataMapping: jsonb                -- Field mapping configuration
-  componentCount: integer
-}
-```
-
----
-
-## 🔧 Comprehensive API Reference
-
-### 🔌 **Component Library Management**
-```http
-# Component CRUD Operations
-GET    /api/components                           # List all components with filtering
-GET    /api/components/search?q={query}          # Search across all specifications
-GET    /api/components/type/{type}               # Filter by component type
-GET    /api/components/category/{category}       # Filter by electrical category
-GET    /api/components/{id}                      # Get specific component details
-POST   /api/components                           # Create new component or variant
-PUT    /api/components/{id}                      # Update existing component
-DELETE /api/components/{id}                      # Delete component (soft delete)
-
-# Live Editing & Variant Creation
-POST   /api/components/{id}/variants             # Create component variant
-GET    /api/components/{id}/variants             # List all variants of component
-POST   /api/components/validate                  # Validate component specifications
-```
-
-### ⚙️ **Configuration Management**
-```http
-# Power Whip Configuration
-GET    /api/configurations                       # List all configurations
-GET    /api/configurations/{id}                  # Get specific configuration
-POST   /api/configurations                       # Create new configuration
-PUT    /api/configurations/{id}                  # Update configuration
-DELETE /api/configurations/{id}                  # Delete configuration
-POST   /api/configurations/{id}/duplicate        # Duplicate existing configuration
-
-# Basic Configuration Settings
-GET    /api/configurations/{id}/validation       # Get validation status
-POST   /api/configurations/{id}/validate         # Run validation checks
-```
-
-### 📊 **Excel Processing & Pattern Recognition**
-```http
-# File Upload & Analysis
-POST   /api/excel/upload                         # Upload Excel file for analysis
-GET    /api/excel/files                          # List uploaded files
-GET    /api/excel/files/{id}                     # Get file analysis results
-DELETE /api/excel/files/{id}                     # Delete uploaded file
-
-# Pattern Recognition & Transformation
-POST   /api/excel/transform                      # Transform patterns to structured data
-POST   /api/excel/analyze-configurator           # Analyze configurator dataset
-GET    /api/excel/components                     # Get parsed components from Excel
-GET    /api/excel/patterns                       # List recognized patterns
-POST   /api/excel/patterns/validate              # Validate pattern recognition
-
-# Natural Language Processing
-POST   /api/excel/nlp/parse                      # Parse natural language specifications
-POST   /api/excel/nlp/distribute                 # Generate distribution patterns
-```
-
-### 🎨 **Design Canvas Operations**
-```http
-# Canvas Management
-GET    /api/design-canvas/{id}                   # Get canvas configuration
-POST   /api/design-canvas                        # Create new canvas
-PUT    /api/design-canvas/{id}                   # Update canvas layout
-DELETE /api/design-canvas/{id}                   # Delete canvas
-
-# Component Placement & Export
-POST   /api/design-canvas/{id}/components        # Add component to canvas
-PUT    /api/design-canvas/{id}/components/{cid}  # Update component position
-DELETE /api/design-canvas/{id}/components/{cid}  # Remove component from canvas
-POST   /api/design-canvas/export-xlsx            # Export canvas to XLSX (31ms)
-POST   /api/design-canvas/export-presal          # Export PreSal format
-```
-
-### 📋 **Order Entry & Management**
-```http
-# Order Operations
-GET    /api/orders                               # List all orders
-GET    /api/orders/{id}                          # Get specific order
-POST   /api/orders                               # Create new order
-PUT    /api/orders/{id}                          # Update order
-DELETE /api/orders/{id}                          # Delete order
-
-# Order Line Items
-GET    /api/orders/{id}/items                    # Get order line items
-POST   /api/orders/{id}/items                    # Add item to order
-PUT    /api/orders/{id}/items/{itemId}           # Update order item
-DELETE /api/orders/{id}/items/{itemId}           # Remove order item
-
-# Professional Export
-POST   /api/orders/{id}/export/xlsx              # Export order to Excel
-POST   /api/orders/{id}/export/pdf               # Export order to PDF
-POST   /api/orders/{id}/export/csv               # Export order to CSV
-```
-
-### ⚡ **Validation & Compliance**
-```http
-# NEC Compliance Validation
-POST   /api/validation/nec-compliance            # Run NEC compliance check
-POST   /api/validation/voltage-drop              # Calculate voltage drop
-POST   /api/validation/thermal-analysis          # Perform thermal analysis
-POST   /api/validation/ampacity                  # Check ampacity calculations
-POST   /api/validation/wire-compatibility        # Validate wire gauge compatibility
-
-# Configuration Validation
-POST   /api/validation/configuration             # Validate complete configuration
-GET    /api/validation/standards                 # Get validation standards reference
-POST   /api/validation/custom                    # Run custom validation rules
-```
-
-### 🔧 **System Administration**
-```http
-# Data Management
-GET    /api/admin/stats                          # System statistics
-POST   /api/admin/cleanup                        # Cleanup temporary files
-GET    /api/admin/health                         # System health check
-POST   /api/admin/cache/clear                    # Clear system cache
-
-# Data Sources
-GET    /api/data-sources                         # List all data sources
-POST   /api/data-sources                         # Add new data source
-PUT    /api/data-sources/{id}                    # Update data source
-POST   /api/data-sources/{id}/sync               # Sync data source
-```
-
-### 📈 **Performance & Analytics**
-```http
-# Performance Metrics
-GET    /api/metrics/performance                  # Get performance metrics
-GET    /api/metrics/usage                        # Get usage statistics
-GET    /api/metrics/components/popular           # Most used components
-GET    /api/metrics/export/frequency             # Export frequency data
-
-# Error Reporting
-POST   /api/errors/report                        # Report client-side errors
-GET    /api/errors/stats                         # Error statistics
-```
-
-### 🔒 **Authentication & Security** (Future)
-```http
-# Authentication (Planned)
-POST   /api/auth/login                           # User login
-POST   /api/auth/logout                          # User logout
-GET    /api/auth/profile                         # Get user profile
-PUT    /api/auth/profile                         # Update user profile
-```
-
-### 📊 **Request/Response Examples**
-
-#### Component Creation with Validation
-```bash
-# Request
-POST /api/components
-Content-Type: application/json
-
-{
-  "name": "CS8369A Industrial Connector",
-  "type": "connector", 
-  "category": "IEC Pin & Sleeve",
-  "voltage": 480,
-  "current": 60,
-  "wireGauge": "8",
-  "price": 89.99,
-  "specifications": {
-    "poles": 4,
-    "grounding": "Yes",
-    "ip_rating": "IP67",
-    "certification": "UL, CSA"
-  }
-}
-
-# Response
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "name": "CS8369A Industrial Connector",
-  "type": "connector",
-  "category": "IEC Pin & Sleeve", 
-  "voltage": 480,
-  "current": 60,
-  "wireGauge": "8",
-  "price": 89.99,
-  "isCustomVariant": true,
-  "parentComponentId": null,
-  "createdAt": "2024-01-15T10:30:00Z"
-}
-```
-
-#### Design Canvas Export
-```bash
-# Request  
-POST /api/design-canvas/export-xlsx
-Content-Type: application/json
-
-{
-  "canvasId": "canvas-001",
-  "exportType": "presal",
-  "includeValidation": true,
-  "groupByProximity": true
-}
-
-# Response (31ms processing time)
-{
-  "downloadUrl": "/downloads/DesignCanvasOutput_1642248600.xlsx",
-  "fileName": "DesignCanvasOutput_1642248600.xlsx",
-  "fileSize": 45632,
-  "sheets": ["Order Entry", "Components", "Specifications", "Compliance", "Summary"],
-  "componentCount": 25,
-  "groupCount": 8,
-  "processingTime": "31ms"
-}
-```
-
----
-
-## 🚀 Deployment
-
-### Development
-```bash
-npm run dev          # Start development server
-npm run check        # TypeScript type checking
-npm run db:push      # Push database schema changes
-```
-
-### Production
-```bash
-npm run build        # Build for production
-npm start           # Start production server
-```
-
-### Environment Variables
-```bash
-DATABASE_URL=        # PostgreSQL connection string
-NODE_ENV=           # development/production
-SESSION_SECRET=     # Session encryption key
-```
-
----
-
-## 🚄 Performance Engineering & Optimization
-
-### ⚡ **Ultra-Fast Processing Metrics**
-
-| Operation | Performance | Optimization Technique |
-|---|---|---|
-| **Design Canvas Export** | 31ms | Spatial analysis algorithms, pre-compiled patterns |
-| **Excel Pattern Recognition** | <50ms | Optimized regex, pattern caching |
-| **Natural Language Processing** | <100ms | Pre-trained models, smart parsing |
-| **Excel File Analysis** | <5s cached | 5-minute intelligent caching system |
-| **Component Rendering** | 1000+ items | Virtualized rendering with react-window |
-| **Live Validation** | Real-time | Memoized calculations, background processing |
-| **Panel Interactions** | 60fps | Hardware acceleration, optimized animations |
-
-### 🧠 **Smart Optimization Strategies**
-
-#### Intelligent Caching System
-```
-Excel Processing Cache (5-minute TTL)
-├── Pattern Recognition Results     # Pre-compiled regex patterns
-├── Component Mapping Data         # NEMA, IEC, L-series mappings  
-├── Natural Language Parsing      # Structured pattern conversion
-├── Multi-Sheet Analysis          # Sheet-by-sheet processing results
-└── Validation Calculations       # NEC compliance, voltage drop, thermal
-```
-
-#### React Performance Optimization
 ```typescript
-// Virtualized rendering for large datasets
-const VirtualizedOrderEntry = React.memo(() => {
-  const { data, isLoading } = useQuery({
-    queryKey: ['/api/excel/components'],
-    staleTime: 5 * 60 * 1000,      // 5-minute cache
-    select: useCallback(data => 
-      data.slice(startIndex, endIndex), [startIndex, endIndex])
-  });
-  
-  return (
-    <FixedSizeList
-      height={600}
-      itemCount={data.length}
-      itemSize={80}
-      itemData={{ data, onQuantityChange }}
-    >
-      {OrderEntryRow}
-    </FixedSizeList>
-  );
-});
+// Four patterns cover the full NEMA/IEC receptacle namespace
+const receptaclePatterns = [
+  /^[A-Z0-9]{2,10}[A-Z]?\d*[A-Z]*$/,   // Standard codes (460C9W, 5-20R)
+  /^L\d+-\d+[A-Z]?$/,                    // NEMA L-series (L6-30R, L14-20P)
+  /^CS\d+[A-Z]*$/,                        // IEC CS series (CS8269A)
+  /^\d+[A-Z]\d+[A-Z]?$/                  // Numeric prefix codes (14R30)
+];
 ```
 
-#### Design Canvas Spatial Optimization
+These patterns are evaluated for each candidate cell value using `Array.some()` for early exit — no backtracking, no dynamic regex compilation.
+
+### 5-Minute Excel Component Cache
+
+The `/api/excel/components` endpoint serves component data from a fixed set of `MasterBubbleUpLookup.xlsx` files stored in `attached_assets/`. Parsing these on every request is expensive, so the system uses a single in-process `componentCache` with a 5-minute TTL:
+- Cache miss: loads the highest-priority available lookup file, parses the first 3 sheets, extracts receptacle components, stores result
+- Cache hit: returns stored result in <1ms without touching disk
+- Cache clear: available via `POST /api/excel/clear-cache`
+
+This is a global singleton cache for this endpoint — it is not per-uploaded-file. User-uploaded files via `/api/excel/extreme-transform` and `/api/excel/upload-analyze` use separate in-memory `uploadedFiles` storage keyed by a generated file ID.
+
+### Multi-Sheet Scanning with Reverse-Order Processing
+
+The `MultiSheetProcessor` scans every sheet in an uploaded workbook. Sheets are processed in reverse order when scanning for patterns — this ensures patterns that appear on later sheets (often summary or output sheets) are captured before they would be overwritten by earlier sheets with the same pattern code.
+
+The system processes **800+ patterns including duplicates** in a single pass.
+
+### Pattern Parser for Comma-Delimited Specifications
+
+The `ReceptaclePatternParser` converts comma-delimited pattern strings into structured PreSal rows:
+
+```
+Input:  "460R9W, Metal Conduit, 50ft, Pigtail 10"
+Output: { receptacle: "460R9W", conduitType: "MCC", whipLength: 50, tailLength: 10, ... }
+```
+
+The parser handles:
+- Conduit type normalization ("Metal Conduit" → "MCC", "Liquid tight" → "LFMC", "Armored cable" → "MC")
+- Whip length extraction from tokens like "50ft", "25 feet"
+- Tail/pigtail length extraction from tokens like "Pigtail 10", "tail length, 8"
+- Electrical specification lookup from a built-in receptacle database (voltage, current, wire gauge)
+- NEMA, IEC CS-series, and L-series code identification via regex prefix matching
+
+### AG-Grid Virtualization
+
+For large order entry datasets (1000+ rows), the Performance interface uses `react-window` with `FixedSizeList`:
+
 ```typescript
-// 31ms export time optimization
-const optimizeCanvasExport = useMemo(() => {
-  const spatialTree = buildSpatialIndex(components);
-  const proximityGroups = calculateProximityGroups(spatialTree, 150);
-  const priorityRules = applyConnectorPriority(proximityGroups);
-  
-  return generatePreSalStructure(priorityRules);
-}, [components]);
+<FixedSizeList
+  height={600}
+  itemCount={data.length}
+  itemSize={80}         // Each row is 80px
+  itemData={{ data, onQuantityChange }}
+>
+  {OrderEntryRow}
+</FixedSizeList>
 ```
 
-### 📊 **Performance Monitoring**
+Only the visible rows are rendered in the DOM — scrolling through 10,000 rows maintains 60fps.
 
-#### Real-Time Metrics Dashboard
-- **Component Library**: Live search performance, edit response times
-- **Design Canvas**: Drag responsiveness, export generation speed  
-- **Excel Processing**: File upload speed, pattern recognition time
-- **Order Entry**: Grid rendering performance, bulk operation speed
-- **Validation Engine**: Calculation speed, real-time update performance
+### NEC Compliance Calculation Engine
 
-#### Performance Benchmarks
-```
-System Requirements:
-├── Minimum: 4GB RAM, Intel i5 2.0GHz, Chrome 90+
-├── Recommended: 8GB RAM, Intel i7 3.0GHz, Chrome 100+
-└── Optimal: 16GB RAM, Intel i9 3.5GHz, Chrome Latest
+The NEC engine runs calculations across six dimensions simultaneously:
+1. **Voltage drop** — checks line loss against NEC Article 210.19 limits
+2. **Thermal analysis** — derates ampacity for ambient temperature
+3. **Ampacity** — verifies wire gauge can carry the specified current
+4. **Wire gauge compatibility** — cross-checks gauge vs connector rating
+5. **Code compliance** — verifies NEC 2020 standard conformance
+6. **Safety margins** — applies engineering safety factors
 
-Dataset Handling:
-├── Components: 10,000+ items with smooth scrolling
-├── Excel Patterns: 800+ patterns with duplicate handling
-├── Design Elements: 500+ canvas components
-├── Order Items: 1,000+ line items with real-time totals
-└── Validation Rules: Real-time NEC compliance for complex configurations
-```
+Calculations are **memoized** — results for the same configuration are cached for the session. The validation engine runs in the background in Hidden mode to pre-warm the cache.
 
-### 🔧 **Development Performance Tools**
+### Design Canvas Export Optimization
 
-#### Build Optimization
-```json
-{
-  "vite": {
-    "optimizeDeps": {
-      "include": ["react-window", "ag-grid-react", "@tanstack/react-query"]
-    },
-    "build": {
-      "rollupOptions": {
-        "output": {
-          "manualChunks": {
-            "vendor": ["react", "react-dom"],
-            "ui": ["@radix-ui/react-dialog", "@radix-ui/react-accordion"],
-            "grid": ["ag-grid-react", "ag-grid-community"],
-            "excel": ["xlsx", "papaparse"]
-          }
-        }
-      }
-    }
-  }
-}
-```
+The original export approach iterated all components in nested loops: O(n²) complexity, producing 11+ second export times for larger designs.
 
-#### Runtime Performance Monitoring
-```typescript
-// Performance tracking for critical operations
-const performanceTracker = {
-  trackExcelProcessing: (startTime: number) => {
-    const duration = performance.now() - startTime;
-    console.log(`Excel processing: ${duration.toFixed(2)}ms`);
-  },
-  
-  trackCanvasExport: (componentCount: number, startTime: number) => {
-    const duration = performance.now() - startTime;
-    console.log(`Canvas export (${componentCount} components): ${duration.toFixed(2)}ms`);
-  }
-};
-```
+The optimized approach:
+1. Build a spatial index of all component positions
+2. Calculate proximity groups in a single O(n log n) pass using sorted coordinates
+3. Apply connector-priority rules as a single filtering pass
+4. Map to PreSal structure using pre-built column mapping
+
+Result: **~31ms** for typical designs with 25–50 components.
+
+### Performance Summary
+
+| Operation | Time | Technique |
+|---|---|---|
+| Design Canvas Export | ~31ms | Spatial index + pre-compiled column mapping |
+| Comma-delimited pattern parsing | <50ms | Pre-compiled regex, O(n) scan |
+| Excel component list (cache hit) | <1ms | Global singleton componentCache, 5-min TTL |
+| Excel component list (cache miss) | seconds | Load + parse MasterBubbleUpLookup.xlsx |
+| Virtualized order entry rendering | 60fps | react-window FixedSizeList |
+| NEC compliance calculations | Real-time | Memoized per configuration |
+| Panel drag interactions | 60fps | Hardware-accelerated CSS, minimal React re-renders |
 
 ---
 
-## 🧪 Testing & Quality
+## API Reference
 
-### Code Quality
-- **TypeScript**: Full type safety across frontend/backend
-- **Zod Validation**: Runtime type checking and validation
-- **ESLint**: Code style and error detection
-- **Shared Schemas**: Consistent types between client/server
+### Component Library
 
-### Browser Support
-- **Modern Browsers**: Chrome 90+, Firefox 88+, Safari 14+
-- **Mobile Responsive**: Touch-optimized interactions
-- **Dark/Light Theme**: System preference detection
+```http
+GET    /api/components                  List all components
+GET    /api/components/type/:type       Filter by type
+GET    /api/components/:id              Get component details
+POST   /api/components                  Create component or variant
+```
 
----
+### Configurations
 
-## 📚 Key Technologies
-
-### Frontend
-- **React 18**: Latest React with concurrent features
-- **shadcn/ui**: Modern component library built on Radix UI
-- **TanStack Query**: Powerful server state management
-- **AG-Grid**: Professional data grid for Excel-like experience
-- **Framer Motion**: Smooth animations and transitions
-
-### Backend
-- **Express.js**: Fast, minimalist web framework
-- **Drizzle ORM**: Type-safe database operations
-- **Neon Serverless**: Serverless PostgreSQL database
-- **Zod**: Schema validation library
+```http
+GET    /api/configurations              List all configurations
+GET    /api/configurations/:id          Get configuration
+POST   /api/configurations              Create configuration
+PATCH  /api/configurations/:id          Update configuration
+DELETE /api/configurations/:id          Delete configuration
+```
 
 ### Excel Processing
-- **xlsx**: Excel file parsing and generation
-- **papaparse**: CSV parsing capabilities
-- **formula-parser**: Excel formula evaluation
 
----
-
-## 🎯 **Troubleshooting & Common Issues**
-
-### 🔧 **Component Library Issues**
-
-#### Editing Not Working
-```bash
-# Check if component type supports editing
-GET /api/components/{id}
-# Verify: NEMA connectors = full editing, Junction boxes = price only
-
-# Clear component cache
-localStorage.removeItem('componentLibraryCache')
-
-# Refresh component data
-queryClient.invalidateQueries(['/api/components'])
+```http
+POST   /api/excel/upload-analyze        Upload and analyze Excel file
+POST   /api/excel/extreme-transform     Transform DCN file to OrderEntryResult
+POST   /api/excel/parse-patterns        Parse comma-delimited patterns to XLSX
+POST   /api/excel/fast-transform        Fast pattern transformation (NLP + comma)
+POST   /api/excel/transform-presal      Convert fileId + rules to PreSal format
+GET    /api/excel/analyze               Analyze built-in master lookup file
 ```
 
-#### Variant Creation Failed
-```bash
-# Validate component specifications
-POST /api/components/validate
-{
-  "voltage": 480,
-  "current": 60,
-  "wireGauge": "8"
-}
+### Export
 
-# Check for duplicate specifications
-# Each variant must have unique specification combination
-```
-
-### 🎨 **Design Canvas Issues**
-
-#### Export Performance Slow
-```bash
-# Check component count (optimal: <100 components)
-# Reduce complexity for large designs
-# Use proximity grouping to optimize structure
-
-# Clear canvas cache
-sessionStorage.removeItem('designCanvasState')
-
-# Monitor export performance
-console.time('canvasExport');
-// ... export operation ...
-console.timeEnd('canvasExport'); // Should show ~31ms
-```
-
-#### Components Not Dropping
-```bash
-# Verify drag data format
-console.log(e.dataTransfer.getData('application/json'));
-
-# Check canvas event listeners
-canvasRef.current?.addEventListener('dragover', handleDragOver);
-canvasRef.current?.addEventListener('drop', handleDrop);
-
-# Clear dragging state
-setIsDraggingComponent(false);
-```
-
-### 📊 **Excel Processing Issues**
-
-#### Pattern Recognition Failed
-```bash
-# Verify file format (.xlsx only)
-# Check file size limit (10MB max)
-# Ensure sheets contain electrical patterns
-
-# Manual pattern testing
-POST /api/excel/nlp/parse
-{
-  "text": "25 L6-30R receptacles with 12 AWG wire"
-}
-
-# Clear Excel processing cache
-DELETE /api/admin/cache/clear
-```
-
-#### Upload Stuck Processing
-```bash
-# Check file processing status
-GET /api/excel/files/{fileId}
-
-# Cancel stuck processing
-DELETE /api/excel/files/{fileId}
-
-# Retry with smaller file or different format
-```
-
-### ⚡ **Validation Issues**
-
-#### NEC Compliance Errors
-```bash
-# Check validation mode setting
-setValidationMode("live"); // Enable real-time validation
-
-# Verify electrical calculations
-POST /api/validation/voltage-drop
-{
-  "voltage": 480,
-  "current": 60,
-  "wireGauge": "8",
-  "length": 25
-}
-
-# Review configuration parameters
-# Ensure voltage, current, wire gauge compatibility
-```
-
-#### Performance Validation Slow
-```bash
-# Switch to static validation mode for large datasets
-setValidationMode("static");
-
-# Background validation for complex configurations
-setValidationMode("hidden");
-
-# Clear validation cache
-sessionStorage.removeItem('validationResults');
-```
-
-### 🔄 **Panel System Issues**
-
-#### Panels Not Moving/Resizing
-```bash
-# Check panel state in localStorage
-localStorage.getItem('panelPositions');
-
-# Reset panel positions
-localStorage.removeItem('panelPositions');
-window.location.reload();
-
-# Verify panel manager context
-const { panels, updatePanel } = usePanelManager();
-```
-
-#### Panel Performance Issues
-```bash
-# Reduce number of open panels (max 4 recommended)
-# Close unused panels to improve performance
-
-# Disable panel animations for better performance
-.draggable-panel {
-  transition: none !important;
-}
-```
-
-### 📋 **Order Entry Issues**
-
-#### AG-Grid Not Loading
-```bash
-# Check AG-Grid license (Community vs Enterprise)
-import "ag-grid-community/styles/ag-grid.css";
-import "ag-grid-community/styles/ag-theme-alpine.css";
-
-# Verify data format
-const rowData = components.map(comp => ({
-  id: comp.id,
-  partNumber: comp.partNumber,
-  description: comp.description
-}));
-```
-
-#### Export Generation Failed
-```bash
-# Check order data validity
-console.log(orderItems.filter(item => !item.partNumber));
-
-# Verify export permissions
-# Ensure all required fields are populated
-
-# Clear order cache
-sessionStorage.removeItem('orderEntryState');
-```
-
-### 🌐 **Browser Compatibility**
-
-#### Recommended Browser Settings
-```bash
-# Chrome/Edge (Recommended)
-- Version 90+ required
-- Hardware acceleration enabled
-- JavaScript enabled
-- Local storage allowed
-
-# Firefox
-- Version 88+ required  
-- Enable CSS Grid support
-- Allow clipboard access for copy/paste
-
-# Safari
-- Version 14+ required
-- Enable experimental web features
-- Allow cross-origin requests
-```
-
-#### Performance Settings
-```bash
-# For optimal performance:
-1. Close unnecessary browser tabs
-2. Enable hardware acceleration
-3. Clear browser cache regularly
-4. Disable unnecessary extensions
-5. Use latest browser version
+```http
+POST   /api/export/xlsx/:id             Prepare XLSX export data for configuration
+POST   /api/export/pdf/:id              Prepare PDF export data for configuration
 ```
 
 ---
 
-## 🤝 Contributing Guide
+## Project Structure
 
-### 🏗️ **Development Setup**
+```
+.
+├── client/src/
+│   ├── components/
+│   │   ├── DraggablePanel.tsx           # Core floating panel (drag, dock, resize, scale)
+│   │   ├── PanelManager.tsx             # Dynamic panel spawning and z-index management
+│   │   ├── PanelControlsFloating.tsx    # All-Features floating panel
+│   │   ├── ContentPanel.tsx             # Content area floating panel
+│   │   ├── ExpandedComponentLibrary.tsx # Full component library view
+│   │   ├── DesignCanvas.tsx             # Interactive 2D design workspace
+│   │   ├── DesignCanvasExportButton.tsx # Export trigger + spatial analysis
+│   │   ├── ExtremeTransformerInterface.tsx # DCN upload and transform UI
+│   │   ├── FloatingOrderEntryPanel.tsx  # Order entry panel wrapper
+│   │   ├── AGGridOrderEntry.tsx         # AG-Grid professional interface
+│   │   ├── PerformanceOrderEntry.tsx    # Virtualized large-dataset view
+│   │   ├── DockZones.tsx               # Visual dock zone overlays during drag
+│   │   └── ...
+│   ├── contexts/
+│   │   ├── DesignCanvasContext.tsx      # Canvas state + docking system
+│   │   ├── FloatingPanelCoordinator.tsx # Magnetic edge snapping for standalone panels
+│   │   └── ConfigurationContext.tsx     # Global configuration form state
+│   └── pages/
+│       └── configurator.tsx             # Main page: layout + docked panel rendering
+├── server/
+│   ├── routes.ts                        # All API endpoint definitions
+│   ├── storage.ts                       # Database abstraction layer
+│   ├── extremeExcelTransformer.ts       # DCN → SAL-0y transformation engine
+│   ├── multiSheetProcessor.ts           # Multi-sheet Excel scanning
+│   ├── receptaclePatternParser.ts       # NLP + pattern parsing
+│   ├── excelParser.ts                   # General Excel parsing utilities
+│   ├── excelFormulaExtractor.ts         # Formula analysis and extraction
+│   ├── designCanvasExport.ts            # Canvas spatial analysis + XLSX generation
+│   └── db.ts                           # Neon PostgreSQL connection
+└── shared/
+    └── schema.ts                        # Drizzle ORM schema + Zod types (shared client/server)
+```
+
+---
+
+## Contributing
+
+### Development Setup
 
 ```bash
-# 1. Clone and install
 git clone <repository-url>
 cd power-whip-configuration-tool
 npm install
-
-# 2. Database setup
 npm run db:push
-
-# 3. Development environment
-cp .env.example .env
-# Edit .env with your database credentials
-
-# 4. Start development
 npm run dev
 ```
 
-### 📝 **Code Standards**
+### Code Standards
 
-#### TypeScript Guidelines
-```typescript
-// Use strict typing for all functions
-interface ComponentProps {
-  id: string;
-  name: string;
-  specifications: ComponentSpecifications;
-}
+- **TypeScript strict mode** throughout — no `any` except at boundary layers (Excel parsing)
+- Use **Zod schemas** from `shared/schema.ts` for all API validation
+- Frontend data fetching via **TanStack Query** — no raw fetch calls in components
+- Use **shadcn/ui** components instead of custom HTML wherever possible
+- Panel system additions: follow the provider hierarchy — standalone panels use `FloatingPanelCoordinator`, managed panels use `PanelManager`
 
-// Prefer interfaces over types for objects
-interface ElectricalComponent {
-  voltage: number;
-  current: number;
-  wireGauge: string;
-}
-
-// Use Zod for runtime validation
-const componentSchema = z.object({
-  name: z.string().min(1),
-  voltage: z.number().min(1).max(600),
-  current: z.number().min(1).max(400)
-});
-```
-
-#### React Component Guidelines
-```tsx
-// Use React.memo for expensive components
-const ComponentLibrary = React.memo(() => {
-  // Component implementation
-});
-
-// Prefer custom hooks for complex logic
-const useComponentEditing = (componentId: string) => {
-  // Hook implementation
-};
-
-// Use shadcn/ui components when possible
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-```
-
-#### Performance Guidelines
-```typescript
-// Use useMemo for expensive calculations
-const filteredComponents = useMemo(() => {
-  return components.filter(comp => 
-    comp.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-}, [components, searchQuery]);
-
-// Use useCallback for event handlers
-const handleComponentEdit = useCallback((id: string, field: string, value: any) => {
-  // Edit handler implementation
-}, []);
-
-// Virtualize large datasets
-import { FixedSizeList as List } from 'react-window';
-```
-
-### 🚀 **Feature Development Process**
-
-#### 1. Feature Planning
-```bash
-# Create feature branch
-git checkout -b feature/panel-system-enhancement
-
-# Document feature requirements
-# Update relevant documentation
-# Plan component architecture
-```
-
-#### 2. Implementation
-```bash
-# Follow coding standards
-# Write tests for new functionality
-# Ensure TypeScript strict mode compliance
-# Add proper error handling
-```
-
-#### 3. Testing
-```bash
-# Test component functionality
-# Verify performance requirements
-# Check browser compatibility
-# Validate accessibility standards
-```
-
-#### 4. Documentation
-```bash
-# Update README.md with new features
-# Add inline code documentation
-# Update API documentation
-# Create usage examples
-```
-
-### 📊 **Commit Convention**
+### Commit Convention
 
 ```bash
-# Feature additions
-feat(component-library): add live specification editing
-feat(design-canvas): implement 31ms export optimization
-feat(validation): add real-time NEC compliance checking
-
-# Bug fixes
-fix(excel-parser): resolve multi-sheet analysis issue
-fix(panel-system): correct panel positioning state
-fix(order-entry): fix AG-Grid copy/paste functionality
-
-# Performance improvements
-perf(canvas-export): optimize spatial analysis algorithm
-perf(pattern-recognition): improve regex compilation
-perf(virtualization): enhance large dataset rendering
-
-# Documentation
-docs(readme): add comprehensive feature guide
-docs(api): update endpoint documentation
-docs(troubleshooting): add common issue solutions
-
-# Code refactoring
-refactor(components): reorganize panel system architecture
-refactor(hooks): extract custom panel state management
-refactor(types): improve TypeScript interface definitions
+feat(excel-transformer): add Hornetsecurity 36-row template generation
+fix(panel-system): correct dock zone detection for high-DPI displays
+perf(canvas-export): reduce spatial analysis from O(n²) to O(n log n)
+docs(readme): update DCN transformation section with sequence diagram
 ```
-
-### 🔍 **Code Review Guidelines**
-
-#### Checklist for Pull Requests
-- [ ] **TypeScript**: Strict type checking passes
-- [ ] **Performance**: No performance regressions
-- [ ] **Testing**: New features have tests
-- [ ] **Documentation**: README and inline docs updated
-- [ ] **Standards**: Follows established code patterns
-- [ ] **Accessibility**: UI components are accessible
-- [ ] **Browser Support**: Works in target browsers
-- [ ] **Mobile**: Responsive design considerations
-
-#### Review Focus Areas
-1. **Component Architecture**: Proper use of React patterns
-2. **State Management**: Efficient TanStack Query usage
-3. **Performance**: Virtualization and memoization
-4. **User Experience**: Intuitive interface design
-5. **Error Handling**: Comprehensive error states
-6. **Security**: Input validation and sanitization
 
 ---
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License**.
 
----
-
-## 🆘 Support
-
-For questions, issues, or feature requests:
-
-1. **Documentation**: Check this README and inline code comments
-2. **Issues**: Create GitHub issues for bugs or feature requests
-3. **Discussions**: Use GitHub Discussions for questions
-
----
-
-## 🎉 **Success Stories & Use Cases**
-
-### 🏭 **Industrial Applications**
-- **Data Centers**: Complex power distribution with hundreds of components
-- **Manufacturing Plants**: Three-phase power whip configurations
-- **Commercial Buildings**: NEMA and IEC connector integration
-- **Outdoor Installations**: GFCI and weather-resistant configurations
-
-### ⚡ **Performance Achievements**
-- **31ms Export Speed**: Revolutionary design canvas export optimization
-- **Real-Time Validation**: Live NEC compliance checking during design
-- **1000+ Component Support**: Virtualized rendering for large projects
-- **Multi-Format Integration**: Excel, PDF, CSV export capabilities
-
-### 🔧 **Professional Benefits**
-- **Engineering Efficiency**: 75% reduction in design time
-- **Code Compliance**: Automatic NEC standard verification  
-- **Documentation Quality**: Professional export templates
-- **Error Reduction**: Real-time validation prevents costly mistakes
-
----
-
-## 📞 **Support & Community**
-
-### 🆘 **Getting Help**
-
-#### Documentation Resources
-1. **This README**: Comprehensive feature and usage guide
-2. **Inline Code Comments**: Detailed technical documentation
-3. **API Reference**: Complete endpoint documentation
-4. **Troubleshooting Guide**: Common issues and solutions
-
-#### Community Support
-1. **GitHub Issues**: Bug reports and feature requests
-2. **GitHub Discussions**: Questions, ideas, and community help
-3. **Stack Overflow**: Technical questions with `power-whip-tool` tag
-
-### 🐛 **Bug Reports**
-
-When reporting issues, please include:
-```bash
-# System Information
-OS: Windows 10 / macOS / Linux
-Browser: Chrome 120.x / Firefox 118.x / Safari 17.x
-Node.js: v20.x.x
-Database: PostgreSQL version
-
-# Steps to Reproduce
-1. Specific steps that led to the issue
-2. Expected behavior vs actual behavior  
-3. Console errors (if any)
-4. Screenshots or videos (if applicable)
-
-# Additional Context
-- File sizes (for Excel processing issues)
-- Component count (for performance issues)
-- Configuration details (for validation issues)
-```
-
-### 💡 **Feature Requests**
-
-Feature request template:
-```markdown
-## Feature Description
-Brief description of the requested feature
-
-## Use Case
-Explain the problem this feature would solve
-
-## Proposed Solution
-Describe how you envision the feature working
-
-## Additional Context
-Any mockups, examples, or related information
-```
-
-### 🤝 **Contributing**
-
-We welcome contributions! Please see the Contributing Guide above for:
-- Development setup instructions
-- Coding standards and conventions
-- Pull request process
-- Code review guidelines
-
----
-
-## 📄 **License & Legal**
-
-### License
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-### Attribution
 ```
 Power Whip Configuration Tool
-Copyright (c) 2024 
+Copyright (c) 2024
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1818,51 +818,15 @@ copies or substantial portions of the Software.
 ```
 
 ### Third-Party Libraries
-- **React & TypeScript**: MIT License
-- **shadcn/ui & Radix UI**: MIT License  
-- **TanStack Query**: MIT License
-- **AG-Grid Community**: MIT License
-- **Drizzle ORM**: Apache 2.0 License
-- **Neon Database**: PostgreSQL License
+
+- React & TypeScript: MIT License
+- shadcn/ui & Radix UI: MIT License
+- TanStack Query: MIT License
+- AG-Grid Community: MIT License
+- Drizzle ORM: Apache 2.0 License
+- Neon Database: PostgreSQL License
+- xlsx: Apache 2.0 License
 
 ---
 
-## 🚀 **Deployment & Production**
-
-### Environment Requirements
-```bash
-# Production Environment
-Node.js: v20.x LTS
-PostgreSQL: v15+
-Memory: 4GB minimum, 8GB recommended  
-Storage: 50GB minimum
-CPU: 2 cores minimum, 4 cores recommended
-```
-
-### Production Deployment
-```bash
-# Build for production
-npm run build
-
-# Start production server
-npm start
-
-# Environment variables for production
-NODE_ENV=production
-DATABASE_URL=postgresql://user:pass@host:5432/db
-SESSION_SECRET=secure-random-string
-```
-
-### Monitoring & Analytics
-- **Performance Monitoring**: Track export speeds, validation times
-- **Error Reporting**: Log validation errors, Excel processing failures
-- **Usage Analytics**: Component library usage, export frequency
-- **System Health**: Database performance, memory usage, response times
-
----
-
-**⚡ Built with precision by electrical engineers, for electrical engineers worldwide. ⚡**
-
----
-
-*Transforming electrical engineering workflows through intelligent automation, real-time validation, and professional documentation systems.*
+*Built for electrical engineers, technicians, and procurement teams who need a professional tool for configuring, validating, and documenting electrical power whip assemblies.*
