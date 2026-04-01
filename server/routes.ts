@@ -18,6 +18,8 @@ import rateLimit from 'express-rate-limit';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const DRAWINGS_DIR = path.resolve(__dirname, '..', 'data', 'drawings');
+
 // Configure multer for file uploads
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -325,8 +327,9 @@ function categorizeByReceptacle(receptacle: string): string {
 // Use existing multer configuration
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Ensure tmp/uploads directory exists at startup
+  // Ensure tmp/uploads and data/drawings directories exist at startup
   await fs.promises.mkdir('./tmp/uploads', { recursive: true });
+  await fs.promises.mkdir(DRAWINGS_DIR, { recursive: true });
 
   // Apply rate limiting to expensive file-processing endpoints
   app.use('/api/excel/upload', excelRateLimit);
@@ -3646,6 +3649,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to export Design Canvas to XLSX",
         error: error instanceof Error ? error.message : 'Unknown error'
       });
+    }
+  });
+
+  // ── PDF Drawing Viewer endpoints ─────────────────────────────────────────
+
+  // POST /api/drawings/upload — save a PDF drawing and associate by filename
+  app.post('/api/drawings/upload', upload.single('file'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'No file provided' });
+
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    if (ext !== '.pdf') {
+      return res.status(400).json({ error: 'Only PDF files are accepted' });
+    }
+
+    // Sanitize: strip path separators and non-safe chars, keep original name readable
+    const safeName = path.basename(req.file.originalname)
+      .replace(/[^a-zA-Z0-9\-_(). ]/g, '_');
+    const savedName = `${Date.now()}_${safeName}`;
+    const savePath = path.join(DRAWINGS_DIR, savedName);
+
+    // Path-traversal guard
+    if (!savePath.startsWith(DRAWINGS_DIR)) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+
+    await fs.promises.writeFile(savePath, req.file.buffer);
+
+    res.json({
+      filename: savedName,
+      displayName: safeName,
+      uploadedAt: new Date().toISOString(),
+      size: req.file.size,
+    });
+  });
+
+  // GET /api/drawings/list — return all uploaded drawings newest-first
+  app.get('/api/drawings/list', async (_req, res) => {
+    try {
+      const files = await fs.promises.readdir(DRAWINGS_DIR);
+      const drawings = files
+        .filter(f => f.toLowerCase().endsWith('.pdf'))
+        .map(filename => {
+          const stats = fs.statSync(path.join(DRAWINGS_DIR, filename));
+          return {
+            filename,
+            displayName: filename.replace(/^\d+_/, ''), // strip timestamp prefix
+            uploadedAt: stats.mtime.toISOString(),
+            size: stats.size,
+          };
+        })
+        .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
+
+      res.json(drawings);
+    } catch {
+      res.status(500).json({ error: 'Failed to list drawings' });
+    }
+  });
+
+  // GET /api/drawings/file/:filename — serve the PDF inline
+  app.get('/api/drawings/file/:filename', async (req, res) => {
+    const safeName = path.basename(req.params.filename);
+    const filePath = path.join(DRAWINGS_DIR, safeName);
+
+    // Path-traversal guard
+    if (!filePath.startsWith(DRAWINGS_DIR)) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+
+    try {
+      await fs.promises.access(filePath, fs.constants.R_OK);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${safeName}"`);
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      const stream = fs.createReadStream(filePath);
+      stream.on('error', () => res.status(500).end());
+      stream.pipe(res);
+    } catch {
+      res.status(404).json({ error: 'Drawing not found' });
     }
   });
 
