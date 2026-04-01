@@ -58,6 +58,7 @@ export const DesignCanvasProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [dockedPanels, setDockedPanels] = useState<DockedPanel[]>([
     { id: 'all-features-panel', title: 'All Features', position: 'top', size: 160 },
     { id: 'component-library-panel', title: 'Component Library - MasterBubbleUpLookup', position: 'left', size: 450 },
+    { id: 'content-panel', title: 'Configuration', position: 'right', size: 450 },
   ]);
   const [dockHints, setDockHints] = useState<DockHint[]>([
     { position: 'top', active: false },
