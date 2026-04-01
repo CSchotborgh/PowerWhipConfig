@@ -57,20 +57,20 @@ export function DrawingViewer({ partNumber, open, onClose }: DrawingViewerProps)
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-5xl w-[95vw] h-[88vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="px-5 py-3 border-b flex-shrink-0">
-          <div className="flex items-center justify-between gap-3">
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <FileText className="w-4 h-4 text-primary flex-shrink-0" />
+      <DialogContent className="!fixed !inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !max-w-none !w-screen !h-screen !max-h-screen !rounded-none flex flex-col p-0 gap-0 z-[99999]">
+        <DialogHeader className="px-4 py-2 border-b border-technical-200 dark:border-technical-600 flex-shrink-0 bg-white dark:bg-technical-800">
+          <div className="flex items-center gap-3">
+            <FileText className="w-4 h-4 text-primary flex-shrink-0" />
+            <DialogTitle className="flex items-center gap-2 text-sm flex-1 min-w-0">
               Technical Drawing
               {partNumber && (
-                <Badge variant="outline" className="font-mono text-xs">
+                <Badge variant="outline" className="font-mono text-xs flex-shrink-0">
                   {partNumber}
                 </Badge>
               )}
             </DialogTitle>
 
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1 flex-shrink-0">
               {drawing && (
                 <>
                   <a

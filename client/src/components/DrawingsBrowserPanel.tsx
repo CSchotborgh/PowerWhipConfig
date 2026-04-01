@@ -51,23 +51,55 @@ function ViewerDialog({ drawing, onClose, onUploadDone }: ViewerDialogProps) {
 
   return (
     <Dialog open={!!drawing} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="px-4 py-3 border-b border-technical-200 dark:border-technical-600 flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-sm">
+      <DialogContent className="!fixed !inset-0 !left-0 !top-0 !translate-x-0 !translate-y-0 !max-w-none !w-screen !h-screen !max-h-screen !rounded-none flex flex-col p-0 gap-0 z-[99999]">
+        <DialogHeader className="px-4 py-2 border-b border-technical-200 dark:border-technical-600 flex-shrink-0 bg-white dark:bg-technical-800">
+          <div className="flex items-center gap-3">
             <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
-            <span className="truncate">{drawing?.displayName}</span>
+            <DialogTitle className="flex-1 text-sm font-medium truncate">
+              {drawing?.displayName}
+            </DialogTitle>
             {drawing && (
-              <Badge variant="outline" className="ml-auto flex-shrink-0 text-xs">
+              <Badge variant="outline" className="flex-shrink-0 text-xs">
                 {formatBytes(drawing.size)}
               </Badge>
             )}
-          </DialogTitle>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {pdfUrl && (
+                <>
+                  <Button size="sm" variant="outline" className="h-7 text-xs"
+                    onClick={() => window.open(pdfUrl, "_blank")}>
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    New Tab
+                  </Button>
+                  <a href={pdfUrl} download={drawing?.displayName}>
+                    <Button size="sm" variant="outline" className="h-7 text-xs">
+                      <Download className="w-3 h-3 mr-1" />
+                      Download
+                    </Button>
+                  </a>
+                </>
+              )}
+              <input ref={fileInputRef} type="file" accept=".pdf,.PDF"
+                className="hidden" onChange={handleFileChange} />
+              <Button size="sm" variant="outline" className="h-7 text-xs"
+                onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                <Upload className="w-3 h-3 mr-1" />
+                {uploading ? "Uploading…" : "Upload PDF"}
+              </Button>
+              <Button size="sm" variant="ghost" className="h-7 text-xs ml-1" onClick={onClose}>
+                ✕ Close
+              </Button>
+            </div>
+          </div>
+          {uploadError && (
+            <p className="text-xs text-red-500 mt-1">{uploadError}</p>
+          )}
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-technical-900">
+        <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-technical-900">
           {pdfUrl ? (
             <iframe
-              src={`${pdfUrl}#toolbar=1`}
+              src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
               className="w-full h-full border-0"
               title={drawing?.displayName}
             />
@@ -76,49 +108,6 @@ function ViewerDialog({ drawing, onClose, onUploadDone }: ViewerDialogProps) {
               No drawing selected
             </div>
           )}
-        </div>
-
-        <div className="flex items-center gap-2 px-4 py-2 border-t border-technical-200 dark:border-technical-600 flex-shrink-0 bg-white dark:bg-technical-800">
-          {pdfUrl && (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => window.open(pdfUrl, "_blank")}
-              >
-                <ExternalLink className="w-3 h-3 mr-1" />
-                New Tab
-              </Button>
-              <a href={pdfUrl} download={drawing?.displayName}>
-                <Button size="sm" variant="outline">
-                  <Download className="w-3 h-3 mr-1" />
-                  Download
-                </Button>
-              </a>
-            </>
-          )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.PDF"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          >
-            <Upload className="w-3 h-3 mr-1" />
-            {uploading ? "Uploading…" : "Upload PDF"}
-          </Button>
-          {uploadError && (
-            <span className="text-xs text-red-500 flex-1 truncate">{uploadError}</span>
-          )}
-          <Button size="sm" variant="ghost" className="ml-auto" onClick={onClose}>
-            Close
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
