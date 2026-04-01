@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Grid, Layers, Settings, RotateCcw, Save, Undo, FileText } from "lucide-react";
 import { DrawingViewer } from "./DrawingViewer";
-
+import DrawingsBrowserPanel from "./DrawingsBrowserPanel";
 import { cn } from "@/lib/utils";
 import { useDesignCanvas } from "@/contexts/DesignCanvasContext";
 
@@ -507,6 +507,10 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
           </div>
         )}
 
+        {/* Drawings browser — always visible at the bottom */}
+        <div className="flex-1 overflow-y-auto p-3">
+          <DrawingsBrowserPanel />
+        </div>
       </div>
 
       {/* Drawing Viewer dialog */}
