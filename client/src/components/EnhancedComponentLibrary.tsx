@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Search, ChevronDown, ChevronRight, Zap, Cable, Box, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DrawingButton } from "./DrawingButton";
+import DrawingsBrowserPanel from "./DrawingsBrowserPanel";
 
 interface ExcelComponent {
   partNumber?: string;
@@ -265,6 +266,9 @@ export default function EnhancedComponentLibrary() {
           {searchTerm ? `No components found matching "${searchTerm}"` : 'No components available'}
         </div>
       )}
+
+      {/* Technical Drawings Library */}
+      <DrawingsBrowserPanel />
     </div>
   );
 }

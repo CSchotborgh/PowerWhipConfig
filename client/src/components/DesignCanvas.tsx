@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Grid, Layers, Settings, RotateCcw, Save, Undo, ZoomIn, ZoomOut, FileText } from "lucide-react";
 import { DrawingViewer } from "./DrawingViewer";
+import DrawingsBrowserPanel from "./DrawingsBrowserPanel";
 import { cn } from "@/lib/utils";
 import { useDesignCanvas } from "@/contexts/DesignCanvasContext";
 
@@ -429,10 +430,10 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
         </div>
       </div>
 
-      {/* Properties Panel */}
-      {selectedComponentData && (
-        <div className="w-80 border-l border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800">
-          <Card className="h-full rounded-none border-0">
+      {/* Right Panel: Properties + Drawings */}
+      <div className="w-80 border-l border-technical-200 dark:border-technical-600 bg-white dark:bg-technical-800 flex flex-col overflow-hidden">
+        {selectedComponentData ? (
+          <Card className="flex-shrink-0 rounded-none border-0 border-b border-technical-200 dark:border-technical-600">
             <CardHeader className="border-b border-technical-200 dark:border-technical-600">
               <CardTitle className="flex items-center gap-2">
                 <Settings className="w-4 h-4 text-primary" />
@@ -517,8 +518,17 @@ export default function DesignCanvas({ onToggleView }: DesignCanvasProps) {
               </Button>
             </CardContent>
           </Card>
+        ) : (
+          <div className="flex-shrink-0 p-4 text-sm text-technical-400 dark:text-technical-500 text-center border-b border-technical-100 dark:border-technical-700">
+            Select a component on the canvas to view its properties
+          </div>
+        )}
+
+        {/* Drawings browser — always visible at the bottom */}
+        <div className="flex-1 overflow-y-auto p-3">
+          <DrawingsBrowserPanel compact />
         </div>
-      )}
+      </div>
 
       {/* Drawing Viewer dialog */}
       {drawingViewerPartNumber && (

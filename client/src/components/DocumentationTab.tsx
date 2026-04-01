@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, Share, Package, Wrench, Shield, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import DrawingsBrowserPanel from "./DrawingsBrowserPanel";
 
 export default function DocumentationTab() {
   const { toast } = useToast();
@@ -24,6 +25,9 @@ export default function DocumentationTab() {
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      {/* Technical Drawings Library */}
+      <DrawingsBrowserPanel />
+
       {/* Documentation Templates */}
       <Card>
         <CardHeader>
